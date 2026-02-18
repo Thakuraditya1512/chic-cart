@@ -17,7 +17,7 @@ const SaleBanner = () => {
             Up to 40% Off
           </h2>
           <p className="text-base md:text-lg opacity-80 mb-8 max-w-lg mx-auto">
-            Don't miss our seasonal sale. Premium pieces at exceptional prices.
+            Don't miss our seasonal sneaker sale. Iconic kicks at unbeatable prices.
           </p>
           <a
             href="#new"

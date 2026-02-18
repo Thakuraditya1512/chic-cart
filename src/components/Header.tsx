@@ -12,8 +12,8 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
   const navLinks = [
     { label: "New In", to: "/#new" },
-    { label: "Women", to: "/#categories" },
-    { label: "Men", to: "/#categories" },
+    { label: "Brands", to: "/#categories" },
+    { label: "Trending", to: "/#new" },
     { label: "Sale", to: "/#sale" },
   ];
 
@@ -31,7 +31,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
             <Link to="/" className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground">
-              LUXE
+              SOLEKICKS
             </Link>
           </div>
 

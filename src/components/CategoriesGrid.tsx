@@ -7,10 +7,10 @@ const CategoriesGrid = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Shop by Category
+            Shop by Brand
           </h2>
           <p className="text-muted-foreground text-sm md:text-base">
-            Explore our curated collections
+            Your favorite sneaker brands, all in one place
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">

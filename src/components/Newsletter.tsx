@@ -18,10 +18,10 @@ const Newsletter = () => {
     <section className="py-16 md:py-24 bg-secondary">
       <div className="container mx-auto px-4 text-center max-w-xl">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
-          Stay in the Loop
+          Never Miss a Drop
         </h2>
         <p className="text-muted-foreground text-sm mb-8">
-          Subscribe for exclusive access, early drops, and styling tips.
+          Subscribe for early access to new releases, restocks, and exclusive deals.
         </p>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input

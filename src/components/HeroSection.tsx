@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import heroBanner from "@/assets/hero-banner.jpg";
+import heroShoes from "@/assets/hero-shoes.jpg";
 
 const HeroSection = () => {
   return (
     <section className="relative w-full h-[70vh] md:h-[85vh] overflow-hidden bg-secondary">
       <img
-        src={heroBanner}
-        alt="Hero fashion"
+        src={heroShoes}
+        alt="Premium sneaker collection"
         className="absolute inset-0 w-full h-full object-cover"
         loading="eager"
       />
@@ -18,7 +18,7 @@ const HeroSection = () => {
           transition={{ duration: 0.6 }}
           className="text-sm md:text-base uppercase tracking-[0.3em] text-sale-foreground/80 mb-4"
         >
-          New Season Collection
+          New Season Drops
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
@@ -26,9 +26,9 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="font-display text-4xl md:text-7xl font-bold text-sale-foreground mb-6 leading-tight"
         >
-          Define Your
+          Step Into
           <br />
-          Style
+          Greatness
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -36,7 +36,7 @@ const HeroSection = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-sale-foreground/70 text-base md:text-lg mb-8 max-w-md"
         >
-          Discover curated collections crafted for the modern individual
+          Every brand. Every drop. The freshest kicks curated for you.
         </motion.p>
         <motion.a
           href="#categories"
