@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-              SOLEKICKS
+              WALK IN STYLE
             </Link>
             <p className="text-primary-foreground/60 text-sm mt-3 max-w-xs">
               Your destination for premium sneakers. Every brand, every drop, every style.
@@ -41,7 +41,7 @@ const Footer = () => {
         </div>
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-primary-foreground/10">
           <p className="text-xs text-primary-foreground/40 mb-4 md:mb-0">
-            © 2026 SOLEKICKS. All rights reserved.
+            © 2026 WALK IN STYLE. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <a href="#" className="text-primary-foreground/40 hover:text-primary-foreground transition-colors">

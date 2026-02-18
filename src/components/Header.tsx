@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Menu, X, Sun, Moon } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, ShoppingBag, Menu, X, Sun, Moon, User } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
+  const navigate = useNavigate();
   const { totalItems, setIsCartOpen } = useCart();
+  const { user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -31,7 +34,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
             <Link to="/" className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground">
-              SOLEKICKS
+              WALK IN STYLE
             </Link>
           </div>
 
@@ -64,6 +67,15 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             >
               <Search size={20} />
             </button>
+            {user && (
+              <button
+                onClick={() => navigate("/orders")}
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Profile"
+              >
+                <User size={20} />
+              </button>
+            )}
             <button
               onClick={() => setIsCartOpen(true)}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors relative"

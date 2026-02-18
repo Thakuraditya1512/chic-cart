@@ -1,9 +1,10 @@
 import { X, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const CartDrawer = () => {
+  const navigate = useNavigate();
   const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
 
   return (
@@ -104,7 +105,13 @@ const CartDrawer = () => {
                   <span className="text-sm text-muted-foreground">Subtotal</span>
                   <span className="text-lg font-semibold text-foreground">${totalPrice.toFixed(2)}</span>
                 </div>
-                <button className="w-full py-3.5 bg-primary text-primary-foreground font-medium text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm">
+                <button 
+                  onClick={() => {
+                    navigate("/checkout");
+                    setIsCartOpen(false);
+                  }}
+                  className="w-full py-3.5 bg-primary text-primary-foreground font-medium text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm"
+                >
                   Checkout
                 </button>
                 <button
