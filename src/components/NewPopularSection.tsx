@@ -3,14 +3,15 @@ import { products } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { motion } from "framer-motion";
 
-const tabs = ["All", "Shirts", "Jeans", "Polos", "Trousers"];
+const tabs = ["All", "Nike", "Adidas", "Jordan", "New Balance", "Puma", "Converse"];
 
 const NewPopularSection = () => {
   const [activeTab, setActiveTab] = useState("All");
 
+  const tabToCategory: Record<string, string> = { "New Balance": "newbalance" };
   const filtered = activeTab === "All"
     ? products
-    : products.filter((p) => p.category === activeTab.toLowerCase());
+    : products.filter((p) => p.category === (tabToCategory[activeTab] || activeTab.toLowerCase()));
 
   return (
     <section id="new" className="py-16 md:py-24 bg-background">

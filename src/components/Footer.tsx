@@ -8,17 +8,17 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="font-display text-2xl font-bold tracking-tight">
-              LUXE
+              SOLEKICKS
             </Link>
             <p className="text-primary-foreground/60 text-sm mt-3 max-w-xs">
-              Curated fashion for the modern individual. Premium quality, timeless design.
+              Your destination for premium sneakers. Every brand, every drop, every style.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-sm uppercase tracking-wider mb-4">Shop</h4>
             <ul className="space-y-2.5 text-sm text-primary-foreground/60">
-              <li><a href="#new" className="hover:text-primary-foreground transition-colors">New Arrivals</a></li>
-              <li><a href="#categories" className="hover:text-primary-foreground transition-colors">Categories</a></li>
+              <li><a href="#new" className="hover:text-primary-foreground transition-colors">New Drops</a></li>
+              <li><a href="#categories" className="hover:text-primary-foreground transition-colors">Brands</a></li>
               <li><a href="#sale" className="hover:text-primary-foreground transition-colors">Sale</a></li>
             </ul>
           </div>
@@ -41,7 +41,7 @@ const Footer = () => {
         </div>
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-primary-foreground/10">
           <p className="text-xs text-primary-foreground/40 mb-4 md:mb-0">
-            © 2026 LUXE. All rights reserved.
+            © 2026 SOLEKICKS. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <a href="#" className="text-primary-foreground/40 hover:text-primary-foreground transition-colors">

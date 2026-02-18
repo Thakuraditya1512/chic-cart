@@ -10,10 +10,10 @@ const FeaturedProducts = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Featured Picks
+            Featured Kicks
           </h2>
           <p className="text-muted-foreground text-sm md:text-base">
-            Handpicked essentials for your wardrobe
+            Handpicked sneakers for your rotation
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
