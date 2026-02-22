@@ -93,7 +93,7 @@ const Login = () => {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
@@ -195,7 +195,7 @@ const Login = () => {
           transition={{ delay: 0.5 }}
           className="text-center text-xs text-muted-foreground mt-6"
         >
-          Demo email: demo@example.com | Password: Demo123!
+          {/* Demo email: demo@example.com | Password: Demo123! */}
         </motion.p>
       </motion.div>
     </div>

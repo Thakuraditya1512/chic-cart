@@ -4,12 +4,13 @@ import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB2SRcPIkArn6hn4JnWSjY4SRLdOZjcAfE",
-  authDomain: "platform-react-8225a.firebaseapp.com",
-  projectId: "platform-react-8225a",
-  storageBucket: "platform-react-8225a.firebasestorage.app",
-  messagingSenderId: "281242787417",
-  appId: "1:281242787417:web:2be55de49a881681555b48",
+  apiKey: "AIzaSyBl5YpzUJF960hA5kGCN6oeiDP2--EbRSQ",
+  authDomain: "shoppingshoes-b4f67.firebaseapp.com",
+  projectId: "shoppingshoes-b4f67",
+  storageBucket: "shoppingshoes-b4f67.firebasestorage.app",
+  messagingSenderId: "932957475226",
+  appId: "1:932957475226:web:30dfc8343465a7b9e26a23",
+  measurementId: "G-VC3TWF3CMN",
 };
 
 // Initialize Firebase

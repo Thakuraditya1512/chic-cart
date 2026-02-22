@@ -1,7 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { products } from "@/data/products";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
@@ -9,16 +8,101 @@ import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { Product } from "@/types";
+
+interface Brand {
+  id: string;
+  name: string;
+  image: string;
+  description?: string;
+}
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [wishlisted, setWishlisted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [imageZoomed, setImageZoomed] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchProductAndRelated();
+    }
+  }, [id]);
+
+  const fetchProductAndRelated = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch product
+      const productRef = doc(db, "products", id!);
+      const productSnap = await getDoc(productRef);
+
+      if (!productSnap.exists()) {
+        setProduct(null);
+        return;
+      }
+
+      const productData = {
+        id: productSnap.id,
+        ...productSnap.data(),
+        rating: productSnap.data().rating || 4.5,
+      } as Product;
+      setProduct(productData);
+
+      // Fetch brand details if brandId exists
+      if (productData.brandId) {
+        const brandRef = doc(db, "brands", productData.brandId);
+        const brandSnap = await getDoc(brandRef);
+        if (brandSnap.exists()) {
+          setBrand({
+            id: brandSnap.id,
+            ...brandSnap.data(),
+          } as Brand);
+        }
+
+        // Fetch all products from same brand
+        const productsRef = collection(db, "products");
+        const allProducts = await getDocs(productsRef);
+        const sameBrandProducts = allProducts.docs
+          .filter(
+            (doc) =>
+              doc.data().brandId === productData.brandId && doc.id !== id
+          )
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            rating: doc.data().rating || 4.5,
+          } as Product))
+          .slice(0, 8); // Show up to 8 related products
+        setRelatedProducts(sameBrandProducts);
+      }
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      setProduct(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-2 border-purple-500 border-t-transparent animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -30,8 +114,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background">
@@ -158,12 +240,23 @@ const ProductDetail = () => {
         </div>
 
         {/* Related */}
-        {related.length > 0 && (
+        {relatedProducts.length > 0 && (
           <section className="mt-16 md:mt-24">
-            <h2 className="font-display text-2xl font-bold text-foreground mb-8">You May Also Like</h2>
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-3">
+              More from {brand?.name || "this Brand"}
+            </h2>
+            <p className="text-muted-foreground text-sm md:text-base mb-8">Check out other shoes from this brand</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {related.map((p) => (
-                <ProductCard key={p.id} product={p} />
+              {relatedProducts.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
               ))}
             </div>
           </section>

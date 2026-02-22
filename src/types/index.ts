@@ -4,12 +4,17 @@ export interface Product {
   price: number;
   originalPrice?: number;
   image: string;
-  category: string;
+  category?: string;
+  brandId?: string;
   rating: number;
   badge?: 'new' | 'sale' | 'trending';
   description?: string;
   sizes?: string[];
   colors?: string[];
+  reviews?: number;
+  inStock?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem {
@@ -24,4 +29,13 @@ export interface Category {
   name: string;
   image: string;
   count: number;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  image: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

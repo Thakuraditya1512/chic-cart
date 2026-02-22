@@ -1,7 +1,7 @@
 # Firebase Firestore Security Rules Setup
 
 ## The Problem
-You're getting **"Missing or insufficient permissions"** error when trying to add products in the Admin panel. This happens because Firestore Security Rules haven't been configured to allow your admin users to write to the database.
+You need to set up Firestore Security Rules to properly manage access to products, user data, and orders based on user roles (admin vs regular user).
 
 ---
 
@@ -9,7 +9,7 @@ You're getting **"Missing or insufficient permissions"** error when trying to ad
 
 ### Step 1: Go to Firebase Console
 1. Visit [Firebase Console](https://console.firebase.google.com)
-2. Select your project: **platform-react-8225a**
+2. Select your project: **shoppingshoes-b4f67**
 3. In left sidebar: **Firestore Database**
 
 ### Step 2: Open Security Rules Editor
@@ -24,13 +24,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Public read access for brands
+    match /brands/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // Public read access for products
     match /products/{document=**} {
       allow read: if true;
       allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
-    // User data - own data only
+    // User data - own data only, admins can read all
     match /users/{userId} {
       allow read: if request.auth.uid == userId;
       allow write: if request.auth.uid == userId;
@@ -55,105 +61,55 @@ service cloud.firestore {
 ### Step 4: Publish Rules
 1. Click **Publish** button
 2. Wait for confirmation (green checkmark)
+3. This may take 1-2 minutes to propagate
 
 ---
 
 ## Step 5: Create Admin User
 
-Now you need to create an admin user in Firestore.
+### How to Make a User Admin:
 
-### Option A: Using Firebase Console
+1. **Sign up a new user** through the app (/signup) with your email
+   - Or use Firebase Authentication to create a user manually
 
-1. Go to **Authentication** tab
-2. Click **Add user** (if you don't have one)
-   - Email: `admin@walkinstyle.com`
-   - Password: (your choice)
-   - Click **Create user**
+2. **Go to Firestore Database** → **users** collection
 
-3. Go back to **Firestore Database**
-4. Click **Start collection**
-   - Collection ID: `users`
-   - Document ID: (copy the UID of the user you just created)
-   - Add field:
-     - Field name: `role`
-     - Type: `string`
-     - Value: `admin`
+3. **Find your user document** by the user ID (UID)
+
+4. **Add the role field:**
+   - Click **Add field**
+   - Field name: `role`
+   - Type: `string`
+   - Value: `admin`
    - Click **Save**
 
-### Option B: Automated (via App)
-
-1. Sign up a new user in the app (/signup)
-2. In Firestore Console, find the user document in `users` collection
-3. Add a field: `role: "admin"`
-
----
-
-## Step 6: Test Admin Panel
-
-1. Sign in with your admin user
-2. Go to `/admin`
-3. Try adding a product - it should now work!
+Now that user is an admin and can:
+- Access the Admin Panel (`/admin`)
+- Add/Edit/Delete products
+- See all orders in the system
 
 ---
 
-## Understanding the Security Rules
+## Step 6: Test the Setup
 
-- **products**: Anyone can read, but only admins can create/update/delete
-- **users**: Users can only read/write their own data, admins can read all
-- **orders**: Users can see their own orders, admins can see all orders
-- **All else**: Denied by default (secure)
+### Test Admin Access:
+1. Log out if needed
+2. Log in with your **admin user** email  
+3. Go to `/admin` → You should access the admin panel
+4. Try adding a product with shoes data
 
----
+### Test Regular User Access:
+1. Create a new account (sign up)
+2. This user will have `role: "user"` automatically
+3. Try visiting `/admin` → Should redirect to home page
+4. Can view products and place orders
 
-## Troubleshooting
-
-### Still getting "Missing permissions" error?
-1. **Check admin role**: Go to Firestore → users collection → your user document → verify `role: admin` exists
-2. **Refresh browser**: Ctrl+Shift+R (hard refresh)
-3. **Check rules**: In Rules tab, verify all code is properly formatted
-4. **Wait 1 minute**: Rules can take a minute to apply
-
-### Can't create admin user?
-1. First, create a regular user (sign up in app)
-2. Manually add the `role: "admin"` field in Firestore Console
-3. Refresh the app and try again
-
-### Rules still showing errors?
-1. Click **Validate** button to see specific errors
-2. Make sure you copied all the code correctly
-3. Check for missing semicolons or brackets
+### Test Orders:
+1. As a regular user, add items to cart
+2. Go to `/checkout` and complete an order
+3. Visit `/orders` → Should see your order history
+4. As an admin, the `/orders` page shows all orders
 
 ---
 
-## Collections Structure After Setup
-
-Your Firestore should have this structure:
-
-```
-firestore/
-├── products/
-│   ├── {productId}
-│   │   ├── name: string
-│   │   ├── price: number
-│   │   ├── image: string
-│   │   └── ...
-│   
-├── users/
-│   ├── {userId}
-│   │   ├── email: string
-│   │   ├── role: "admin" | "user"
-│   │   └── ...
-│
-└── orders/
-    ├── {orderId}
-    │   ├── userId: string
-    │   ├── items: array
-    │   ├── total: number
-    │   └── ...
-```
-
----
-
-## Done! 🎉
-
-Your admin panel should now work perfectly with proper security!
+## Firestore Collection Structure

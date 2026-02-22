@@ -129,7 +129,7 @@ const Signup = () => {
                   <Input
                     type="text"
                     name="fullName"
-                    placeholder="John Doe"
+                    placeholder="Name"
                     value={formData.fullName}
                     onChange={handleInputChange}
                     className="pl-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
@@ -151,7 +151,7 @@ const Signup = () => {
                   <Input
                     type="email"
                     name="email"
-                    placeholder="you@example.com"
+                    placeholder="Email address "
                     value={formData.email}
                     onChange={handleInputChange}
                     className="pl-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"

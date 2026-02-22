@@ -104,12 +104,19 @@ const Checkout = () => {
         address: addressData.address,
         city: addressData.city,
         zipCode: addressData.zipCode,
-        items: cartItems.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          price: item.product.price,
-          quantity: item.quantity,
-        })),
+        items: cartItems.map((item) => {
+          const itemData: any = {
+            productId: item.product.id,
+            productName: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity,
+            image: item.product.image,
+          };
+          // Only add optional fields if they exist
+          if (item.product.category) itemData.category = item.product.category;
+          if ((item as any).size) itemData.size = (item as any).size;
+          return itemData;
+        }),
         subtotal: totalPrice,
         codCharge: totalPrice > 1000 ? 0 : 50, // Free COD for orders > $1000
         total: totalPrice + (totalPrice > 1000 ? 0 : 50),
