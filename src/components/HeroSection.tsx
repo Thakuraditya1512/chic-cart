@@ -38,7 +38,7 @@ const HeroSection = () => {
         >
           Every brand. Every drop. The freshest kicks curated for you.
         </motion.p>
-        <motion.a
+        {/* <motion.a
           href="#categories"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -46,7 +46,7 @@ const HeroSection = () => {
           className="inline-flex items-center px-8 py-3.5 bg-sale-foreground text-foreground font-medium text-sm uppercase tracking-widest hover:opacity-90 transition-opacity rounded-sm"
         >
           Shop Now
-        </motion.a>
+        </motion.a> */}
       </div>
     </section>
   );

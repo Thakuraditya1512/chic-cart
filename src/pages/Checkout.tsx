@@ -210,7 +210,7 @@ const Checkout = () => {
                       <div>
                         <label className="block text-sm font-medium mb-1">Full Name *</label>
                         <Input
-                          placeholder="John Doe"
+                          placeholder="Name"
                           value={customerData.fullName}
                           onChange={(e) =>
                             setCustomerData({ ...customerData, fullName: e.target.value })
@@ -222,7 +222,7 @@ const Checkout = () => {
                         <label className="block text-sm font-medium mb-1">Email *</label>
                         <Input
                           type="email"
-                          placeholder="john@example.com"
+                          placeholder="Email"
                           value={customerData.email}
                           onChange={(e) =>
                             setCustomerData({ ...customerData, email: e.target.value })
@@ -235,7 +235,7 @@ const Checkout = () => {
                       <div>
                         <label className="block text-sm font-medium mb-1">Phone Number *</label>
                         <Input
-                          placeholder="9876543210"
+                          placeholder="Phone"
                           value={customerData.phone}
                           onChange={(e) =>
                             setCustomerData({ ...customerData, phone: e.target.value })
