@@ -24,6 +24,7 @@ interface Product {
   rating?: number;
   reviews?: number;
   inStock?: boolean;
+  sizes?: string[];
   createdAt?: string;
 }
 
@@ -82,6 +83,7 @@ const Admin = () => {
     rating: "4.5",
     reviews: "0",
     inStock: true,
+    sizes: [] as string[],
   });
 
   // Fetch data on mount
@@ -117,7 +119,7 @@ const Admin = () => {
         ...doc.data(),
       } as Product));
       setProducts(fetchedProducts);
-      
+
       // Load featured products
       const featured = new Set(
         fetchedProducts
@@ -130,6 +132,50 @@ const Admin = () => {
       toast.error("Failed to fetch products");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedBrand) return;
+
+    try {
+      setLoading(true);
+      const fileContent = await file.text();
+      const shoesArray = JSON.parse(fileContent);
+
+      if (!Array.isArray(shoesArray)) {
+        toast.error("Invalid JSON format. Expected an array.");
+        return;
+      }
+
+      let count = 0;
+      for (const shoe of shoesArray) {
+        const newProduct = {
+          name: shoe.name,
+          price: Number(shoe.price),
+          originalPrice: shoe.originalPrice ? Number(shoe.originalPrice) : null,
+          brandId: selectedBrand.id,
+          description: shoe.description || "",
+          image: shoe.image || "",
+          rating: Number(shoe.rating) || 4.5,
+          reviews: Number(shoe.reviews) || Math.floor(Math.random() * 50),
+          inStock: shoe.inStock ?? true,
+          sizes: shoe.sizes || ["6", "7", "8", "9", "10", "11", "12"],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await addDoc(collection(db, "products"), newProduct);
+        count++;
+      }
+      toast.success(`Successfully uploaded ${count} shoes!`);
+      fetchProducts();
+    } catch (error) {
+      console.error("Bulk upload error:", error);
+      toast.error("Error reading JSON file.");
+    } finally {
+      setLoading(false);
+      if (event.target) event.target.value = '';
     }
   };
 
@@ -226,6 +272,7 @@ const Admin = () => {
       rating: "4.5",
       reviews: "0",
       inStock: true,
+      sizes: [],
     });
     setImagePreview("");
     setError("");
@@ -258,6 +305,7 @@ const Admin = () => {
       rating: String(p.rating || 4.5),
       reviews: String(p.reviews || 0),
       inStock: p.inStock ?? true,
+      sizes: p.sizes || [],
     });
     setError("");
     setShowForm(true);
@@ -360,6 +408,7 @@ const Admin = () => {
       rating: rating,
       reviews: Number(productForm.reviews) || 0,
       inStock: productForm.inStock,
+      sizes: productForm.sizes,
       updatedAt: new Date().toISOString(),
     };
 
@@ -387,17 +436,17 @@ const Admin = () => {
   };
 
   const handleDelete = async (id: string, type: "brand" | "product") => {
-    const confirmMessage = type === "brand" 
-      ? "Are you sure you want to delete this brand? All products in this brand will still exist." 
+    const confirmMessage = type === "brand"
+      ? "Are you sure you want to delete this brand? All products in this brand will still exist."
       : "Are you sure you want to delete this product?";
-    
+
     if (confirm(confirmMessage)) {
       try {
         setDeleteLoading(id);
         const collection_name = type === "brand" ? "brands" : "products";
         await deleteDoc(doc(db, collection_name, id));
         toast.success(`${type === "brand" ? "Brand" : "Product"} deleted successfully!`);
-        
+
         if (type === "brand") {
           fetchBrands();
           if (selectedBrand?.id === id) {
@@ -419,20 +468,20 @@ const Admin = () => {
     try {
       const isFeatured = featuredProducts.has(productId);
       const newFeaturedSet = new Set(featuredProducts);
-      
+
       if (isFeatured) {
         newFeaturedSet.delete(productId);
       } else {
         newFeaturedSet.add(productId);
       }
-      
+
       setFeaturedProducts(newFeaturedSet);
-      
+
       // Update in Firestore
       await updateDoc(doc(db, "products", productId), {
         featured: !isFeatured,
       });
-      
+
       toast.success(isFeatured ? "Removed from Featured Kicks" : "Added to Featured Kicks");
       fetchProducts();
     } catch (error) {
@@ -451,16 +500,14 @@ const Admin = () => {
           className="mb-6 sm:mb-8 md:mb-12 relative overflow-hidden rounded-lg sm:rounded-xl"
         >
           <div className={`absolute inset-0 bg-gradient-to-r ${isDarkMode ? "from-gray-600/20 via-slate-600/20 to-gray-600/20" : "from-gray-200/30 via-slate-200/30 to-gray-200/30"} blur-3xl`}></div>
-          <div className={`relative p-4 sm:p-6 md:p-8 border rounded-lg sm:rounded-xl backdrop-blur-sm ${
-            isDarkMode
-              ? "border-gray-500/30 bg-gradient-to-br from-gray-800/50 via-gray-900/30 to-gray-800/50"
-              : "border-gray-300 bg-gradient-to-br from-gray-50 via-white to-gray-50"
-          }`}>
+          <div className={`relative p-4 sm:p-6 md:p-8 border rounded-lg sm:rounded-xl backdrop-blur-sm ${isDarkMode
+            ? "border-gray-500/30 bg-gradient-to-br from-gray-800/50 via-gray-900/30 to-gray-800/50"
+            : "border-gray-300 bg-gradient-to-br from-gray-50 via-white to-gray-50"
+            }`}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <h1 className={`font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 leading-tight ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}>
+                <h1 className={`font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 leading-tight ${isDarkMode ? "text-white" : "text-gray-900"
+                  }`}>
                   ADMIN CONTROL
                 </h1>
                 <p className={`text-xs sm:text-sm md:text-base ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>Manage your brands and shoes</p>
@@ -468,22 +515,20 @@ const Admin = () => {
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => setIsDarkMode(!isDarkMode)}
-                  className={`p-2 sm:p-2.5 rounded-lg transition-all ${
-                    isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-yellow-400"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-                  }`}
+                  className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDarkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-yellow-400"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                    }`}
                   title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 >
                   {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
                 <button
                   onClick={activeTab === "brands" ? openNewBrand : openNewProduct}
-                  className={`flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-white font-display text-xs sm:text-xs font-bold tracking-wider transition-all shadow-lg whitespace-nowrap ${
-                    isDarkMode
-                      ? "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 hover:shadow-gray-500/30"
-                      : "bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 hover:shadow-gray-400/30"
-                  }`}
+                  className={`flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-white font-display text-xs sm:text-xs font-bold tracking-wider transition-all shadow-lg whitespace-nowrap ${isDarkMode
+                    ? "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 hover:shadow-gray-500/30"
+                    : "bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 hover:shadow-gray-400/30"
+                    }`}
                 >
                   <Plus className="w-4 h-4" />
                   <span className="hidden sm:inline">ADD</span>
@@ -499,30 +544,26 @@ const Admin = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-4 sm:p-5 md:p-6 rounded-lg transition-colors ${
-              isDarkMode
-                ? "bg-gradient-to-br from-gray-600/10 to-slate-600/10 border border-gray-600/30 hover:border-gray-600/50"
-                : "bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-300 hover:border-gray-400"
-            }`}
+            className={`p-4 sm:p-5 md:p-6 rounded-lg transition-colors ${isDarkMode
+              ? "bg-gradient-to-br from-gray-600/10 to-slate-600/10 border border-gray-600/30 hover:border-gray-600/50"
+              : "bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-300 hover:border-gray-400"
+              }`}
           >
-            <p className={`text-xs sm:text-xs md:text-sm mb-2 font-medium uppercase tracking-wider ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            }`}>Total Brands</p>
+            <p className={`text-xs sm:text-xs md:text-sm mb-2 font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-600"
+              }`}>Total Brands</p>
             <p className={`text-2xl sm:text-3xl md:text-4xl font-bold ${isDarkMode ? "text-gray-300" : "text-gray-800"}`}>{brands.length}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className={`p-4 sm:p-5 md:p-6 rounded-lg transition-colors ${
-              isDarkMode
-                ? "bg-gradient-to-br from-slate-600/10 to-gray-600/10 border border-slate-600/30 hover:border-slate-600/50"
-                : "bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 hover:border-gray-400"
-            }`}
+            className={`p-4 sm:p-5 md:p-6 rounded-lg transition-colors ${isDarkMode
+              ? "bg-gradient-to-br from-slate-600/10 to-gray-600/10 border border-slate-600/30 hover:border-slate-600/50"
+              : "bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 hover:border-gray-400"
+              }`}
           >
-            <p className={`text-xs sm:text-xs md:text-sm mb-2 font-medium uppercase tracking-wider ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            }`}>Total Products</p>
+            <p className={`text-xs sm:text-xs md:text-sm mb-2 font-medium uppercase tracking-wider ${isDarkMode ? "text-gray-400" : "text-gray-600"
+              }`}>Total Products</p>
             <p className={`text-2xl sm:text-3xl md:text-4xl font-bold ${isDarkMode ? "text-gray-300" : "text-gray-800"}`}>
               ${products.reduce((sum, p) => sum + p.price, 0).toFixed(2)}
             </p>
@@ -530,27 +571,24 @@ const Admin = () => {
         </div>
 
         {/* Tabs */}
-        <div className={`flex gap-1 sm:gap-2 border-b overflow-x-auto mb-6 sm:mb-8 pb-2 ${
-          isDarkMode ? "border-gray-700" : "border-gray-200"
-        }`}>
+        <div className={`flex gap-1 sm:gap-2 border-b overflow-x-auto mb-6 sm:mb-8 pb-2 ${isDarkMode ? "border-gray-700" : "border-gray-200"
+          }`}>
           <button
             onClick={() => {
               setActiveTab("brands");
               setShowForm(false);
             }}
-            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${
-              activeTab === "brands"
-                ? isDarkMode ? "text-gray-300" : "text-gray-800"
-                : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${activeTab === "brands"
+              ? isDarkMode ? "text-gray-300" : "text-gray-800"
+              : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             BRANDS
             {activeTab === "brands" && (
               <motion.div
                 layoutId="adminTab"
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
-                  isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
-                }`}
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
+                  }`}
               />
             )}
           </button>
@@ -559,19 +597,17 @@ const Admin = () => {
               setActiveTab("products");
               setShowForm(false);
             }}
-            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${
-              activeTab === "products"
-                ? isDarkMode ? "text-gray-300" : "text-gray-800"
-                : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${activeTab === "products"
+              ? isDarkMode ? "text-gray-300" : "text-gray-800"
+              : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             SHOES
             {activeTab === "products" && (
               <motion.div
                 layoutId="adminTab"
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
-                  isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
-                }`}
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
+                  }`}
               />
             )}
           </button>
@@ -580,19 +616,17 @@ const Admin = () => {
               setActiveTab("featured");
               setShowForm(false);
             }}
-            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${
-              activeTab === "featured"
-                ? isDarkMode ? "text-gray-300" : "text-gray-800"
-                : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${activeTab === "featured"
+              ? isDarkMode ? "text-gray-300" : "text-gray-800"
+              : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             FEATURED KICKS
             {activeTab === "featured" && (
               <motion.div
                 layoutId="adminTab"
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
-                  isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
-                }`}
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
+                  }`}
               />
             )}
           </button>
@@ -601,19 +635,17 @@ const Admin = () => {
               setActiveTab("customers");
               setShowForm(false);
             }}
-            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${
-              activeTab === "customers"
-                ? isDarkMode ? "text-gray-300" : "text-gray-800"
-                : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${activeTab === "customers"
+              ? isDarkMode ? "text-gray-300" : "text-gray-800"
+              : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             CUSTOMERS
             {activeTab === "customers" && (
               <motion.div
                 layoutId="adminTab"
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
-                  isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
-                }`}
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
+                  }`}
               />
             )}
           </button>
@@ -622,19 +654,17 @@ const Admin = () => {
               setActiveTab("users");
               setShowForm(false);
             }}
-            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${
-              activeTab === "users"
-                ? isDarkMode ? "text-gray-300" : "text-gray-800"
-                : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-3 sm:px-4 py-2 font-display text-xs sm:text-sm font-bold tracking-wider transition-all whitespace-nowrap relative ${activeTab === "users"
+              ? isDarkMode ? "text-gray-300" : "text-gray-800"
+              : isDarkMode ? "text-gray-500 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             MANAGE USERS
             {activeTab === "users" && (
               <motion.div
                 layoutId="adminTab"
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${
-                  isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
-                }`}
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${isDarkMode ? "from-gray-500 to-gray-400" : "from-gray-600 to-gray-500"
+                  }`}
               />
             )}
           </button>
@@ -867,6 +897,35 @@ const Admin = () => {
               />
             </div>
 
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1.5">Shoe Sizes</label>
+              <div className="flex flex-wrap gap-2">
+                {["6", "7", "8", "9", "10", "11", "12"].map((size) => {
+                  const isSelected = productForm.sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setProductForm(prev => ({
+                          ...prev,
+                          sizes: isSelected
+                            ? prev.sizes.filter(s => s !== size)
+                            : [...prev.sizes, size]
+                        }))
+                      }}
+                      type="button"
+                      className={`min-w-[40px] px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${isSelected
+                          ? "bg-cyan-500 text-white border border-cyan-500"
+                          : "bg-secondary text-gray-400 border border-border hover:border-cyan-500/50"
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sticky bottom-0 bg-card border-t border-border/30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 sm:py-4">
               <button
                 onClick={handleSave}
@@ -1004,15 +1063,26 @@ const Admin = () => {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setSelectedBrand(null);
-                      setShowForm(false);
-                    }}
-                    className="text-xs text-gray-400 hover:text-gray-300 transition-colors"
-                  >
-                    Change Brand
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <label className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white text-xs sm:text-sm font-bold rounded-md transition-all cursor-pointer shadow-lg shadow-cyan-900/20">
+                      BULK UPLOAD DATA
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={handleBulkUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={() => {
+                        setSelectedBrand(null);
+                        setShowForm(false);
+                      }}
+                      className="text-xs text-gray-400 hover:text-gray-300 transition-colors bg-secondary px-3 py-2 rounded-md"
+                    >
+                      Change Brand
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-2 sm:space-y-3">
@@ -1087,11 +1157,10 @@ const Admin = () => {
         {/* FEATURED KICKS TAB */}
         {activeTab === "featured" && (
           <>
-            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-gray-50 border-gray-300"
-            }`}>
+            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-gray-50 border-gray-300"
+              }`}>
               <p className={`text-xs sm:text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
                 Featured Kicks: <span className={`font-bold ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>{featuredProducts.size}</span> / {products.length}
               </p>
@@ -1102,14 +1171,12 @@ const Admin = () => {
 
             <div className="space-y-2 sm:space-y-3">
               {products.length === 0 ? (
-                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${
-                  isDarkMode
-                    ? "border-gray-700"
-                    : "border-gray-300"
-                }`}>
-                  <p className={`text-xs sm:text-base mb-2 sm:mb-4 font-medium ${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${isDarkMode
+                  ? "border-gray-700"
+                  : "border-gray-300"
                   }`}>
+                  <p className={`text-xs sm:text-base mb-2 sm:mb-4 font-medium ${isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>
                     No shoes yet. Create some products first!
                   </p>
                   <p className={`text-xs ${isDarkMode ? "text-gray-500" : "text-gray-500"}`}>Add shoes in the SHOES tab before selecting featured kicks.</p>
@@ -1123,15 +1190,14 @@ const Admin = () => {
                       key={product.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className={`flex flex-col xs:flex-row xs:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-colors ${
-                        isFeatured
-                          ? isDarkMode
-                            ? "bg-green-900/30 border-green-700"
-                            : "bg-green-50 border-green-300"
-                          : isDarkMode
+                      className={`flex flex-col xs:flex-row xs:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-colors ${isFeatured
+                        ? isDarkMode
+                          ? "bg-green-900/30 border-green-700"
+                          : "bg-green-50 border-green-300"
+                        : isDarkMode
                           ? "bg-gray-800 border-gray-700 hover:border-gray-600"
                           : "bg-white border-gray-300 hover:border-gray-400"
-                      }`}
+                        }`}
                     >
                       <img
                         src={product.image}
@@ -1143,9 +1209,8 @@ const Admin = () => {
                         className="w-14 h-14 sm:w-16 sm:h-16 rounded-md object-cover flex-shrink-0 mx-auto xs:mx-0"
                       />
                       <div className="flex-1 min-w-0 text-center xs:text-left">
-                        <h3 className={`font-display text-xs sm:text-sm font-semibold truncate ${
-                          isDarkMode ? "text-gray-200" : "text-gray-900"
-                        }`}>
+                        <h3 className={`font-display text-xs sm:text-sm font-semibold truncate ${isDarkMode ? "text-gray-200" : "text-gray-900"
+                          }`}>
                           {product.name}
                         </h3>
                         <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
@@ -1159,13 +1224,12 @@ const Admin = () => {
                       </div>
                       <button
                         onClick={() => toggleFeatured(product.id)}
-                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${
-                          isFeatured
-                            ? "bg-green-600 hover:bg-green-500 text-white shadow-lg"
-                            : isDarkMode
+                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${isFeatured
+                          ? "bg-green-600 hover:bg-green-500 text-white shadow-lg"
+                          : isDarkMode
                             ? "border border-gray-600 text-gray-300 hover:text-gray-100 hover:border-gray-500"
                             : "border border-gray-400 text-gray-700 hover:text-gray-900 hover:border-gray-600"
-                        }`}
+                          }`}
                       >
                         {isFeatured ? "✓ FEATURED" : "+ ADD"}
                       </button>
@@ -1180,11 +1244,10 @@ const Admin = () => {
         {/* CUSTOMERS TAB */}
         {activeTab === "customers" && (
           <>
-            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-gray-50 border-gray-300"
-            }`}>
+            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-gray-50 border-gray-300"
+              }`}>
               <p className={`text-xs sm:text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
                 Total Orders: <span className={`font-bold ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>{orders.length}</span>
               </p>
@@ -1192,14 +1255,12 @@ const Admin = () => {
 
             <div className="space-y-3">
               {orders.length === 0 ? (
-                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${
-                  isDarkMode
-                    ? "border-gray-700"
-                    : "border-gray-300"
-                }`}>
-                  <p className={`text-xs sm:text-base font-medium ${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${isDarkMode
+                  ? "border-gray-700"
+                  : "border-gray-300"
                   }`}>
+                  <p className={`text-xs sm:text-base font-medium ${isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>
                     No orders yet
                   </p>
                 </div>
@@ -1209,11 +1270,10 @@ const Admin = () => {
                     key={order.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`rounded-lg border cursor-pointer transition-colors ${
-                      isDarkMode
-                        ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-                        : "bg-white border-gray-300 hover:border-gray-400"
-                    }`}
+                    className={`rounded-lg border cursor-pointer transition-colors ${isDarkMode
+                      ? "bg-gray-800 border-gray-700 hover:border-gray-600"
+                      : "bg-white border-gray-300 hover:border-gray-400"
+                      }`}
                     onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
                   >
                     {/* Order Header */}
@@ -1241,9 +1301,8 @@ const Admin = () => {
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
-                        className={`border-t p-4 sm:p-5 space-y-4 ${
-                          isDarkMode ? "border-gray-700 bg-gray-700/20" : "border-gray-200 bg-gray-50"
-                        }`}
+                        className={`border-t p-4 sm:p-5 space-y-4 ${isDarkMode ? "border-gray-700 bg-gray-700/20" : "border-gray-200 bg-gray-50"
+                          }`}
                       >
                         {/* Items */}
                         <div>
@@ -1252,16 +1311,14 @@ const Admin = () => {
                           </p>
                           <div className="space-y-2">
                             {order.items.map((item, idx) => (
-                              <div key={idx} className={`flex gap-3 p-3 rounded border transition-colors ${
-                                isDarkMode
-                                  ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-                                  : "bg-white border-gray-300 hover:border-gray-400"
-                              }`}>
+                              <div key={idx} className={`flex gap-3 p-3 rounded border transition-colors ${isDarkMode
+                                ? "bg-gray-800 border-gray-700 hover:border-gray-600"
+                                : "bg-white border-gray-300 hover:border-gray-400"
+                                }`}>
                                 {/* Product Image */}
                                 {item.image && (
-                                  <div className={`flex-shrink-0 w-14 h-14 rounded overflow-hidden ${
-                                    isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                                  }`}>
+                                  <div className={`flex-shrink-0 w-14 h-14 rounded overflow-hidden ${isDarkMode ? "bg-gray-700" : "bg-gray-200"
+                                    }`}>
                                     <img
                                       src={item.image}
                                       alt={item.productName}
@@ -1269,7 +1326,7 @@ const Admin = () => {
                                     />
                                   </div>
                                 )}
-                                
+
                                 {/* Product Details */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between items-start gap-2 mb-1">
@@ -1295,17 +1352,15 @@ const Admin = () => {
                         </div>
 
                         {/* Pricing */}
-                        <div className={`p-3 rounded border space-y-2 text-xs ${
-                          isDarkMode
-                            ? "bg-gray-800 border-gray-700"
-                            : "bg-white border-gray-300"
-                        }`}>
+                        <div className={`p-3 rounded border space-y-2 text-xs ${isDarkMode
+                          ? "bg-gray-800 border-gray-700"
+                          : "bg-white border-gray-300"
+                          }`}>
                           <div className="flex justify-between">
                             <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>Subtotal</span>
                           </div>
-                          <div className={`flex justify-between font-bold pt-2 border-t ${
-                            isDarkMode ? "border-gray-700" : "border-gray-300"
-                          }`}>
+                          <div className={`flex justify-between font-bold pt-2 border-t ${isDarkMode ? "border-gray-700" : "border-gray-300"
+                            }`}>
                             <span className={isDarkMode ? "text-gray-200" : "text-gray-900"}>Total</span>
                             <span className={isDarkMode ? "text-blue-400" : "text-blue-600"}>${order.total.toFixed(2)}</span>
                           </div>
@@ -1316,11 +1371,10 @@ const Admin = () => {
                           <p className={`text-xs font-bold mb-2 ${isDarkMode ? "text-blue-400" : "text-blue-600"}`}>
                             DELIVERY ADDRESS
                           </p>
-                          <div className={`p-3 rounded border text-xs ${
-                            isDarkMode
-                              ? "bg-gray-800 border-gray-700"
-                              : "bg-white border-gray-300"
-                          }`}>
+                          <div className={`p-3 rounded border text-xs ${isDarkMode
+                            ? "bg-gray-800 border-gray-700"
+                            : "bg-white border-gray-300"
+                            }`}>
                             <p className={`font-medium ${isDarkMode ? "text-gray-200" : "text-gray-900"}`}>Customer Info</p>
                             <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>{order.customerName}</p>
                             <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>{order.email}</p>
@@ -1346,13 +1400,12 @@ const Admin = () => {
                                   key={statusStep}
                                   onClick={() => handleStatusChange(order.id, statusStep)}
                                   disabled={updatingStatus === order.id}
-                                  className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                                    order.status === statusStep
-                                      ? "bg-blue-600 text-white"
-                                      : isDarkMode
+                                  className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold transition-all ${order.status === statusStep
+                                    ? "bg-blue-600 text-white"
+                                    : isDarkMode
                                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
                                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                  } disabled:opacity-50`}
+                                    } disabled:opacity-50`}
                                 >
                                   {statusStep.replace("_", " ").split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ").substring(0, 8)}
                                 </button>
@@ -1371,24 +1424,23 @@ const Admin = () => {
                               (statusStep) => (
                                 <div key={statusStep} className="flex items-center gap-3 text-xs">
                                   <div
-                                    className={`w-3 h-3 rounded-full ${
-                                      ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"]
-                                        .indexOf(statusStep) <=
+                                    className={`w-3 h-3 rounded-full ${["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"]
+                                      .indexOf(statusStep) <=
                                       ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].indexOf(
                                         order.status
                                       )
-                                        ? "bg-blue-500"
-                                        : isDarkMode ? "bg-gray-700" : "bg-gray-300"
-                                    }`}
+                                      ? "bg-blue-500"
+                                      : isDarkMode ? "bg-gray-700" : "bg-gray-300"
+                                      }`}
                                   />
                                   <span
                                     className={
                                       ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].indexOf(
                                         statusStep
                                       ) <=
-                                      ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].indexOf(
-                                        order.status
-                                      )
+                                        ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].indexOf(
+                                          order.status
+                                        )
                                         ? isDarkMode ? "text-gray-200" : "text-gray-900"
                                         : isDarkMode ? "text-gray-400" : "text-gray-600"
                                     }
@@ -1412,11 +1464,10 @@ const Admin = () => {
         {/* MANAGE USERS TAB */}
         {activeTab === "users" && (
           <>
-            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-gray-50 border-gray-300"
-            }`}>
+            <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-gray-50 border-gray-300"
+              }`}>
               <p className={`text-xs sm:text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
                 Total Users: <span className={`font-bold ${isDarkMode ? "text-gray-300" : "text-gray-900"}`}>{users.length}</span>
               </p>
@@ -1427,14 +1478,12 @@ const Admin = () => {
 
             <div className="space-y-2 sm:space-y-3">
               {users.length === 0 ? (
-                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${
-                  isDarkMode
-                    ? "border-gray-700"
-                    : "border-gray-300"
-                }`}>
-                  <p className={`text-xs sm:text-base font-medium ${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                <div className={`text-center py-8 sm:py-12 px-4 rounded-lg border ${isDarkMode
+                  ? "border-gray-700"
+                  : "border-gray-300"
                   }`}>
+                  <p className={`text-xs sm:text-base font-medium ${isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}>
                     No users found
                   </p>
                 </div>
@@ -1444,19 +1493,17 @@ const Admin = () => {
                     key={user.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={`flex flex-col xs:flex-row xs:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-colors ${
-                      isDarkMode
-                        ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-                        : "bg-white border-gray-300 hover:border-gray-400"
-                    }`}
+                    className={`flex flex-col xs:flex-row xs:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border transition-colors ${isDarkMode
+                      ? "bg-gray-800 border-gray-700 hover:border-gray-600"
+                      : "bg-white border-gray-300 hover:border-gray-400"
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs sm:text-sm font-semibold truncate ${
-                        isDarkMode ? "text-gray-200" : "text-gray-900"
-                      }`}>
+                      <p className={`text-xs sm:text-sm font-semibold truncate ${isDarkMode ? "text-gray-200" : "text-gray-900"
+                        }`}>
                         {user.email}
                       </p>
                       <p className={`text-xs ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
@@ -1466,29 +1513,27 @@ const Admin = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => user.role !== "user" && updateUserRole(user.id, "user")}
-                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${
-                          user.role === "user"
-                            ? isDarkMode
-                              ? "bg-blue-600 hover:bg-blue-500 text-white"
-                              : "bg-blue-500 hover:bg-blue-600 text-white"
-                            : isDarkMode
+                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 ${user.role === "user"
+                          ? isDarkMode
+                            ? "bg-blue-600 hover:bg-blue-500 text-white"
+                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                          : isDarkMode
                             ? "border border-gray-600 text-gray-400 hover:text-gray-200"
                             : "border border-gray-400 text-gray-600 hover:text-gray-900"
-                        }`}
+                          }`}
                       >
                         USER
                       </button>
                       <button
                         onClick={() => user.role !== "admin" && updateUserRole(user.id, "admin")}
-                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 flex items-center gap-1 ${
-                          user.role === "admin"
-                            ? isDarkMode
-                              ? "bg-purple-600 hover:bg-purple-500 text-white"
-                              : "bg-purple-500 hover:bg-purple-600 text-white"
-                            : isDarkMode
+                        className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-display font-bold tracking-wider transition-all whitespace-nowrap flex-shrink-0 flex items-center gap-1 ${user.role === "admin"
+                          ? isDarkMode
+                            ? "bg-purple-600 hover:bg-purple-500 text-white"
+                            : "bg-purple-500 hover:bg-purple-600 text-white"
+                          : isDarkMode
                             ? "border border-gray-600 text-gray-400 hover:text-gray-200"
                             : "border border-gray-400 text-gray-600 hover:text-gray-900"
-                        }`}
+                          }`}
                       >
                         <Shield className="w-4 h-4" />
                         ADMIN

@@ -1,7 +1,7 @@
 import ProductCard from "@/components/ProductCard";
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Product } from "@/types";
@@ -11,6 +11,7 @@ const FeaturedProducts = () => {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const [startX, setStartX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -48,6 +49,7 @@ const FeaturedProducts = () => {
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 10);
       setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
     }
   };
@@ -56,6 +58,15 @@ const FeaturedProducts = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({
         left: 320,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollLeftNav = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -320,
         behavior: "smooth",
       });
     }
@@ -185,7 +196,20 @@ const FeaturedProducts = () => {
               ))}
             </div>
 
-            {/* Scroll Arrow - Right Only */}
+            {/* Scroll Arrows */}
+            {showLeftArrow && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={scrollLeftNav}
+                className="absolute -left-6 md:left-0 top-1/2 -translate-y-1/2 p-3 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg transition-all hover:shadow-purple-500/50 z-10 hidden sm:flex items-center justify-center"
+                title="Scroll left"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </motion.button>
+            )}
+
             {showRightArrow && (
               <motion.button
                 initial={{ opacity: 0 }}

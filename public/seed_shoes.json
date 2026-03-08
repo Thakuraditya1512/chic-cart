@@ -1,0 +1,287 @@
+[
+    {
+        "name": "Jordan 1 Retro High OG",
+        "price": 180.00,
+        "description": "The Air Jordan 1 Retro High OG brings back the classic silhouette with premium leather construction and authentic detailing.",
+        "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.9,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Nike Air Max 270 React",
+        "price": 160.00,
+        "description": "Nike's first lifestyle Air Max meets the softest, smoothest, and most resilient foam yet.",
+        "image": "https://images.unsplash.com/photo-1605348532760-6753d2c43329?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.7,
+        "sizes": [
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Adidas Ultraboost 22",
+        "price": 190.00,
+        "description": "Experience epic energy return with the Ultraboost 22. Constructed with Primeknit for a precision fit.",
+        "image": "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.8,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10"
+        ]
+    },
+    {
+        "name": "Puma RS-X3 Puzzle",
+        "price": 110.00,
+        "originalPrice": 130.00,
+        "description": "Exaggerated detailing, bold textures, and contrasting colors make the RS-X3 stand out.",
+        "image": "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.5,
+        "sizes": [
+            "7",
+            "8",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "New Balance 550 White Green",
+        "price": 120.00,
+        "description": "A nod to 1989's original basketball shoe. The 550's clean, simple aesthetic is an instant classic.",
+        "image": "https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.9,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Converse Chuck Taylor All Star 70",
+        "price": 85.00,
+        "description": "The Chuck 70 mixes the best details from the '70s-era canvas with modern craftsmanship.",
+        "image": "https://images.unsplash.com/photo-1607522370275-f14206abe5d3?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.8,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Nike Dunk Low Retro",
+        "price": 110.00,
+        "description": "Created for the hardwood but taken to the streets, the Dunk Low Retro returns with crisp overlays.",
+        "image": "https://images.unsplash.com/photo-1620012253295-c159f24c3d67?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.9,
+        "sizes": [
+            "7",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Adidas Yeezy Boost 350 V2",
+        "price": 230.00,
+        "description": "The Yeezy Boost 350 V2 features a primeknit upper and an innovative midsole.",
+        "image": "https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.7,
+        "sizes": [
+            "8",
+            "9",
+            "10"
+        ]
+    },
+    {
+        "name": "Vans Old Skool Classic",
+        "price": 70.00,
+        "description": "The iconic skate shoe that brought the side stripe to the world.",
+        "image": "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.6,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Jordan 4 Retro Military Blue",
+        "price": 210.00,
+        "description": "A legendary silhouette brought back to its original 1989 glory.",
+        "image": "https://images.unsplash.com/photo-1662927976214-301b02131336?auto=format&fit=crop&q=80&w=800",
+        "rating": 5.0,
+        "sizes": [
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Nike Air Force 1 '07",
+        "price": 110.00,
+        "description": "The radiance lives on in the Nike Air Force 1 '07, the b-ball icon that puts a fresh spin on what you know best.",
+        "image": "https://images.unsplash.com/photo-1595341888016-a392ef81b7de?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.8,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Asics Gel-Kayano 14",
+        "price": 150.00,
+        "description": "Conveying a new perception to the retro running shape, the Gel-Kayano resurfaces with its late 2000s aesthetic.",
+        "image": "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.7,
+        "sizes": [
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Adidas Forum Low",
+        "price": 100.00,
+        "description": "More than just a sneaker, it's a statement. The Forum arrived in '84 and gained major love on the hardwood.",
+        "image": "https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.6,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "New Balance 990v5",
+        "price": 185.00,
+        "description": "Worn by supermodels in London and dads in Ohio, the 990 is a true classic in running and casual wear.",
+        "image": "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.9,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Puma Suede Classic",
+        "price": 75.00,
+        "description": "Definitively the most well-known and popular of all PUMA shoes, this design classic deserves its place in public affection.",
+        "image": "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.5,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10"
+        ]
+    },
+    {
+        "name": "Reebok Club C 85 Vintage",
+        "price": 85.00,
+        "description": "Rule the court and the streets. Clean, minimalist look. Soft leather upper.",
+        "image": "https://images.unsplash.com/photo-1584735174965-48c48d7dde28?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.7,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Salomon XT-6",
+        "price": 200.00,
+        "description": "The preferred footwear for world-class athletes running ultra distance races under harsh conditions.",
+        "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.8,
+        "sizes": [
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Vans Slip-On Checkerboard",
+        "price": 65.00,
+        "originalPrice": 75.00,
+        "description": "First introduced in 1977, the Slip-On quickly became an icon in Southern California.",
+        "image": "https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.8,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    },
+    {
+        "name": "Nike Blazers Mid '77",
+        "price": 105.00,
+        "description": "Vintage midsole finish delivers an old-school look that makes it appear you've been saving them for years.",
+        "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.7,
+        "sizes": [
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12"
+        ]
+    },
+    {
+        "name": "Adidas Stan Smith",
+        "price": 100.00,
+        "description": "Introduced in the '70s, the Stan Smith represents a clean, classic design.",
+        "image": "https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&q=80&w=800",
+        "rating": 4.6,
+        "sizes": [
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11"
+        ]
+    }
+]
