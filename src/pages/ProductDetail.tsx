@@ -122,7 +122,7 @@ const ProductDetail = () => {
         {/* Breadcrumb */}
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
           <ArrowLeft size={16} />
-          Back to shop
+          
         </Link>
 
         <div className="grid md:grid-cols-2 gap-8 md:gap-16">

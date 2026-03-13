@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import OrderAnalytics from "@/components/OrderAnalytics"; // ← add this import
 import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
   ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard,
@@ -78,32 +79,32 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:          "text-amber-400  bg-amber-400/10  border-amber-400/30",
-  confirmed:        "text-blue-400   bg-blue-400/10   border-blue-400/30",
-  packed:           "text-indigo-400 bg-indigo-400/10 border-indigo-400/30",
-  shipped:          "text-violet-400 bg-violet-400/10 border-violet-400/30",
+  pending: "text-amber-400  bg-amber-400/10  border-amber-400/30",
+  confirmed: "text-blue-400   bg-blue-400/10   border-blue-400/30",
+  packed: "text-indigo-400 bg-indigo-400/10 border-indigo-400/30",
+  shipped: "text-violet-400 bg-violet-400/10 border-violet-400/30",
   out_for_delivery: "text-orange-400 bg-orange-400/10 border-orange-400/30",
-  delivered:        "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
+  delivered: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
 };
 
 // ─── Admin Component ──────────────────────────────────────────────────────────
 
 const Admin = () => {
-  const [activeTab, setActiveTab]           = useState<TabId>("brands");
-  const [brands, setBrands]                 = useState<Brand[]>([]);
-  const [products, setProducts]             = useState<Product[]>([]);
-  const [orders, setOrders]                 = useState<Order[]>([]);
-  const [users, setUsers]                   = useState<AppUser[]>([]);
-  const [selectedBrand, setSelectedBrand]   = useState<Brand | null>(null);
-  const [loading, setLoading]               = useState(false);
-  const [expandedOrder, setExpandedOrder]   = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("brands");
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
-  const [editing, setEditing]               = useState<Product | Brand | null>(null);
-  const [showForm, setShowForm]             = useState(false);
-  const [imagePreview, setImagePreview]     = useState<string>("");
-  const [error, setError]                   = useState<string>("");
-  const [deleteLoading, setDeleteLoading]   = useState<string | null>(null);
-  const [formType, setFormType]             = useState<"brand" | "product">("brand");
+  const [editing, setEditing] = useState<Product | Brand | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [formType, setFormType] = useState<"brand" | "product">("brand");
   const [featuredProducts, setFeaturedProducts] = useState<Set<string>>(new Set());
 
   const [brandForm, setBrandForm] = useState({ name: "", description: "", image: "" });
@@ -186,7 +187,7 @@ const Admin = () => {
           image: shoe.image || "", rating: Number(shoe.rating) || 4.5,
           reviews: Number(shoe.reviews) || Math.floor(Math.random() * 50),
           inStock: shoe.inStock ?? true,
-          sizes: shoe.sizes || ["6","7","8","9","10","11","12"],
+          sizes: shoe.sizes || ["6", "7", "8", "9", "10", "11", "12"],
           createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
         });
       }
@@ -232,8 +233,10 @@ const Admin = () => {
   const openNewProduct = () => {
     if (!selectedBrand) { toast.error("Select a brand first"); return; }
     setFormType("product"); setEditing(null);
-    setProductForm({ name:"", price:"", originalPrice:"", description:"",
-      image:"", rating:"4.5", reviews:"0", inStock:true, sizes:[] });
+    setProductForm({
+      name: "", price: "", originalPrice: "", description: "",
+      image: "", rating: "4.5", reviews: "0", inStock: true, sizes: []
+    });
     setImagePreview(""); setError(""); setShowForm(true);
   };
 
@@ -271,8 +274,10 @@ const Admin = () => {
   const saveBrand = async () => {
     if (!brandForm.name.trim()) { setError("Brand name is required"); return; }
     if (!brandForm.image.trim()) { setError("Image URL is required"); return; }
-    const data = { name: brandForm.name.trim(), description: brandForm.description.trim(),
-      image: brandForm.image.trim(), updatedAt: new Date().toISOString() };
+    const data = {
+      name: brandForm.name.trim(), description: brandForm.description.trim(),
+      image: brandForm.image.trim(), updatedAt: new Date().toISOString()
+    };
     try {
       setLoading(true);
       if (editing) {
@@ -352,11 +357,11 @@ const Admin = () => {
   // ─── Tab config ─────────────────────────────────────────────────────────────
 
   const tabs = [
-    { id: "brands"    as TabId, label: "Brands",       icon: Tag,           count: brands.length },
-    { id: "products"  as TabId, label: "Shoes",         icon: Package,       count: products.length },
-    { id: "featured"  as TabId, label: "Featured",      icon: Star,          count: featuredProducts.size },
-    { id: "customers" as TabId, label: "Orders",        icon: LayoutDashboard, count: orders.length },
-    { id: "users"     as TabId, label: "Users",          icon: Shield,        count: users.length },
+    { id: "brands" as TabId, label: "Brands", icon: Tag, count: brands.length },
+    { id: "products" as TabId, label: "Shoes", icon: Package, count: products.length },
+    { id: "featured" as TabId, label: "Featured", icon: Star, count: featuredProducts.size },
+    { id: "customers" as TabId, label: "Orders", icon: LayoutDashboard, count: orders.length },
+    { id: "users" as TabId, label: "Users", icon: Shield, count: users.length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -469,10 +474,10 @@ const Admin = () => {
           {(activeTab === "brands" || activeTab === "products") && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: "Brands",    value: brands.length,   unit: "" },
-                { label: "Products",  value: products.length, unit: "" },
-                { label: "Featured",  value: featuredProducts.size, unit: "" },
-                { label: "Inventory", value: `$${products.reduce((s,p) => s + p.price, 0).toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2})}`, unit: "" },
+                { label: "Brands", value: brands.length, unit: "" },
+                { label: "Products", value: products.length, unit: "" },
+                { label: "Featured", value: featuredProducts.size, unit: "" },
+                { label: "Inventory", value: `$${products.reduce((s, p) => s + p.price, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, unit: "" },
               ].map(stat => (
                 <div key={stat.label}
                   className="rounded-2xl border border-white/6 bg-[#0d0d18] p-5">
@@ -635,7 +640,7 @@ const Admin = () => {
                       <div>
                         <label className={labelCls}>Sizes</label>
                         <div className="flex flex-wrap gap-2">
-                          {["6","7","8","9","10","11","12"].map(size => {
+                          {["6", "7", "8", "9", "10", "11", "12"].map(size => {
                             const sel = productForm.sizes.includes(size);
                             return (
                               <button key={size} type="button"
@@ -895,6 +900,14 @@ const Admin = () => {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {activeTab === "customers" && (
             <div className="space-y-3">
+              {/* ── Analytics Dashboard ── */}
+              <OrderAnalytics orders={orders} />
+
+              {/* ── Orders List ── */}
+              <div className="pt-2 pb-1">
+                <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest text-[11px]">Order History</h3>
+              </div>
+
               {orders.length === 0 ? (
                 <EmptyState title="No orders yet" subtitle="Orders will appear here when customers check out." />
               ) : (
@@ -922,7 +935,7 @@ const Admin = () => {
                         <div className="flex items-center gap-4 sm:gap-6 ml-13">
                           <div>
                             <p className="text-[10px] text-white/25 uppercase tracking-widest">Order</p>
-                            <p className="text-xs font-mono text-white/50">#{order.id.slice(0,8)}</p>
+                            <p className="text-xs font-mono text-white/50">#{order.id.slice(0, 8)}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-white/25 uppercase tracking-widest">Total</p>
@@ -1074,7 +1087,7 @@ const Admin = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{user.email}</p>
                       <p className="text-[11px] text-white/30 mt-0.5 font-mono">
-                        ID: {user.id.slice(0,14)}…
+                        ID: {user.id.slice(0, 14)}…
                       </p>
                     </div>
                     <div className="flex gap-2">
