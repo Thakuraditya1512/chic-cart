@@ -77,36 +77,37 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-0.5">
-            {[
-              {
-                icon: isDark ? Sun : Moon,
-                label: "Toggle theme",
-                action: toggleTheme,
-              },
-              { icon: Search, label: "Search", action: onSearchOpen },
-              ...(user
-                ? [
-                  {
-                    icon: User,
-                    label: "Profile",
-                    action: () => navigate("/orders"),
-                  },
-                ]
-                : []),
-            ].map(({ icon: Icon, label, action }) => (
-              <button
-                key={label}
-                onClick={action}
-                className={`p-2.5 transition-colors duration-300 ${isScrolled
-                  ? "text-muted-foreground hover:text-foreground"
-                  : "text-white/60 hover:text-white"
-                  }`}
-                aria-label={label}
-              >
-                <Icon size={18} />
-              </button>
-            ))}
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2.5 transition-colors duration-300 ${isScrolled
+                ? "text-muted-foreground hover:text-foreground"
+                : "text-white/60 hover:text-white"
+                }`}
+              aria-label="Toggle theme"
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
+            {/* Profile / Orders button */}
+            <button
+              onClick={() => {
+                if (user) {
+                  navigate("/orders");
+                } else {
+                  navigate("/login");
+                }
+              }}
+              className={`p-2.5 transition-colors duration-300 ${isScrolled
+                ? "text-muted-foreground hover:text-foreground"
+                : "text-white/60 hover:text-white"
+                }`}
+              aria-label="Profile"
+            >
+              <User size={18} />
+            </button>
+
+            {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
               className={`p-2.5 transition-colors duration-300 relative ${isScrolled
