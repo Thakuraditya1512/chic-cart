@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProductCard from "@/components/ProductCard";
-import { motion } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Product } from "@/types";
@@ -15,6 +15,8 @@ const NewPopularSection = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [activeTab, setActiveTab] = useState("All");
   const [loading, setLoading] = useState(true);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
 
   useEffect(() => {
     fetchData();
@@ -23,24 +25,23 @@ const NewPopularSection = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      // Fetch brands
       const brandsRef = collection(db, "brands");
       const brandSnapshot = await getDocs(brandsRef);
-      const fetchedBrands = brandSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().name,
-      } as Brand));
+      const fetchedBrands = brandSnapshot.docs.map(
+        (doc) => ({ id: doc.id, name: doc.data().name } as Brand)
+      );
       setBrands(fetchedBrands);
 
-      // Fetch products
       const productsRef = collection(db, "products");
       const productSnapshot = await getDocs(productsRef);
-      const fetchedProducts = productSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        rating: doc.data().rating || 4.5,
-      } as Product));
+      const fetchedProducts = productSnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+            rating: doc.data().rating || 4.5,
+          } as Product)
+      );
       setProducts(fetchedProducts);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -51,93 +52,99 @@ const NewPopularSection = () => {
     }
   };
 
-  // Get unique brand names from products for tabs
   const brandNames = ["All", ...brands.map((b) => b.name)];
 
   const filtered =
     activeTab === "All"
       ? products
       : products.filter(
-          (p) =>
-            brands.find((b) => b.id === p.brandId)?.name === activeTab
+          (p) => brands.find((b) => b.id === p.brandId)?.name === activeTab
         );
 
-  if (loading) {
-    return (
-      <section id="new" className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-              New & Popular
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base">
-              Fresh arrivals and customer favorites
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[3/4] rounded-lg bg-secondary/50 animate-pulse"
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section id="new" className="py-16 md:py-24 bg-background">
+    <section id="categories" ref={ref} className="py-24 md:py-36 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-3">
-            New & Popular
-          </h2>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Fresh arrivals and customer favorites
-          </p>
+        <div className="text-center mb-12">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+            className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-muted-foreground mb-4 font-sans"
+          >
+            Browse Collection
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 40 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{
+              duration: 0.8,
+              delay: 0.1,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="font-display text-4xl md:text-6xl font-bold leading-[0.95]"
+          >
+            New & <span className="italic font-normal">Popular</span>
+          </motion.h2>
         </div>
 
-        {/* Tabs */}
-        <div className="flex justify-center gap-2 mb-10 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Filter Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="flex justify-center gap-2 mb-12 overflow-x-auto pb-2 scrollbar-hide"
+        >
           {brandNames.map((brand) => (
             <button
               key={brand}
               onClick={() => setActiveTab(brand)}
-              className={`px-5 py-2 text-xs font-medium uppercase tracking-wider rounded-full transition-colors whitespace-nowrap ${
+              className={`px-6 py-2.5 text-[10px] font-sans font-medium uppercase tracking-[0.15em] rounded-full transition-all duration-300 whitespace-nowrap ${
                 activeTab === brand
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background"
+                  : "bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
               }`}
             >
               {brand}
             </button>
           ))}
-        </div>
+        </motion.div>
 
-        {/* Grid */}
-        {filtered.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
+        {/* Products Grid */}
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[3/4] rounded-xl bg-secondary/50 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground font-sans">
               No products available for this brand.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {filtered.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                layout
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </div>
+          <motion.div
+            layout
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+          >
+            <AnimatePresence mode="popLayout">
+              {filtered.map((product, i) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.03 }}
+                  layout
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </section>

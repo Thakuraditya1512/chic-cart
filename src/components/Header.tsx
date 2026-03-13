@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, Menu, X, Sun, Moon, User } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
 const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const navigate = useNavigate();
@@ -12,6 +12,15 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const { user } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const prev = scrollY.getPrevious() ?? 0;
+    setIsScrolled(latest > 50);
+    setHidden(latest > prev && latest > 200);
+  });
 
   const navLinks = [
     { label: "New In", to: "/#new" },
@@ -22,8 +31,17 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto flex items-center justify-between h-14 md:h-16 px-4">
+      <motion.header
+        initial={{ y: 0 }}
+        animate={{ y: hidden ? -100 : 0 }}
+        transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm"
+            : "bg-transparent border-b border-transparent"
+        }`}
+      >
+        <div className="container mx-auto flex items-center justify-between h-16 md:h-[72px] px-4">
           {/* Left: Menu + Logo */}
           <div className="flex items-center gap-3">
             <button
@@ -33,18 +51,27 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             >
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
-            <Link to="/" className="font-display text-xl md:text-2xl font-bold tracking-tight text-foreground">
+            <Link
+              to="/"
+              className={`font-display text-xl md:text-2xl font-bold tracking-tight transition-colors duration-300 ${
+                isScrolled ? "text-foreground" : "text-white"
+              }`}
+            >
               WALK IN STYLE
             </Link>
           </div>
 
-          {/* Center: Nav (desktop) */}
+          {/* Center: Nav */}
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.to}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors tracking-wide uppercase"
+                className={`text-xs font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 hover:opacity-100 ${
+                  isScrolled
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "text-white/60 hover:text-white"
+                }`}
               >
                 {link.label}
               </a>
@@ -52,65 +79,82 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Toggle theme"
-            >
-              {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button
-              onClick={onSearchOpen}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Search"
-            >
-              <Search size={20} />
-            </button>
-            {user && (
+          <div className="flex items-center gap-0.5">
+            {[
+              {
+                icon: isDark ? Sun : Moon,
+                label: "Toggle theme",
+                action: toggleTheme,
+              },
+              { icon: Search, label: "Search", action: onSearchOpen },
+              ...(user
+                ? [
+                    {
+                      icon: User,
+                      label: "Profile",
+                      action: () => navigate("/orders"),
+                    },
+                  ]
+                : []),
+            ].map(({ icon: Icon, label, action }) => (
               <button
-                onClick={() => navigate("/orders")}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Profile"
+                key={label}
+                onClick={action}
+                className={`p-2.5 transition-colors duration-300 ${
+                  isScrolled
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "text-white/60 hover:text-white"
+                }`}
+                aria-label={label}
               >
-                <User size={20} />
+                <Icon size={18} />
               </button>
-            )}
+            ))}
+
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-2 text-muted-foreground hover:text-foreground transition-colors relative"
+              className={`p-2.5 transition-colors duration-300 relative ${
+                isScrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-white/60 hover:text-white"
+              }`}
               aria-label="Cart"
             >
-              <ShoppingBag size={20} />
+              <ShoppingBag size={18} />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-badge text-badge-foreground text-[10px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded-full min-w-[18px] h-[18px]">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-0.5 -right-0.5 bg-white text-black text-[9px] font-sans font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full"
+                >
                   {totalItems}
-                </span>
+                </motion.span>
               )}
             </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background pt-14"
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-40 bg-background"
           >
-            <nav className="flex flex-col p-6 gap-6">
+            <nav className="flex flex-col items-start p-8 pt-24 gap-6">
               {navLinks.map((link, i) => (
                 <motion.a
                   key={link.label}
                   href={link.to}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
                   onClick={() => setMenuOpen(false)}
-                  className="text-2xl font-display font-semibold text-foreground"
+                  className="text-4xl font-display font-bold text-foreground hover:opacity-60 transition-opacity"
                 >
                   {link.label}
                 </motion.a>

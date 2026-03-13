@@ -1,9 +1,12 @@
 import { useState } from "react";
 import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
-import CategoriesGrid from "@/components/CategoriesGrid";
+import CinematicHero from "@/components/CinematicHero";
+import BrandMarquee from "@/components/BrandMarquee";
+import ShoeShowcase from "@/components/ShoeShowcase";
+import EditorialLookbook from "@/components/EditorialLookbook";
+import StatsBar from "@/components/StatsBar";
 import FeaturedProducts from "@/components/FeaturedProducts";
-import SaleBanner from "@/components/SaleBanner";
+import PremiumCTA from "@/components/PremiumCTA";
 import NewPopularSection from "@/components/NewPopularSection";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
@@ -18,17 +21,40 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header onSearchOpen={() => setSearchOpen(true)} />
       <main>
-        <HeroSection />
-        <CategoriesGrid />
+        {/* 1. Full-screen cinematic video hero */}
+        <CinematicHero />
+
+        {/* 2. Infinite brand marquee strip */}
+        <BrandMarquee />
+
+        {/* 3. 3D Shoe showcase — Apple-style dark section */}
+        <ShoeShowcase />
+
+        {/* 4. Editorial lookbook grid */}
+        <EditorialLookbook />
+
+        {/* 5. Social proof stats */}
+        <StatsBar />
+
+        {/* 6. Featured products + horizontal scroll */}
         <FeaturedProducts />
-        <SaleBanner />
+
+        {/* 7. Premium CTA / Sale banner */}
+        <PremiumCTA />
+
+        {/* 8. New & Popular with brand filter tabs */}
         <NewPopularSection />
+
+        {/* 9. Newsletter */}
         <Newsletter />
       </main>
       <Footer />
       <BottomNav onSearchOpen={() => setSearchOpen(true)} />
       <CartDrawer />
-      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
     </div>
   );
 };
