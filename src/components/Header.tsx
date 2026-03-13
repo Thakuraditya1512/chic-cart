@@ -35,11 +35,10 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
         initial={{ y: 0 }}
         animate={{ y: hidden ? -100 : 0 }}
         transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm"
-            : "bg-transparent border-b border-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
+          ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm"
+          : "bg-transparent border-b border-transparent"
+          }`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 md:h-[72px] px-4">
           {/* Left: Menu + Logo */}
@@ -53,11 +52,10 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             </button>
             <Link
               to="/"
-              className={`font-display text-xl md:text-2xl font-bold tracking-tight transition-colors duration-300 ${
-                isScrolled ? "text-foreground" : "text-white"
-              }`}
+              className={`font-cursive text-[1.25rem] leading-[2.5rem] md:text-[1.75rem] transition-colors duration-300 ${isScrolled ? "text-foreground" : "text-white"
+                }`}
             >
-              WALK IN STYLE
+              FlexTheKicks
             </Link>
           </div>
 
@@ -67,11 +65,10 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               <a
                 key={link.label}
                 href={link.to}
-                className={`text-xs font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 hover:opacity-100 ${
-                  isScrolled
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-white/60 hover:text-white"
-                }`}
+                className={`text-xs font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 hover:opacity-100 ${isScrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-white/60 hover:text-white"
+                  }`}
               >
                 {link.label}
               </a>
@@ -89,22 +86,21 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               { icon: Search, label: "Search", action: onSearchOpen },
               ...(user
                 ? [
-                    {
-                      icon: User,
-                      label: "Profile",
-                      action: () => navigate("/orders"),
-                    },
-                  ]
+                  {
+                    icon: User,
+                    label: "Profile",
+                    action: () => navigate("/orders"),
+                  },
+                ]
                 : []),
             ].map(({ icon: Icon, label, action }) => (
               <button
                 key={label}
                 onClick={action}
-                className={`p-2.5 transition-colors duration-300 ${
-                  isScrolled
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-white/60 hover:text-white"
-                }`}
+                className={`p-2.5 transition-colors duration-300 ${isScrolled
+                  ? "text-muted-foreground hover:text-foreground"
+                  : "text-white/60 hover:text-white"
+                  }`}
                 aria-label={label}
               >
                 <Icon size={18} />
@@ -113,11 +109,10 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
             <button
               onClick={() => setIsCartOpen(true)}
-              className={`p-2.5 transition-colors duration-300 relative ${
-                isScrolled
-                  ? "text-muted-foreground hover:text-foreground"
-                  : "text-white/60 hover:text-white"
-              }`}
+              className={`p-2.5 transition-colors duration-300 relative ${isScrolled
+                ? "text-muted-foreground hover:text-foreground"
+                : "text-white/60 hover:text-white"
+                }`}
               aria-label="Cart"
             >
               <ShoppingBag size={18} />

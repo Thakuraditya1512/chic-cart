@@ -93,8 +93,8 @@ const Signup = () => {
         <Card className="border border-border/50 backdrop-blur-xl bg-background/50">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-center mb-4">
-              <Link to="/" className="font-display text-2xl font-bold tracking-tight text-foreground">
-                WALK IN STYLE
+              <Link to="/" className="font-cursive text-4xl text-foreground mt-4 mb-2">
+                FlexTheKicks
               </Link>
             </div>
             <CardTitle className="text-2xl text-center">Create Account</CardTitle>
@@ -201,9 +201,8 @@ const Signup = () => {
                     className="text-xs space-y-1 mt-2 bg-muted/30 rounded p-2"
                   >
                     <div
-                      className={`flex items-center gap-2 ${
-                        passwordRequirements.length ? "text-green-600" : "text-muted-foreground"
-                      }`}
+                      className={`flex items-center gap-2 ${passwordRequirements.length ? "text-green-600" : "text-muted-foreground"
+                        }`}
                     >
                       {passwordRequirements.length ? (
                         <Check className="h-3 w-3" />
@@ -213,9 +212,8 @@ const Signup = () => {
                       At least 8 characters
                     </div>
                     <div
-                      className={`flex items-center gap-2 ${
-                        passwordRequirements.uppercase ? "text-green-600" : "text-muted-foreground"
-                      }`}
+                      className={`flex items-center gap-2 ${passwordRequirements.uppercase ? "text-green-600" : "text-muted-foreground"
+                        }`}
                     >
                       {passwordRequirements.uppercase ? (
                         <Check className="h-3 w-3" />
@@ -225,9 +223,8 @@ const Signup = () => {
                       One uppercase letter
                     </div>
                     <div
-                      className={`flex items-center gap-2 ${
-                        passwordRequirements.lowercase ? "text-green-600" : "text-muted-foreground"
-                      }`}
+                      className={`flex items-center gap-2 ${passwordRequirements.lowercase ? "text-green-600" : "text-muted-foreground"
+                        }`}
                     >
                       {passwordRequirements.lowercase ? (
                         <Check className="h-3 w-3" />
@@ -237,9 +234,8 @@ const Signup = () => {
                       One lowercase letter
                     </div>
                     <div
-                      className={`flex items-center gap-2 ${
-                        passwordRequirements.number ? "text-green-600" : "text-muted-foreground"
-                      }`}
+                      className={`flex items-center gap-2 ${passwordRequirements.number ? "text-green-600" : "text-muted-foreground"
+                        }`}
                     >
                       {passwordRequirements.number ? (
                         <Check className="h-3 w-3" />
@@ -288,9 +284,8 @@ const Signup = () => {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className={`text-xs flex items-center gap-1 ${
-                      passwordMatch ? "text-green-600" : "text-destructive"
-                    }`}
+                    className={`text-xs flex items-center gap-1 ${passwordMatch ? "text-green-600" : "text-destructive"
+                      }`}
                   >
                     {passwordMatch ? (
                       <Check className="h-3 w-3" />

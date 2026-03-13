@@ -43,9 +43,9 @@ const Footer = () => {
           <div>
             <Link
               to="/"
-              className="font-display text-3xl md:text-4xl font-bold tracking-tight block mb-3"
+              className="font-cursive text-4xl md:text-5xl block mb-3"
             >
-              WALK IN STYLE
+              FlexTheKicks
             </Link>
             <p className="text-background/40 text-sm font-sans font-light max-w-xs">
               Your destination for premium sneakers. Every brand, every drop.

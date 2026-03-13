@@ -19,7 +19,7 @@ const ShoeShowcase = () => {
     <section
       id="showcase"
       ref={sectionRef}
-      className="relative py-24 md:py-40 bg-black text-white overflow-hidden noise-bg"
+      className="relative py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-purple-500/10 blur-[120px] animate-glow-pulse" />
@@ -33,7 +33,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0, x: -30 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-white/40 mb-4 font-sans"
+              className="text-[10px] md:text-xs uppercase tracking-[0.4em] text-foreground/50 mb-4 font-sans"
             >
               Exclusive Release
             </motion.p>
@@ -46,7 +46,7 @@ const ShoeShowcase = () => {
             >
               Crafted for
               <br />
-              <span className="italic font-normal text-white/70">
+              <span className="italic font-normal text-muted-foreground">
                 Perfection
               </span>
             </motion.h2>
@@ -55,7 +55,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-white/40 text-sm md:text-base max-w-md mb-8 leading-relaxed font-sans font-light"
+              className="text-foreground/60 text-sm md:text-base max-w-md mb-8 leading-relaxed font-sans font-light"
             >
               Every stitch tells a story. Premium materials meet cutting-edge
               design in our most anticipated drop of the season.
@@ -69,7 +69,7 @@ const ShoeShowcase = () => {
             >
               <a
                 href="#new"
-                className="btn-glow inline-flex items-center px-8 py-3.5 bg-white text-black font-sans font-semibold text-xs uppercase tracking-[0.15em] hover:bg-white/90 transition-colors rounded-full"
+                className="btn-glow inline-flex items-center px-8 py-3.5 bg-foreground text-background font-sans font-semibold text-xs uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors rounded-full"
               >
                 Shop Now
               </a>
@@ -78,13 +78,13 @@ const ShoeShowcase = () => {
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 rounded-full bg-white/10 border-2 border-black flex items-center justify-center text-[10px] text-white/60 font-sans"
+                      className="w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center text-[10px] text-foreground/60 font-sans"
                     >
                       {["A", "K", "J"][i - 1]}
                     </div>
                   ))}
                 </div>
-                <p className="text-white/40 text-xs font-sans">
+                <p className="text-foreground/60 text-xs font-sans">
                   2.4k+ Reviews
                 </p>
               </div>
@@ -103,10 +103,10 @@ const ShoeShowcase = () => {
                 { label: "Hand\nCrafted", value: "✓" },
               ].map((item, i) => (
                 <div key={i} className="text-center">
-                  <p className="text-2xl md:text-3xl font-display font-bold text-white mb-1">
+                  <p className="text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
                     {item.value}
                   </p>
-                  <p className="text-[10px] text-white/30 uppercase tracking-wider font-sans whitespace-pre-line leading-tight">
+                  <p className="text-[10px] text-foreground/50 uppercase tracking-wider font-sans whitespace-pre-line leading-tight">
                     {item.label}
                   </p>
                 </div>
@@ -122,18 +122,25 @@ const ShoeShowcase = () => {
           >
             {/* Ambient ring */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-[80%] h-[80%] rounded-full border border-white/5" />
-              <div className="absolute w-[60%] h-[60%] rounded-full border border-white/5" />
+              <div className="w-[80%] h-[80%] rounded-full border border-foreground/10" />
+              <div className="absolute w-[60%] h-[60%] rounded-full border border-foreground/10" />
             </div>
 
-            <motion.img
-              src="/shoe-hero.png"
-              alt="Premium sneaker showcase"
-              className="relative z-10 w-full max-w-lg animate-float drop-shadow-2xl"
+            <motion.div
+              className="relative z-10 w-full max-w-lg rounded-3xl overflow-hidden drop-shadow-2xl"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            />
+            >
+              <video
+                src="/wb.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-auto object-cover"
+              />
+            </motion.div>
           </motion.div>
         </div>
       </div>

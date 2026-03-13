@@ -24,9 +24,6 @@ const Index = () => {
         {/* 1. Full-screen cinematic video hero */}
         <CinematicHero />
 
-        {/* 2. Infinite brand marquee strip */}
-        <BrandMarquee />
-
         {/* 3. 3D Shoe showcase — Apple-style dark section */}
         <ShoeShowcase />
 

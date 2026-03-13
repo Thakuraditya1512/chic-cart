@@ -58,8 +58,8 @@ const Login = () => {
         <Card className="border border-border/50 backdrop-blur-xl bg-background/50">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-center mb-4">
-              <Link to="/" className="font-display text-2xl font-bold tracking-tight text-foreground">
-                WALK IN STYLE
+              <Link to="/" className="font-cursive text-4xl text-foreground mt-4 mb-2">
+                FlexTheKicks
               </Link>
             </div>
             <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
