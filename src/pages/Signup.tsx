@@ -90,10 +90,10 @@ const Signup = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        <Card className="border border-border/50 backdrop-blur-xl bg-background/50">
+        <Card className="border border-border backdrop-blur-xl bg-card/50 transition-colors duration-500">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-center mb-4">
-              <Link to="/" className="font-cursive text-4xl text-foreground mt-4 mb-2">
+              <Link to="/" className="font-cursive text-4xl text-foreground mt-4 mb-2 hover:opacity-80 transition-opacity">
                 FlexTheKicks
               </Link>
             </div>
@@ -132,7 +132,7 @@ const Signup = () => {
                     placeholder="Name"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="pl-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
+                    className="pl-10 bg-background border-border placeholder:text-muted-foreground transition-all"
                     disabled={loading}
                   />
                 </div>
@@ -154,7 +154,7 @@ const Signup = () => {
                     placeholder="Email address "
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
+                    className="pl-10 bg-background border-border placeholder:text-muted-foreground transition-all"
                     disabled={loading}
                   />
                 </div>
@@ -176,7 +176,7 @@ const Signup = () => {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
+                    className="pl-10 pr-10 bg-background border-border placeholder:text-muted-foreground transition-all"
                     disabled={loading}
                   />
                   <button
@@ -264,7 +264,7 @@ const Signup = () => {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10 bg-muted/50 border-border/50 placeholder:text-muted-foreground focus:border-primary"
+                    className="pl-10 pr-10 bg-background border-border placeholder:text-muted-foreground transition-all"
                     disabled={loading}
                   />
                   <button

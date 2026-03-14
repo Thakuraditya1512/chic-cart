@@ -2,21 +2,16 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, LogOut, Truck, CheckCircle, Clock, Moon, Sun, Navigation } from "lucide-react";
+import { Star as StarFilled, X, Plus, Loader2, LogOut, Truck, CheckCircle, Clock, Moon, Sun, Navigation, MapPin, Package, ShoppingBag, Star, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy } from "firebase/firestore";
 import { toast } from "sonner";
-import { 
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose 
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Star as StarFilled, X, Image as ImageIcon, Plus } from "lucide-react";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface Order {
   id: string;
@@ -44,26 +39,37 @@ interface Order {
 
 const statusOptions = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"];
 
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+  pending: { label: "Pending", color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/30", dot: "bg-amber-400" },
+  confirmed: { label: "Confirmed", color: "text-sky-400", bg: "bg-sky-400/10 border-sky-400/30", dot: "bg-sky-400" },
+  packed: { label: "Packed", color: "text-indigo-400", bg: "bg-indigo-400/10 border-indigo-400/30", dot: "bg-indigo-400" },
+  shipped: { label: "Shipped", color: "text-violet-400", bg: "bg-violet-400/10 border-violet-400/30", dot: "bg-violet-400" },
+  out_for_delivery: { label: "Out for Delivery", color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/30", dot: "bg-orange-400" },
+  delivered: { label: "Delivered", color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30", dot: "bg-emerald-400" },
+};
+
 const Orders = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  // Review Modal State
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [activeTab, setActiveTab] = useState<"orders" | "addresses">("orders");
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [copiedCoupon, setCopiedCoupon] = useState(false);
+
+  // Review Modal
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
   const [reviewItem, setReviewItem] = useState<any>(null);
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [reviewImages, setReviewImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewedProductIds, setReviewedProductIds] = useState<Set<string>>(new Set());
 
-  // Success/Coupon Modal State
+  // Coupon Modal
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [generatedCoupon, setGeneratedCoupon] = useState("");
 
@@ -74,10 +80,7 @@ const Orders = () => {
       const q = query(ordersRef, where("userId", "==", user?.uid));
       const snapshot = await getDocs(q);
       const fetchedOrders = snapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        } as Order))
+        .map((doc) => ({ id: doc.id, ...doc.data() } as Order))
         .sort((a, b) => {
           const timeA = a.createdAt?.toDate?.() || new Date(0);
           const timeB = b.createdAt?.toDate?.() || new Date(0);
@@ -96,118 +99,67 @@ const Orders = () => {
     try {
       const q = query(collection(db, "reviews"), where("userId", "==", user?.uid));
       const snapshot = await getDocs(q);
-      const reviewedIds = new Set(snapshot.docs.map(doc => doc.data().productId));
-      setReviewedProductIds(reviewedIds);
+      setReviewedProductIds(new Set(snapshot.docs.map(doc => doc.data().productId)));
     } catch (error) {
       console.error("Error fetching user reviews:", error);
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      fetchOrders();
-      fetchUserReviews();
+  const fetchSavedAddresses = async () => {
+    try {
+      const q = query(collection(db, "orders"), where("userId", "==", user?.uid), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      const addresses: any[] = [];
+      const seen = new Set();
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.lane1 && data.city) {
+          const key = `${data.lane1}-${data.city}-${data.zipCode}`.toLowerCase();
+          if (!seen.has(key)) {
+            addresses.push({ lane1: data.lane1, lane2: data.lane2 || "", landmark: data.landmark || "", city: data.city, zipCode: data.zipCode, location: data.location || null });
+            seen.add(key);
+          }
+        }
+      });
+      setSavedAddresses(addresses);
+    } catch (error) {
+      console.error("Error fetching addresses:", error);
     }
-  }, [user, navigate]);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
   };
 
+  useEffect(() => {
+    if (user) { fetchOrders(); fetchUserReviews(); fetchSavedAddresses(); }
+  }, [user]);
+
+  const handleLogout = async () => { await logout(); navigate("/login"); };
+
   const handleOpenReview = (order: Order, item: any) => {
-    setReviewOrder(order);
-    setReviewItem(item);
-    setRating(0);
-    setComment("");
-    setReviewImages([]);
-    setPreviewUrls([]);
+    setReviewOrder(order); setReviewItem(item); setRating(0); setComment("");
     setReviewModalOpen(true);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (reviewImages.length + files.length > 3) {
-      toast.error("You can only upload up to 3 images");
-      return;
-    }
-
-    const newFiles = [...reviewImages, ...files];
-    setReviewImages(newFiles);
-
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPreviewUrls([...previewUrls, ...newPreviews]);
-  };
-
-  const removeImage = (index: number) => {
-    const newFiles = [...reviewImages];
-    newFiles.splice(index, 1);
-    setReviewImages(newFiles);
-
-    const newPreviews = [...previewUrls];
-    URL.revokeObjectURL(newPreviews[index]);
-    newPreviews.splice(index, 1);
-    setPreviewUrls(newPreviews);
-  };
 
   const submitReview = async () => {
-    if (rating === 0) {
-      toast.error("Please select a rating");
-      return;
-    }
-    if (!comment.trim()) {
-      toast.error("Please add a comment");
-      return;
-    }
-
+    if (rating === 0) { toast.error("Please select a rating"); return; }
+    if (!comment.trim()) { toast.error("Please add a comment"); return; }
     try {
       setSubmittingReview(true);
-      
-      // 1. Upload Images to Firebase Storage
-      const uploadedUrls = await Promise.all(
-        reviewImages.map(async (file) => {
-          const storageRef = ref(storage, `reviews/${user?.uid}/${Date.now()}_${file.name}`);
-          const snapshot = await uploadBytes(storageRef, file);
-          return await getDownloadURL(snapshot.ref);
-        })
-      );
-
-      // 2. Save Review
-      const reviewData = {
-        productId: reviewItem.productId,
-        productName: reviewItem.productName,
-        userId: user?.uid,
-        orderId: reviewOrder?.id,
+      await addDoc(collection(db, "reviews"), {
+        productId: reviewItem.productId, productName: reviewItem.productName,
+        userId: user?.uid, orderId: reviewOrder?.id,
         customerName: reviewOrder?.customerName || user?.email?.split('@')[0],
-        rating,
-        comment,
-        images: uploadedUrls,
-        createdAt: serverTimestamp(),
-      };
-
-      await addDoc(collection(db, "reviews"), reviewData);
-
-      // 2. Generate Coupon
+        rating, comment, images: [], createdAt: serverTimestamp(),
+      });
       const couponCode = `CHIC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-      const couponData = {
-        code: couponCode,
-        discountPercent: 10,
-        userId: user?.uid,
-        isUsed: false,
-        createdAt: serverTimestamp(),
-        expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days
-      };
-
-      await addDoc(collection(db, "coupons"), couponData);
-
-      // 3. Update local state to restrict further reviews
+      await addDoc(collection(db, "coupons"), {
+        code: couponCode, discountPercent: 10, userId: user?.uid, isUsed: false,
+        createdAt: serverTimestamp(), expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      });
       setReviewedProductIds(prev => new Set([...prev, reviewItem.productId]));
-
       setGeneratedCoupon(couponCode);
       setReviewModalOpen(false);
       setShowCouponModal(true);
-      toast.success("Review submitted! Enjoy your 10% coupon!");
-      
+      toast.success("Review submitted! 🎉");
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
@@ -216,539 +168,411 @@ const Orders = () => {
     }
   };
 
-
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/50";
-      case "confirmed":
-        return "bg-cyan-500/20 text-cyan-400 border-cyan-500/50";
-      case "packed":
-        return "bg-blue-500/20 text-blue-400 border-blue-500/50";
-      case "shipped":
-        return "bg-purple-500/20 text-purple-400 border-purple-500/50";
-      case "out_for_delivery":
-        return "bg-orange-500/20 text-orange-400 border-orange-500/50";
-      case "delivered":
-        return "bg-green-500/20 text-green-400 border-green-500/50";
-      default:
-        return "bg-gray-500/20 text-gray-400 border-gray-500/50";
-    }
+  const copyCoupon = async () => {
+    await navigator.clipboard.writeText(generatedCoupon);
+    setCopiedCoupon(true);
+    setTimeout(() => setCopiedCoupon(false), 2000);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "delivered":
-        return <CheckCircle className="w-4 h-4" />;
-      case "out_for_delivery":
-        return <Truck className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
+  const bg = isDarkMode ? "bg-black" : "bg-[#f8f9fa]";
+  const cardBg = isDarkMode ? "bg-zinc-900/40 backdrop-blur-md border-zinc-800/50" : "bg-white border-gray-100 shadow-sm";
+  const cardBgAlt = isDarkMode ? "bg-zinc-950/50 border-zinc-800/50" : "bg-gray-50 border-gray-100";
+  const textPrimary = isDarkMode ? "text-white" : "text-gray-900";
+  const textMuted = isDarkMode ? "text-zinc-500" : "text-gray-400";
+  const textSub = isDarkMode ? "text-zinc-400" : "text-gray-600";
+  const divider = isDarkMode ? "border-zinc-800/50" : "border-gray-100";
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        isDarkMode ? "bg-gray-900" : "bg-white"
-      }`}>
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-            Loading your orders...
-          </p>
-        </div>
+      <div className={`min-h-screen flex items-center justify-center ${bg}`}>
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <motion.div animate={{ rotate: 360, borderRadius: ["40%", "50%", "40%"] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              className="w-24 h-24 border-2 border-blue-500/20 border-t-blue-500" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <ShoppingBag className={`w-8 h-8 ${isDarkMode ? "text-blue-400" : "text-blue-600"} animate-pulse`} />
+            </div>
+          </div>
+          <div className="text-center space-y-1">
+            <h2 className={`text-xl font-bold tracking-tighter uppercase ${textPrimary}`}>FLEX THE KICKS</h2>
+            <p className={`text-[10px] font-black tracking-[0.3em] uppercase ${textMuted}`}>LOADING YOUR KICKS...</p>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen pt-8 md:pt-12 pb-8 md:pb-12 px-4 transition-colors ${
-      isDarkMode ? "bg-gray-900" : "bg-gray-50"
-    }`}>
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Truck className={`w-6 h-6 ${isDarkMode ? "text-blue-400" : "text-blue-600"}`} />
-              <h1 className={`font-display text-3xl font-bold ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              }`}>My Orders</h1>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className={`p-2 rounded-lg transition-all ${
-                  isDarkMode
-                    ? "bg-gray-800 text-yellow-400 hover:bg-gray-700"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-                title="Toggle dark mode"
-              >
-                {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-              <Button onClick={handleLogout} variant="outline" size="sm"
-                className={isDarkMode ? "border-gray-700 text-gray-300 hover:bg-gray-800" : ""}
-              >
-                <LogOut className="w-4 h-4 mr-2" /> Logout
-              </Button>
-            </div>
-          </div>
-          <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-            Track your purchases and deliveries
-          </p>
-        </motion.div>
+    <div className={`min-h-screen ${bg} transition-colors duration-500`} style={{ fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
+      {/* Subtle gradient orb */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: isDarkMode ? "radial-gradient(ellipse at top, rgba(59,130,246,0.07) 0%, transparent 70%)" : "radial-gradient(ellipse at top, rgba(59,130,246,0.05) 0%, transparent 70%)" }} />
 
-        {/* User Info Card */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <div className={`p-6 rounded-lg border ${
-            isDarkMode
-              ? "bg-gray-800 border-gray-700"
-              : "bg-white border-gray-200"
-          }`}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className={`text-sm mb-1 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Logged in as</p>
-                <p className={`font-semibold ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}>{user?.email}</p>
-              </div>
-              <div className="text-right">
-                <p className={`text-sm mb-1 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
-                }`}>Total Orders</p>
-                <p className={`text-2xl font-bold ${
-                  isDarkMode ? "text-blue-400" : "text-blue-600"
-                }`}>{orders.length}</p>
-              </div>
-            </div>
+      <div className="max-w-3xl mx-auto px-4 pt-10 pb-24 relative">
+
+        {/* ── Header ── */}
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-10 flex items-start justify-between">
+          <div className="space-y-1">
+            <h1 className={`text-4xl font-black tracking-tighter ${textPrimary}`}>MY ACCOUNT</h1>
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${textMuted}`}>
+              {user?.email}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <button onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${cardBg} ${textMuted} hover:${textSub}`}>
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <button onClick={handleLogout}
+              className={`h-9 px-4 rounded-xl flex items-center gap-2 border text-sm font-medium transition-all ${cardBg} ${textSub}`}>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign out</span>
+            </button>
           </div>
         </motion.div>
 
-        {/* Orders List */}
-        {orders.length === 0 ? (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className={`p-12 rounded-lg border text-center ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-200"
-            }`}>
-              <Truck className={`w-12 h-12 mx-auto mb-4 opacity-50 ${
-                isDarkMode ? "text-gray-500" : "text-gray-400"
-              }`} />
-              <h3 className={`text-lg font-semibold mb-2 ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              }`}>No Orders Yet</h3>
-              <p className={`mb-6 ${
-                isDarkMode ? "text-gray-400" : "text-gray-600"
-              }`}>You haven't placed any orders yet.</p>
-              <Button onClick={() => navigate("/")} size="lg"
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Start Shopping
-              </Button>
+        {/* ── Stats Row ── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className={`grid grid-cols-3 gap-3 mb-8`}>
+          {[
+            { label: "Total Orders", value: orders.length, icon: ShoppingBag },
+            { label: "Delivered", value: orders.filter(o => o.status === "delivered").length, icon: CheckCircle },
+            { label: "In Transit", value: orders.filter(o => !["delivered", "pending"].includes(o.status)).length, icon: Truck },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className={`rounded-2xl border p-4 ${cardBg}`}>
+              <Icon className={`w-4 h-4 mb-3 ${textMuted}`} />
+              <p className={`text-2xl font-bold ${textPrimary}`}>{value}</p>
+              <p className={`text-[11px] mt-0.5 ${textMuted}`}>{label}</p>
             </div>
-          </motion.div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((order, index) => (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div
-                  className={`cursor-pointer rounded-lg border transition-all ${
-                    isDarkMode
-                      ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-                      : "bg-white border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() =>
-                    setExpandedOrder(expandedOrder === order.id ? null : order.id)
-                  }
-                >
-                  {/* Order Header */}
-                  <div className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 border-b" style={{
-                    borderColor: isDarkMode ? "#4b5563" : "#e5e7eb"
-                  }}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className={`font-display font-bold ${
-                          isDarkMode ? "text-blue-400" : "text-blue-600"
-                        }`}>Order #{order.id.slice(0, 8)}</h3>
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold border ${getStatusColor(
-                            order.status
-                          )}`}
-                        >
-                          {getStatusIcon(order.status)}
-                          {order.status.replace("_", " ").toUpperCase()}
-                        </span>
-                      </div>
-                      <p className={`text-sm ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}>
-                        {order.createdAt?.toDate?.()?.toLocaleDateString() || "Date unavailable"}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`text-sm mb-1 ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}>Order Total</p>
-                      <p className={`text-2xl font-bold ${
-                        isDarkMode ? "text-blue-400" : "text-blue-600"
-                      }`}>₹{order.total.toLocaleString('en-IN')}</p>
-                    </div>
-                  </div>
+          ))}
+        </motion.div>
 
-                  {/* Expanded Details */}
-                  <AnimatePresence>
-                    {expandedOrder === order.id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className={`overflow-hidden ${
-                          isDarkMode ? "bg-gray-750" : "bg-gray-50"
-                        }`}
-                      >
-                        <div className="p-4 md:p-6 space-y-4">
-                          {/* Items */}
-                          <div>
-                            <p className={`text-xs font-bold mb-3 ${
-                              isDarkMode ? "text-blue-400" : "text-blue-600"
-                            }`}>ITEMS ORDERED ({order.items.length})</p>
-                            <div className="space-y-3">
-                              {order.items.map((item, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`flex gap-4 p-3 rounded border transition-colors ${
-                                    isDarkMode
-                                      ? "bg-gray-800 border-gray-700 hover:border-gray-600"
-                                      : "bg-white border-gray-200 hover:border-gray-300"
-                                  }`}
-                                >
-                                  {/* Product Image */}
-                                  {item.image && (
-                                    <div className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded overflow-hidden ${
-                                      isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                                    }`}>
-                                      <img
-                                        src={item.image}
-                                        alt={item.productName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    </div>
-                                  )}
-                                  
-                                  {/* Product Details */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start gap-2">
-                                      <p className={`font-medium truncate transition-colors ${
-                                        isDarkMode ? "text-white hover:text-blue-400" : "text-gray-900 hover:text-blue-600"
-                                      }`}>
-                                        {item.productName}
-                                      </p>
-                                      <div className={`text-sm font-semibold shrink-0 ${
-                                        isDarkMode ? "text-blue-400" : "text-blue-600"
-                                      }`}>
-                                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                                      </div>
-                                    </div>
-                                    <p className={`text-xs mb-2 ${
-                                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                                    }`}>
-                                      Quantity: {item.quantity} × ₹{item.price.toLocaleString('en-IN')}
-                                    </p>
-                                    {item.size && (
-                                      <p className={`text-xs mb-2 capitalize ${
-                                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                                      }`}>
-                                        Size: {item.size}
-                                      </p>
-                                    )}
-                                    {order.status === "delivered" && (
-                                      reviewedProductIds.has(item.productId) ? (
-                                        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
-                                          <CheckCircle className="w-3 h-3" />
-                                          Reviewed
-                                        </div>
-                                      ) : (
-                                        <Button 
-                                          size="sm" 
-                                          variant="outline" 
-                                          className="mt-2 h-7 text-[10px] font-bold px-3 hover:bg-yellow-500/10 hover:text-yellow-500 hover:border-yellow-500/50 transition-all"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleOpenReview(order, item);
-                                          }}
-                                        >
-                                          <StarFilled className="w-3 h-3 mr-1.5 text-yellow-500 fill-yellow-500" />
-                                          Rate & Review
-                                        </Button>
-                                      )
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+        {/* ── Tabs ── */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+          className={`flex gap-1 p-1 rounded-2xl border mb-8 ${cardBg}`}>
+          {(["orders", "addresses"] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold capitalize transition-all duration-200 ${activeTab === tab
+                  ? isDarkMode ? "bg-white text-black shadow-sm" : "bg-black text-white shadow-sm"
+                  : `${textMuted} hover:${textSub}`
+                }`}>
+              {tab === "orders" ? `Orders (${orders.length})` : "Saved Addresses"}
+            </button>
+          ))}
+        </motion.div>
 
-                          {/* Pricing */}
-                          <div className={`p-4 rounded-xl border space-y-2 text-sm ${
-                            isDarkMode
-                              ? "bg-gray-800/50 border-gray-700"
-                              : "bg-white border-gray-200"
-                          }`}>
-                            <div className="flex justify-between">
-                              <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>Subtotal</span>
-                              <span className={isDarkMode ? "text-white" : "text-gray-900"}>₹{order.subtotal.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>COD Charge</span>
-                              <span className={isDarkMode ? "text-white" : "text-gray-900"}>₹{order.codCharge.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className={`flex justify-between font-bold pt-2 border-t ${
-                              isDarkMode ? "border-gray-700" : "border-gray-200"
-                            }`}>
-                              <span className={isDarkMode ? "text-white" : "text-gray-900"}>Total</span>
-                              <span className={`${isDarkMode ? "text-blue-400" : "text-blue-600"}`}>₹{order.total.toLocaleString('en-IN')}</span>
-                            </div>
-                          </div>
-
-                          {/* Delivery Address */}
-                          <div>
-                            <p className={`text-xs font-bold mb-2 ${
-                              isDarkMode ? "text-blue-400" : "text-blue-600"
-                            }`}>DELIVERY ADDRESS</p>
-                            <div className={`p-4 rounded-xl border text-sm ${
-                              isDarkMode
-                                ? "bg-gray-800/50 border-gray-700"
-                                : "bg-white border-gray-200"
-                            }`}>
-                              <p className={`font-medium mb-1 ${
-                                isDarkMode ? "text-white" : "text-gray-900"
-                              }`}>{order.customerName}</p>
-                              {order.lane1 ? (
-                                <div className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-                                  <p>{order.lane1}</p>
-                                  {order.lane2 && <p>{order.lane2}</p>}
-                                  {order.landmark && <p className="italic text-xs opacity-80">Near {order.landmark}</p>}
-                                </div>
-                              ) : (
-                                <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>{order.address}</p>
-                              )}
-                              <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
-                                {order.city}, {order.zipCode}
-                              </p>
-                              {(order.location?.googleMapsLink || order.location?.latitude) && (
-                                <a 
-                                  href={order.location.googleMapsLink || `https://www.google.com/maps?q=${order.location.latitude},${order.location.longitude}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 mt-3 text-[10px] font-black tracking-wider text-blue-500 hover:text-blue-400 transition-colors uppercase"
-                                >
-                                  <Navigation className="w-3 h-3" />
-                                  View Delivery Location
-                                </a>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Order Status */}
-                          <div>
-                            <p className={`text-xs font-bold mb-3 ${
-                              isDarkMode ? "text-blue-400" : "text-blue-600"
-                            }`}>ORDER PROGRESS</p>
-                            <div className="space-y-3">
-                              {["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].map(
-                                (statusStep, sIdx) => {
-                                  const currentIdx = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"].indexOf(order.status);
-                                  const isDone = sIdx <= currentIdx;
-                                  const isCurrent = sIdx === currentIdx;
-                                  
-                                  return (
-                                    <div key={statusStep} className="flex items-center gap-4">
-                                      <div className="relative flex flex-col items-center">
-                                        <div className={`w-3 h-3 rounded-full z-10 ${
-                                          isCurrent ? "bg-blue-500 ring-4 ring-blue-500/20" : isDone ? "bg-blue-500/50" : "bg-gray-700"
-                                        }`} />
-                                        {sIdx < 5 && (
-                                          <div className={`absolute top-3 w-0.5 h-6 ${
-                                            sIdx < currentIdx ? "bg-blue-500/30" : "bg-gray-800"
-                                          }`} />
-                                        )}
-                                      </div>
-                                      <span className={`text-xs font-medium uppercase tracking-wider ${
-                                        isCurrent ? "text-white" : isDone ? "text-white/60" : "text-white/20"
-                                      }`}>
-                                        {statusStep.replace("_", " ")}
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                              )}
-                            </div>
-                          </div>
+        {/* ── Tab Content ── */}
+        <AnimatePresence mode="wait">
+          {activeTab === "addresses" ? (
+            <motion.div key="addresses" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+              {savedAddresses.length === 0 ? (
+                <EmptyState icon={MapPin} title="No saved addresses" subtitle="Addresses from your orders appear here" darkMode={isDarkMode} />
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {savedAddresses.map((addr, idx) => (
+                    <motion.div key={idx} initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.06 }}
+                      className={`rounded-2xl border p-5 ${cardBg}`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-lg ${isDarkMode ? "bg-white/5 text-white/40" : "bg-black/5 text-black/40"}`}>
+                          Address {idx + 1}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        <MapPin className={`w-4 h-4 mt-0.5 ${textMuted}`} />
+                      </div>
+                      <p className={`font-semibold mb-1 ${textPrimary}`}>{addr.lane1}</p>
+                      {addr.lane2 && <p className={`text-sm ${textSub}`}>{addr.lane2}</p>}
+                      {addr.landmark && <p className={`text-sm italic ${textMuted}`}>Near {addr.landmark}</p>}
+                      <p className={`text-sm font-medium mt-1 ${textSub}`}>{addr.city} – {addr.zipCode}</p>
+                      {addr.location?.googleMapsLink && (
+                        <a href={addr.location.googleMapsLink} target="_blank" rel="noopener noreferrer"
+                          className="mt-4 flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black tracking-widest uppercase transition-all shadow-lg shadow-blue-500/20">
+                          <Navigation className="w-3.5 h-3.5" /> GET DIRECTIONS
+                        </a>
+                      )}
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
+              )}
+            </motion.div>
+          ) : (
+            <motion.div key="orders" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+              {orders.length === 0 ? (
+                <EmptyState icon={ShoppingBag} title="No orders yet" subtitle="Your order history will appear here" darkMode={isDarkMode}
+                  cta={{ label: "Start Shopping", onClick: () => navigate("/") }} />
+              ) : (
+                orders.map((order, index) => (
+                  <OrderCard key={order.id} order={order} index={index} expanded={expandedOrder === order.id}
+                    onToggle={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                    onReview={handleOpenReview} reviewedProductIds={reviewedProductIds}
+                    isDarkMode={isDarkMode} cardBg={cardBg} cardBgAlt={cardBgAlt}
+                    textPrimary={textPrimary} textMuted={textMuted} textSub={textSub} divider={divider} />
+                ))
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Continue Shopping Button */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 text-center">
-          <Button onClick={() => navigate("/")} size="lg"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8"
-          >
-            Explore More Kicks
-          </Button>
+        {/* ── Footer CTA ── */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-12 text-center">
+          <button onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all hover:shadow-lg hover:shadow-blue-500/25 active:scale-95">
+            <ShoppingBag className="w-4 h-4" /> Continue Shopping
+          </button>
         </motion.div>
       </div>
 
-      {/* Review Modal */}
+      {/* ── Review Modal ── */}
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
-        <DialogContent className="max-w-md bg-gray-900 border-gray-800 text-white rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Review Product</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Share your thoughts on {reviewItem?.productName}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-5 py-4">
-            {/* Stars */}
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Rate your experience</p>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className="transition-transform active:scale-90"
-                  >
-                    <StarFilled 
-                      className={`w-8 h-8 ${
-                        star <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-700"
-                      }`} 
-                    />
+        <DialogContent className={`max-w-md rounded-3xl border p-0 overflow-hidden shadow-2xl ${isDarkMode ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-[#0a0a0f]"}`}>
+          <div className={`px-7 pt-7 pb-5 border-b ${isDarkMode ? "border-white/[0.06]" : "border-black/[0.06]"}`}>
+            <p className={`text-[11px] font-semibold uppercase tracking-widest mb-1 ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Review</p>
+            <h2 className="text-xl font-bold">{reviewItem?.productName}</h2>
+          </div>
+
+          <div className="px-7 py-6 space-y-6">
+            {/* Star Rating */}
+            <div>
+              <p className={`text-[11px] font-semibold uppercase tracking-widest mb-3 ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Your Rating</p>
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)}
+                    className="transition-transform hover:scale-110 active:scale-95">
+                    <StarFilled className={`w-9 h-9 transition-colors ${star <= (hoverRating || rating) ? "text-amber-400 fill-amber-400" : isDarkMode ? "text-white/10 fill-white/10" : "text-black/10 fill-black/10"}`} />
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Comment */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Your Comments</label>
-              <Textarea 
-                placeholder="What did you like or dislike?"
-                className="bg-gray-800 border-gray-700 focus:border-blue-500 min-h-[100px] rounded-xl"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
+            <div>
+              <p className={`text-[11px] font-semibold uppercase tracking-widest mb-2 ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Your Review</p>
+              <Textarea value={comment} onChange={(e) => setComment(e.target.value)}
+                placeholder="Tell others what you think…"
+                className={`rounded-xl min-h-[100px] text-sm border resize-none focus-visible:ring-1 focus-visible:ring-blue-500 ${isDarkMode ? "bg-white/[0.03] border-white/10 text-white placeholder:text-white/20" : "bg-black/[0.02] border-black/10 placeholder:text-black/30"}`} />
             </div>
 
-            {/* Images */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Share Photos (Max 3)</label>
-              
-              <div className="grid grid-cols-3 gap-3">
-                {previewUrls.map((url, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-800 bg-gray-800 group">
-                    <img src={url} alt="Preview" className="w-full h-full object-cover" />
-                    <button 
-                      onClick={() => removeImage(idx)}
-                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                
-                {previewUrls.length < 3 && (
-                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-800 hover:border-blue-500/50 hover:bg-blue-500/5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all group">
-                    <Plus className="w-6 h-6 text-gray-600 group-hover:text-blue-400" />
-                    <span className="text-[10px] font-bold text-gray-600 group-hover:text-blue-400">ADD</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      multiple 
-                      className="hidden" 
-                      onChange={handleFileChange}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {previewUrls.length === 0 && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-800/50 border border-gray-800/50">
-                  <ImageIcon className="w-4 h-4 text-gray-500" />
-                  <p className="text-[11px] text-gray-500 italic">No photos selected yet</p>
-                </div>
-              )}
-            </div>
+            {/* Images section removed as per request */}
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button 
-              variant="outline" 
-              className="border-gray-700 text-gray-300 rounded-xl"
-              onClick={() => setReviewModalOpen(false)}
-            >
+          <div className={`px-7 py-5 flex gap-3 border-t ${isDarkMode ? "border-white/[0.06] bg-white/[0.02]" : "border-black/[0.06] bg-black/[0.02]"}`}>
+            <button onClick={() => setReviewModalOpen(false)}
+              className={`flex-1 py-3 rounded-xl text-sm font-semibold border transition-all ${isDarkMode ? "border-white/10 text-white/50 hover:bg-white/[0.04]" : "border-black/10 text-black/50 hover:bg-black/[0.04]"}`}>
               Cancel
-            </Button>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 rounded-xl"
-              onClick={submitReview}
-              disabled={submittingReview}
-            >
-              {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit Review"}
-            </Button>
-          </DialogFooter>
+            </button>
+            <button onClick={submitReview} disabled={submittingReview}
+              className="flex-[2] py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-all">
+              {submittingReview ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Submit Review"}
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Coupon Success Modal */}
+      {/* ── Coupon Modal ── */}
       <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
-        <DialogContent className="max-w-sm bg-gray-900 border-gray-800 text-white rounded-3xl text-center overflow-hidden p-0">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-10 h-10 text-white" />
+        <DialogContent className={`max-w-sm rounded-3xl border p-0 overflow-hidden shadow-2xl ${isDarkMode ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-[#0a0a0f]"}`}>
+          <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-600 p-8 text-center">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-7 h-7 text-white" />
             </div>
-            <h2 className="text-2xl font-bold mb-1">Thank You!</h2>
-            <p className="text-blue-100 text-sm opacity-80">Your review helps the community</p>
+            <h2 className="text-2xl font-bold text-white mb-1">Review Submitted!</h2>
+            <p className="text-blue-100/70 text-sm">You've earned a reward</p>
           </div>
-          <div className="p-8 space-y-6">
+          <div className="p-7 space-y-6 text-center">
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Here is your rewards</p>
-              <div className="bg-gray-800 border-2 border-dashed border-gray-700 p-4 rounded-2xl relative">
-                <div className="text-3xl font-black tracking-tighter text-blue-400">
-                  {generatedCoupon}
-                </div>
-                <div className="text-[10px] font-bold text-gray-500 mt-2">10% OFF ON YOUR NEXT ORDER</div>
+              <p className={`text-[11px] font-semibold uppercase tracking-widest mb-3 ${isDarkMode ? "text-white/40" : "text-black/40"}`}>Your Coupon Code</p>
+              <div className={`relative rounded-2xl border-2 border-dashed p-5 ${isDarkMode ? "border-white/10 bg-white/[0.02]" : "border-black/10 bg-black/[0.02]"}`}>
+                <p className="text-2xl font-bold tracking-widest text-blue-500 mb-1">{generatedCoupon}</p>
+                <p className={`text-[11px] ${isDarkMode ? "text-white/30" : "text-black/30"}`}>10% off your next order · Valid 10 days</p>
+                <button onClick={copyCoupon}
+                  className={`absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${isDarkMode ? "bg-white/5 hover:bg-white/10" : "bg-black/5 hover:bg-black/10"}`}>
+                  {copiedCoupon ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className={`w-3.5 h-3.5 ${isDarkMode ? "text-white/40" : "text-black/40"}`} />}
+                </button>
               </div>
             </div>
-            <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 rounded-2xl py-6 h-auto text-base font-bold"
-              onClick={() => setShowCouponModal(false)}
-            >
-              Awesome, Copy & Close
-            </Button>
-            <p className="text-[10px] text-gray-500 italic">Code automatically saved to your profile</p>
+            <button onClick={() => setShowCouponModal(false)}
+              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all active:scale-95">
+              Start Shopping
+            </button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 };
+
+// ── OrderCard Component ──────────────────────────────────────────────────────
+
+const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedProductIds, isDarkMode, cardBg, cardBgAlt, textPrimary, textMuted, textSub, divider }: any) => {
+  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+  const currentIdx = statusOptions.indexOf(order.status);
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.07 }}>
+      <div className={`rounded-2xl border overflow-hidden transition-all ${cardBg}`}>
+
+        {/* Header row — always visible */}
+        <button onClick={onToggle} className="w-full text-left p-5 flex items-center gap-4">
+          {/* Status dot */}
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+              <span className={`text-[10px] font-bold tracking-widest uppercase ${textMuted}`}>
+                #{order.id.slice(0, 10).toUpperCase()}
+              </span>
+              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${cfg.bg} ${cfg.color}`}>
+                {cfg.label}
+              </span>
+            </div>
+            <p className={`text-sm ${textMuted}`}>
+              {order.createdAt?.toDate?.()?.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) || "—"}
+              {" · "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
+            </p>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            <p className={`text-lg font-bold ${textPrimary}`}>₹{order.total.toLocaleString('en-IN')}</p>
+          </div>
+          <div className={`ml-1 ${textMuted}`}>
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </button>
+
+        {/* Expanded body */}
+        <AnimatePresence>
+          {expanded && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+              <div className={`border-t ${divider}`}>
+
+                {/* Items */}
+                <div className="p-5 space-y-3">
+                  <p className={`text-[10px] font-semibold uppercase tracking-widest ${textMuted}`}>Items</p>
+                  {order.items.map((item: any, idx: number) => (
+                    <div key={idx} className={`flex gap-4 p-4 rounded-xl border ${cardBgAlt}`}>
+                      {item.image && (
+                        <img src={item.image} alt={item.productName} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between gap-2 mb-1">
+                          <p className={`font-semibold text-sm truncate ${textPrimary}`}>{item.productName}</p>
+                          <p className={`text-sm font-bold flex-shrink-0 text-blue-500`}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
+                        </div>
+                        <div className="flex gap-2 flex-wrap mb-3">
+                          {[`Qty ${item.quantity}`, item.size && `Size ${item.size}`, `₹${item.price.toLocaleString('en-IN')} each`].filter(Boolean).map((tag, i) => (
+                            <span key={i} className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${isDarkMode ? "bg-white/[0.05] text-white/40" : "bg-black/[0.05] text-black/40"}`}>{tag}</span>
+                          ))}
+                        </div>
+                        {order.status === "delivered" && (
+                          reviewedProductIds.has(item.productId) ? (
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-400`}>
+                              <CheckCircle className="w-3 h-3" /> Reviewed
+                            </span>
+                          ) : (
+                            <button onClick={(e) => { e.stopPropagation(); onReview(order, item); }}
+                              className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all">
+                              <Star className="w-3 h-3" /> Write a Review
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Details Grid */}
+                <div className={`grid md:grid-cols-2 gap-px border-t ${divider}`}>
+                  {/* Payment + Delivery */}
+                  <div className={`p-5 space-y-5 border-r ${divider}`}>
+                    <div>
+                      <p className={`text-[10px] font-semibold uppercase tracking-widest mb-3 ${textMuted}`}>Payment</p>
+                      <div className="space-y-2 text-sm">
+                        {[
+                          { label: "Subtotal", value: `₹${order.subtotal.toLocaleString('en-IN')}` },
+                          { label: "Shipping", value: order.codCharge > 0 ? `₹${order.codCharge}` : "Free" },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex justify-between">
+                            <span className={textMuted}>{label}</span>
+                            <span className={`font-medium ${textSub}`}>{value}</span>
+                          </div>
+                        ))}
+                        <div className={`flex justify-between pt-2 border-t font-bold ${divider}`}>
+                          <span className={textSub}>Total</span>
+                          <span className={`text-blue-500`}>₹{order.total.toLocaleString('en-IN')}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className={`text-[10px] font-semibold uppercase tracking-widest mb-3 ${textMuted}`}>Delivery Address</p>
+                      <div className={`text-sm ${textSub} space-y-0.5`}>
+                        <p className={`font-semibold ${textPrimary}`}>{order.customerName}</p>
+                        {order.lane1 ? (
+                          <>
+                            <p>{order.lane1}</p>
+                            {order.lane2 && <p>{order.lane2}</p>}
+                            {order.landmark && <p className={`text-xs ${textMuted}`}>Near {order.landmark}</p>}
+                          </>
+                        ) : <p>{order.address}</p>}
+                        <p>{order.city} – {order.zipCode}</p>
+                      </div>
+                      {(order.location?.googleMapsLink || order.location?.latitude) && (
+                        <a href={order.location.googleMapsLink || `https://www.google.com/maps?q=${order.location.latitude},${order.location.longitude}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-500 hover:text-blue-400 transition-colors">
+                          <Navigation className="w-3 h-3" /> View on Maps
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Order Journey */}
+                  <div className="p-5">
+                    <p className={`text-[10px] font-semibold uppercase tracking-widest mb-4 ${textMuted}`}>Order Journey</p>
+                    <div className="space-y-0">
+                      {statusOptions.map((step, sIdx) => {
+                        const done = sIdx <= currentIdx;
+                        const active = sIdx === currentIdx;
+                        return (
+                          <div key={step} className="flex items-start gap-3">
+                            <div className="flex flex-col items-center w-5">
+                              <div className={`w-2 h-2 rounded-full mt-0.5 flex-shrink-0 transition-all ${active ? "bg-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.2)]" : done ? "bg-blue-500" : isDarkMode ? "bg-white/10" : "bg-black/10"}`} />
+                              {sIdx < statusOptions.length - 1 && (
+                                <div className={`w-px flex-1 my-1 h-5 ${sIdx < currentIdx ? "bg-blue-500/40" : isDarkMode ? "bg-white/[0.07]" : "bg-black/[0.07]"}`} />
+                              )}
+                            </div>
+                            <p className={`text-xs pb-4 font-medium capitalize ${active ? "text-blue-500" : done ? textSub : textMuted}`}>
+                              {step.replace(/_/g, " ")}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+};
+
+// ── EmptyState Component ─────────────────────────────────────────────────────
+
+const EmptyState = ({ icon: Icon, title, subtitle, darkMode, cta }: any) => (
+  <div className={`rounded-2xl border p-12 text-center ${darkMode ? "bg-[#111118] border-white/[0.06]" : "bg-white border-black/[0.06]"}`}>
+    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${darkMode ? "bg-white/[0.04]" : "bg-black/[0.04]"}`}>
+      <Icon className={`w-5 h-5 ${darkMode ? "text-white/20" : "text-black/20"}`} />
+    </div>
+    <p className={`font-semibold mb-1 ${darkMode ? "text-white" : "text-[#0a0a0f]"}`}>{title}</p>
+    <p className={`text-sm mb-5 ${darkMode ? "text-white/30" : "text-black/30"}`}>{subtitle}</p>
+    {cta && (
+      <button onClick={cta.onClick} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all">
+        {cta.label}
+      </button>
+    )}
+  </div>
+);
 
 export default Orders;

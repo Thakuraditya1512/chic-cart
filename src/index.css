@@ -34,9 +34,9 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 5%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 142 71% 45%; /* Light green accent */
 
     --radius: 0.75rem;
 
@@ -87,9 +87,9 @@
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 0 0% 80%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 142 76% 36%; /* Darker green for dark mode focus */
 
     --sale: 346 87% 53%;
     --sale-foreground: 0 0% 100%;
@@ -146,6 +146,12 @@
   .dark ::selection {
     background: hsl(0 0% 95%);
     color: hsl(0 0% 5%);
+  }
+
+  /* Enhanced Input states */
+  input:focus, textarea:focus, select:focus {
+    @apply outline-none ring-2 ring-ring/50 border-ring/50;
+    transition: all 0.2s ease;
   }
 }
 

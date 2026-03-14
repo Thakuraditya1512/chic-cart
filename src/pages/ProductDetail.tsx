@@ -233,7 +233,7 @@ const ProductDetail = () => {
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
                     className={`w-12 h-16 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      activeImageIndex === idx ? "border-[#6c5ce7]" : "border-transparent opacity-50"
+                      activeImageIndex === idx ? "border-foreground" : "border-border opacity-50"
                     }`}
                   >
                     <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
@@ -266,7 +266,7 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6 p-4 rounded-xl border border-border bg-card/20 w-fit">
               <span className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
               {product.originalPrice && (
                 <span className="text-lg text-muted-foreground line-through">₹{product.originalPrice.toLocaleString('en-IN')}</span>
@@ -341,7 +341,7 @@ const ProductDetail = () => {
         </div>
 
         {/* Reviews Section */}
-        <section className="mt-16 md:mt-24 border-t border-border pt-16">
+        <section className="mt-16 md:mt-24 p-6 md:p-10 rounded-3xl border border-border bg-card/10">
           <div className="flex flex-col md:flex-row justify-between items-start gap-8 mb-12">
             <div>
               <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">Customer Reviews</h2>

@@ -35,10 +35,9 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
         initial={{ y: 0 }}
         animate={{ y: hidden ? -100 : 0 }}
         transition={{ duration: 0.3, ease: [0.33, 1, 0.68, 1] }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled
-          ? "bg-background/80 backdrop-blur-xl border-b border-border shadow-sm"
-          : "bg-transparent border-b border-transparent"
-          }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          isDark ? "bg-black/90 border-white/5" : "bg-white/90 border-black/[0.06]"
+        } backdrop-blur-xl border-b shadow-sm`}
       >
         <div className="container mx-auto flex items-center justify-between h-16 md:h-[72px] px-4">
           {/* Left: Menu + Logo */}
@@ -52,8 +51,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             </button>
             <Link
               to="/"
-              className={`font-cursive text-[1.25rem] leading-[2.5rem] md:text-[1.75rem] transition-colors duration-300 ${isScrolled ? "text-foreground" : "text-white"
-                }`}
+              className="font-cursive text-[1.25rem] leading-[2.5rem] md:text-[1.75rem] text-foreground transition-opacity hover:opacity-80"
             >
               FlexTheKicks
             </Link>
@@ -65,10 +63,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               <a
                 key={link.label}
                 href={link.to}
-                className={`text-xs font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 hover:opacity-100 ${isScrolled
-                  ? "text-muted-foreground hover:text-foreground"
-                  : "text-white/60 hover:text-white"
-                  }`}
+                className="text-xs font-sans font-medium uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground transition-colors duration-300"
               >
                 {link.label}
               </a>
@@ -80,10 +75,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className={`p-2.5 transition-colors duration-300 ${isScrolled
-                ? "text-muted-foreground hover:text-foreground"
-                : "text-white/60 hover:text-white"
-                }`}
+              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Toggle theme"
             >
               {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -98,10 +90,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                   navigate("/login");
                 }
               }}
-              className={`p-2.5 transition-colors duration-300 ${isScrolled
-                ? "text-muted-foreground hover:text-foreground"
-                : "text-white/60 hover:text-white"
-                }`}
+              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Profile"
             >
               <User size={18} />
@@ -110,10 +99,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className={`p-2.5 transition-colors duration-300 relative ${isScrolled
-                ? "text-muted-foreground hover:text-foreground"
-                : "text-white/60 hover:text-white"
-                }`}
+              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
               aria-label="Cart"
             >
               <ShoppingBag size={18} />
@@ -121,7 +107,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-0.5 -right-0.5 bg-white text-black text-[9px] font-sans font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full"
+                  className={`absolute -top-0.5 -right-0.5 ${isDark ? "bg-white text-black" : "bg-black text-white"} text-[9px] font-sans font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full`}
                 >
                   {totalItems}
                 </motion.span>
@@ -139,7 +125,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-background"
+            className={`fixed inset-0 z-40 ${isDark ? "bg-black" : "bg-white"}`}
           >
             <nav className="flex flex-col items-start p-8 pt-24 gap-6">
               {navLinks.map((link, i) => (
