@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, ArrowRight, ShoppingBag } from "lucide-react";
+import { Loader2, AlertCircle, ArrowRight, ShoppingBag, MapPin, CheckCircle2, Navigation, Tag, Ticket } from "lucide-react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import { toast } from "sonner";
 
 // Standard WhatsApp Icon SVG
@@ -40,10 +40,26 @@ const Checkout = () => {
   });
 
   const [addressData, setAddressData] = useState({
-    address: "",
+    lane1: "",
+    lane2: "",
+    landmark: "",
     city: "",
     zipCode: "",
+    googleMapsLink: "",
   });
+
+  const [locationData, setLocationData] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+    accuracy: number | null;
+  } | null>(null);
+
+  const [locationStatus, setLocationStatus] = useState<"idle" | "requesting" | "success" | "error">("idle");
+
+  const [couponCode, setCouponCode] = useState("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
 
   // Redirect if no items in cart
   useEffect(() => {
@@ -107,24 +123,100 @@ const Checkout = () => {
     setStep("address");
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLocationStatus("requesting");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocationData({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+        setLocationStatus("success");
+        toast.success("Location captured successfully!");
+      },
+      (error) => {
+        console.error("Location error:", error);
+        setLocationStatus("error");
+        let msg = "Could not get your location";
+        if (error.code === 1) msg = "Location permission denied";
+        toast.error(msg);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!addressData.address.trim()) {
-      setError("Address is required");
+    if (!addressData.lane1.trim()) {
+      setError("Lane 1 / Door number is required");
       return;
     }
     if (!addressData.city.trim()) {
       setError("City is required");
       return;
     }
-    if (!addressData.zipCode.trim()) {
-      setError("Zip code is required");
+    if (!addressData.zipCode.trim() || addressData.zipCode.length < 6) {
+      setError("Valid ZIP code is required");
       return;
     }
 
     setStep("review");
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Please enter a coupon code");
+      return;
+    }
+
+    try {
+      setIsValidatingCoupon(true);
+      const couponsRef = collection(db, "coupons");
+      const q = query(
+        couponsRef, 
+        where("code", "==", couponCode.toUpperCase()),
+        where("isUsed", "==", false)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        toast.error("Invalid or already used coupon code");
+        setDiscount(0);
+        setAppliedCouponId(null);
+        return;
+      }
+
+      const couponDoc = snapshot.docs[0];
+      const couponData = couponDoc.data();
+
+      // Check expiry if exists
+      if (couponData.expiresAt) {
+        const expiry = couponData.expiresAt.toDate();
+        if (expiry < new Date()) {
+          toast.error("This coupon has expired");
+          return;
+        }
+      }
+
+      setDiscount(couponData.discountPercent);
+      setAppliedCouponId(couponDoc.id);
+      toast.success(`Coupon applied! ${couponData.discountPercent}% discount added.`);
+      
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      toast.error("Failed to validate coupon");
+    } finally {
+      setIsValidatingCoupon(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -132,14 +224,27 @@ const Checkout = () => {
       setLoading(true);
       setError("");
 
+      const calculatedTotal = Math.max(0, (totalPrice + (totalPrice > 1000 ? 0 : 50) - Math.round((totalPrice * discount) / 100)));
+
       const orderData = {
         userId: user?.uid || "guest",
         customerName: customerData.fullName,
         email: customerData.email,
         phone: customerData.phone,
-        address: addressData.address,
+        lane1: addressData.lane1,
+        lane2: addressData.lane2,
+        landmark: addressData.landmark,
         city: addressData.city,
         zipCode: addressData.zipCode,
+        location: locationData ? {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          googleMapsLink: addressData.googleMapsLink || `https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}`,
+        } : addressData.googleMapsLink ? {
+          latitude: 0,
+          longitude: 0,
+          googleMapsLink: addressData.googleMapsLink
+        } : null,
         items: cartItems.map((item) => {
           const itemData: any = {
             productId: item.product.id,
@@ -148,14 +253,16 @@ const Checkout = () => {
             quantity: item.quantity,
             image: item.product.image,
           };
-          // Only add optional fields if they exist
           if (item.product.category) itemData.category = item.product.category;
           if ((item as any).size) itemData.size = (item as any).size;
           return itemData;
         }),
         subtotal: totalPrice,
-        codCharge: totalPrice > 1000 ? 0 : 50, // Free COD for orders > 1000
-        total: totalPrice + (totalPrice > 1000 ? 0 : 50),
+        codCharge: totalPrice > 1000 ? 0 : 50,
+        discountAmount: Math.round((totalPrice * discount) / 100),
+        discountPercent: discount,
+        couponCode: appliedCouponId ? couponCode.toUpperCase() : null,
+        total: calculatedTotal,
         paymentMethod: "COD",
         status: "pending",
         createdAt: serverTimestamp(),
@@ -164,9 +271,19 @@ const Checkout = () => {
       const ordersRef = collection(db, "orders");
       const docRef = await addDoc(ordersRef, orderData);
 
+      // Mark coupon as used if applicable
+      if (appliedCouponId) {
+        const couponRef = doc(db, "coupons", appliedCouponId);
+        await updateDoc(couponRef, {
+          isUsed: true,
+          usedAt: serverTimestamp(),
+          orderId: docRef.id
+        });
+      }
+
       toast.success("Order placed successfully!");
       clearCart();
-      navigate(`/orders/${docRef.id}`);
+      navigate(`/orders`);
     } catch (err) {
       console.error("Error placing order:", err);
       const errorMsg = err instanceof Error ? err.message : "Failed to place order";
@@ -298,16 +415,96 @@ const Checkout = () => {
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleAddressSubmit} className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Address *</label>
-                        <Input
-                          placeholder="123 Main St, Apt 4B"
-                          value={addressData.address}
-                          onChange={(e) =>
-                            setAddressData({ ...addressData, address: e.target.value })
-                          }
-                          className="bg-muted/50 border-border/50"
-                        />
+                      {/* Location Access */}
+                      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 mb-6">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold flex items-center gap-2">
+                              {locationStatus === "success" ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              ) : (
+                                <MapPin className="w-4 h-4 text-primary" />
+                              )}
+                              Share current location
+                            </h4>
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                              {locationStatus === "success" 
+                                ? "Location detected! We'll use this for precise delivery."
+                                : "Give us your precise location for faster and more accurate delivery."}
+                            </p>
+                          </div>
+                          <Button 
+                            type="button"
+                            size="sm"
+                            variant={locationStatus === "success" ? "outline" : "default"}
+                            onClick={handleGetLocation}
+                            disabled={locationStatus === "requesting"}
+                            className="shrink-0"
+                          >
+                            {locationStatus === "requesting" ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : locationStatus === "success" ? (
+                              "Update"
+                            ) : (
+                              "Get Location"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">
+                            {locationStatus === "success" ? "Door No / Flat / House Name *" : "Lane 1 / Address line 1 *"}
+                          </label>
+                          <Input
+                            placeholder={locationStatus === "success" ? "e.g. Flat 402, Skyline Apts" : "e.g. 123 Main St"}
+                            value={addressData.lane1}
+                            onChange={(e) =>
+                              setAddressData({ ...addressData, lane1: e.target.value })
+                            }
+                            className="bg-muted/50 border-border/50"
+                          />
+                        </div>
+
+                        {!locationData && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Lane 2 (Optional)</label>
+                              <Input
+                                placeholder="e.g. Near Central Park"
+                                value={addressData.lane2}
+                                onChange={(e) =>
+                                  setAddressData({ ...addressData, lane2: e.target.value })
+                                }
+                                className="bg-muted/50 border-border/50"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Landmark (Optional)</label>
+                              <Input
+                                placeholder="e.g. Opposite Metro Station"
+                                value={addressData.landmark}
+                                onChange={(e) =>
+                                  setAddressData({ ...addressData, landmark: e.target.value })
+                                }
+                                className="bg-muted/50 border-border/50"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Google Maps Link (Optional)</label>
+                          <Input
+                            placeholder="Paste maps link if you have one"
+                            value={addressData.googleMapsLink}
+                            onChange={(e) =>
+                              setAddressData({ ...addressData, googleMapsLink: e.target.value })
+                            }
+                            className="bg-muted/50 border-border/50"
+                          />
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -375,10 +572,18 @@ const Checkout = () => {
                       </div>
                       <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
                         <p className="text-xs text-muted-foreground mb-1">DELIVERY ADDRESS</p>
-                        <p className="font-semibold">{addressData.address}</p>
+                        <p className="font-semibold">{addressData.lane1}</p>
+                        {addressData.lane2 && <p className="text-sm text-muted-foreground">{addressData.lane2}</p>}
+                        {addressData.landmark && <p className="text-sm text-muted-foreground italic">Near {addressData.landmark}</p>}
                         <p className="text-sm text-muted-foreground">
                           {addressData.city}, {addressData.zipCode}
                         </p>
+                        {(locationData || addressData.googleMapsLink) && (
+                          <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-500 font-medium">
+                            <Navigation className="w-3 h-3" />
+                            Location attached
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -442,12 +647,46 @@ const Checkout = () => {
                     <span className="text-muted-foreground">COD Charge</span>
                     <span>{totalPrice > 1000 ? "Free" : "₹50"}</span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-500 font-medium">
+                      <span>Discount ({discount}%)</span>
+                      <span>-₹{Math.round((totalPrice * discount) / 100).toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-base pt-2 border-t border-border/50">
                     <span>Total</span>
                     <span className="text-primary">
-                      ₹{(totalPrice + (totalPrice > 1000 ? 0 : 50)).toLocaleString('en-IN')}
+                      ₹{Math.max(0, (totalPrice + (totalPrice > 1000 ? 0 : 50) - Math.round((totalPrice * discount) / 100))).toLocaleString('en-IN')}
                     </span>
                   </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Coupon Code" 
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        className="pl-9 bg-muted/20 border-border/50 h-10 text-sm rounded-lg"
+                      />
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleApplyCoupon}
+                      disabled={isValidatingCoupon || !couponCode.trim()}
+                      className="h-10 px-4 font-bold text-xs uppercase tracking-wider rounded-lg"
+                    >
+                      {isValidatingCoupon ? <Loader2 className="w-3 h-3 animate-spin" /> : "Apply"}
+                    </Button>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex items-center gap-1.5 mt-2 px-2 py-1 rounded bg-green-500/10 text-green-500 text-[10px] font-bold uppercase tracking-widest">
+                      <Ticket className="w-3 h-3" />
+                      {discount}% Discount Applied
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2 pt-2">

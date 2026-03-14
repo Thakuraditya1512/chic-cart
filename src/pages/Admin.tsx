@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import OrderAnalytics from "@/components/OrderAnalytics"; // ← add this import
 import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
-  ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard,
-  Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2
+  ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard, Ticket,
+  Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -47,12 +47,21 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  userId: string;
   customerName: string;
   email: string;
   phone: string;
-  address: string;
+  lane1?: string;
+  lane2?: string;
+  landmark?: string;
+  address?: string; // Legacy support
   city: string;
   zipCode: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    googleMapsLink?: string;
+  };
   items: OrderItem[];
   total: number;
   status: string;
@@ -66,7 +75,7 @@ interface AppUser {
   createdAt?: string;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -90,12 +99,24 @@ const STATUS_COLORS: Record<string, string> = {
 
 // ─── Admin Component ──────────────────────────────────────────────────────────
 
+interface Coupon {
+  id: string;
+  code: string;
+  discountPercent: number;
+  userId: string;
+  isUsed: boolean;
+  orderId?: string;
+  createdAt?: any;
+  expiresAt?: any;
+}
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<TabId>("brands");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [loading, setLoading] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -120,6 +141,7 @@ const Admin = () => {
     fetchProducts();
     fetchOrders();
     fetchUsers();
+    fetchCoupons();
   }, []);
 
   // ─── Data Fetchers ──────────────────────────────────────────────────────────
@@ -168,6 +190,24 @@ const Admin = () => {
       setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() } as AppUser)));
     } catch {
       toast.error("Failed to fetch users");
+    }
+  };
+
+  const fetchCoupons = async () => {
+    try {
+      const snap = await getDocs(query(collection(db, "coupons"), orderBy("createdAt", "desc")));
+      setCoupons(snap.docs.map(d => ({ id: d.id, ...d.data() } as Coupon)));
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      // Fallback if index is not yet created
+      try {
+        const snap = await getDocs(collection(db, "coupons"));
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Coupon))
+          .sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        setCoupons(list);
+      } catch (innerError) {
+        toast.error("Failed to fetch coupons");
+      }
     }
   };
 
@@ -369,6 +409,7 @@ const Admin = () => {
     { id: "featured" as TabId, label: "Featured", icon: Star, count: featuredProducts.size },
     { id: "customers" as TabId, label: "Orders", icon: LayoutDashboard, count: orders.length },
     { id: "users" as TabId, label: "Users", icon: Shield, count: users.length },
+    { id: "coupons" as TabId, label: "Coupons", icon: Ticket, count: coupons.length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -1041,8 +1082,30 @@ const Admin = () => {
                                     text-xs text-white/50 space-y-0.5">
                                     <p className="text-white font-medium">{order.customerName}</p>
                                     <p>{order.email} · {order.phone}</p>
-                                    <p className="pt-1 border-t border-white/6 mt-1">{order.address}</p>
-                                    <p>{order.city}, {order.zipCode}</p>
+                                    <div className="pt-1 border-t border-white/6 mt-1 space-y-0.5">
+                                      {order.lane1 ? (
+                                        <>
+                                          <p className="text-white">{order.lane1}</p>
+                                          {order.lane2 && <p>{order.lane2}</p>}
+                                          {order.landmark && <p className="italic text-white/40">Near {order.landmark}</p>}
+                                        </>
+                                      ) : (
+                                        <p className="text-white">{order.address}</p>
+                                      )}
+                                      <p>{order.city}, {order.zipCode}</p>
+                                      
+                                      {(order.location?.googleMapsLink || order.location?.latitude) && (
+                                        <a 
+                                          href={order.location.googleMapsLink || `https://www.google.com/maps?q=${order.location.latitude},${order.location.longitude}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                        >
+                                          <Navigation className="w-3 h-3" />
+                                          View on Maps
+                                        </a>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -1158,6 +1221,69 @@ const Admin = () => {
                   </motion.div>
                 ))
               )}
+            </div>
+          )}
+
+          {activeTab === "coupons" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <SectionLabel>Generated Coupons</SectionLabel>
+                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                  Auto-generated on product reviews
+                </p>
+              </div>
+              
+              <div className="grid gap-3">
+                {coupons.length === 0 ? (
+                  <EmptyState title="No Coupons Found" subtitle="Coupons are generated when users review their delivered products." />
+                ) : (
+                  coupons.map((coupon) => (
+                    <motion.div 
+                      key={coupon.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-2xl border border-white/6 bg-[#0d0d18] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          coupon.isUsed ? "bg-white/5 text-white/20" : "bg-green-500/20 text-green-400"
+                        }`}>
+                          <Ticket className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-black tracking-tighter text-white">{coupon.code}</p>
+                          <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                            {coupon.discountPercent}% Discount • {coupon.isUsed ? "Redeemed" : "Active"}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col sm:items-end gap-1">
+                        <p className="text-[10px] text-white/40 font-medium">
+                          Created: {coupon.createdAt?.toDate?.()?.toLocaleDateString() || "N/A"}
+                        </p>
+                        {coupon.orderId && (
+                          <p className="text-[10px] text-blue-400 font-bold">
+                            Used for Order: #{coupon.orderId.slice(0, 8)}
+                          </p>
+                        )}
+                        <button 
+                          onClick={async () => {
+                            if (window.confirm("Are you sure you want to delete this coupon?")) {
+                              await deleteDoc(doc(db, "coupons", coupon.id));
+                              toast.success("Coupon deleted");
+                              fetchCoupons();
+                            }
+                          }}
+                          className="text-white/20 hover:text-red-400 transition-colors mt-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
