@@ -39,8 +39,9 @@ const CinematicHero = () => {
       ref={containerRef}
       className="relative w-full h-[100vh] overflow-hidden bg-black"
     >
-      {/* Video Background - 100% visible and unblurred */}
+      {/* Hero Background - Video on Mobile, Image on Large Screens */}
       <motion.div style={{ scale: videoScale }} className="absolute inset-0">
+        {/* Video for mobile/small screens */}
         <video
           ref={videoRef}
           autoPlay
@@ -48,11 +49,23 @@ const CinematicHero = () => {
           loop
           playsInline
           onLoadedData={() => setVideoLoaded(true)}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${videoLoaded ? "opacity-100" : "opacity-0"
-            }`}
+          className={`md:hidden absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+            videoLoaded ? "opacity-100" : "opacity-0"
+          }`}
         >
           <source src="/bn.mp4" type="video/mp4" />
         </video>
+
+        {/* Image for large screens */}
+        <div 
+          className="hidden md:block absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-1000 opacity-100"
+          style={{ 
+            backgroundImage: `url('https://images6.alphacoders.com/138/1381562.jpg')`,
+          }}
+        />
+        
+        {/* Fallback/Loading state for larger screens if needed, otherwise background color handles it */}
+        <div className="absolute inset-0 bg-black/20 z-10" />
       </motion.div>
 
       {/* Intro Sequence vs Content */}
@@ -66,9 +79,9 @@ const CinematicHero = () => {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
           >
-            <h1 className="font-cursive text-7xl sm:text-[8rem] md:text-[10rem] text-white leading-none font-normal drop-shadow-2xl">
+            {/* <h1 className="font-cursive text-7xl sm:text-[8rem] md:text-[10rem] text-white leading-none font-normal drop-shadow-2xl">
               FlexTheKicks
-            </h1>
+            </h1> */}
           </motion.div>
         ) : (
           <motion.div
@@ -101,15 +114,15 @@ const CinematicHero = () => {
           transition={{ delay: 2, duration: 1 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
         >
-          <span className="text-white/60 drop-shadow-lg text-[10px] uppercase tracking-[0.3em] font-sans font-medium">
+          {/* <span className="text-white/60 drop-shadow-lg text-[10px] uppercase tracking-[0.3em] font-sans font-medium">
             Scroll
-          </span>
-          <motion.div
+          </span> */}
+          {/* <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
             <ChevronDown size={16} className="text-white/60 drop-shadow-lg" />
-          </motion.div>
+          </motion.div> */}
         </motion.div>
       )}
     </section>

@@ -14,6 +14,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import LoadingScreen from "./components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,7 @@ const queryClient = new QueryClient();
 const AdminRoute = ({ children }: { children: JSX.Element }) => {
   const { user, isAdmin, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingScreen />;
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -34,7 +35,7 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 const AppRoutes = () => {
   const { user, isAdmin, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <Routes>
@@ -45,7 +46,7 @@ const AppRoutes = () => {
       {/* If already logged in, prevent going back to login */}
       <Route
         path="/login"
-        element={user ? <Navigate to={isAdmin ? "/admin" : "/"} /> : <Login />}
+        element={user ? <Navigate to={isAdmin ? "/admin/flexthekicks" : "/"} /> : <Login />}
       />
 
       <Route
@@ -57,9 +58,9 @@ const AppRoutes = () => {
       <Route path="/orders" element={<Orders />} />
       <Route path="/orders/:id" element={<Orders />} />
 
-      {/* Admin Route */}
+      <Route path="/admin" element={<Navigate to="/admin/flexthekicks" replace />} />
       <Route
-        path="/admin"
+        path="/admin/flexthekicks"
         element={
           <AdminRoute>
             <Admin />

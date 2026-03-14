@@ -417,3 +417,109 @@
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
+
+/* Custom Loading Animation */
+@keyframes fill-text {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.loading-text {
+  position: relative;
+  font-family: 'Dancing Script', cursive;
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
+}
+
+.loading-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 100%;
+  color: #ff5e00;
+  border-right: 2px solid #ff5e00;
+  overflow: hidden;
+  animation: fill-text 2s ease-in-out infinite;
+}
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.dark .loading-screen {
+  background: black;
+}
+
+.dark .loading-text {
+  color: #333;
+}
+
+.dark .loading-text::after {
+  color: #ff5e00;
+  border-right: 2px solid #ff5e00;
+}
+
+/* Shoe Fill Animation */
+@keyframes fill-shoe-vertical {
+  from {
+    height: 0%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+.shoe-container {
+  position: relative;
+  width: 120px;
+  height: 80px;
+  margin-bottom: 1.5rem;
+}
+
+.shoe-icon-base {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 1.5;
+}
+
+.dark .shoe-icon-base {
+  stroke: #1e293b;
+}
+
+.shoe-icon-fill-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  animation: fill-shoe-vertical 2s ease-in-out infinite;
+}
+
+.shoe-icon-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 120px;
+  height: 80px;
+  fill: #ff5e00; /* Primary brand color */
+}
+

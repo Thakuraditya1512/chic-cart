@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
+import LoadingScreen from "@/components/LoadingScreen";
 
 interface Brand {
   id: string;
@@ -61,14 +62,7 @@ const BrandDetail = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-2 border-purple-500 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading brand...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen variant="product" />;
   }
 
   if (!brand) {

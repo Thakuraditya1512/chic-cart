@@ -11,6 +11,7 @@ import ProductCard from "@/components/ProductCard";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { Product } from "@/types";
+import LoadingScreen from "@/components/LoadingScreen";
 
 interface Brand {
   id: string;
@@ -94,14 +95,7 @@ const ProductDetail = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-2 border-purple-500 border-t-transparent animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading product...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen variant="product" />;
   }
 
   if (!product) {
