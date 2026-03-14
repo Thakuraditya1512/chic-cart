@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Star as StarFilled } from "lucide-react";
+import { Star as StarFilled, X, Image as ImageIcon, Plus } from "lucide-react";
+import { storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface Order {
   id: string;
@@ -56,8 +58,10 @@ const Orders = () => {
   const [reviewItem, setReviewItem] = useState<any>(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [reviewImages, setReviewImages] = useState<string[]>([""]);
+  const [reviewImages, setReviewImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewedProductIds, setReviewedProductIds] = useState<Set<string>>(new Set());
 
   // Success/Coupon Modal State
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -88,13 +92,22 @@ const Orders = () => {
     }
   };
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
+  const fetchUserReviews = async () => {
+    try {
+      const q = query(collection(db, "reviews"), where("userId", "==", user?.uid));
+      const snapshot = await getDocs(q);
+      const reviewedIds = new Set(snapshot.docs.map(doc => doc.data().productId));
+      setReviewedProductIds(reviewedIds);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
     }
+  };
 
-    fetchOrders();
+  useEffect(() => {
+    if (user) {
+      fetchOrders();
+      fetchUserReviews();
+    }
   }, [user, navigate]);
 
   const handleLogout = async () => {
@@ -107,8 +120,34 @@ const Orders = () => {
     setReviewItem(item);
     setRating(0);
     setComment("");
-    setReviewImages([""]);
+    setReviewImages([]);
+    setPreviewUrls([]);
     setReviewModalOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (reviewImages.length + files.length > 3) {
+      toast.error("You can only upload up to 3 images");
+      return;
+    }
+
+    const newFiles = [...reviewImages, ...files];
+    setReviewImages(newFiles);
+
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setPreviewUrls([...previewUrls, ...newPreviews]);
+  };
+
+  const removeImage = (index: number) => {
+    const newFiles = [...reviewImages];
+    newFiles.splice(index, 1);
+    setReviewImages(newFiles);
+
+    const newPreviews = [...previewUrls];
+    URL.revokeObjectURL(newPreviews[index]);
+    newPreviews.splice(index, 1);
+    setPreviewUrls(newPreviews);
   };
 
   const submitReview = async () => {
@@ -124,7 +163,16 @@ const Orders = () => {
     try {
       setSubmittingReview(true);
       
-      // 1. Save Review
+      // 1. Upload Images to Firebase Storage
+      const uploadedUrls = await Promise.all(
+        reviewImages.map(async (file) => {
+          const storageRef = ref(storage, `reviews/${user?.uid}/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          return await getDownloadURL(snapshot.ref);
+        })
+      );
+
+      // 2. Save Review
       const reviewData = {
         productId: reviewItem.productId,
         productName: reviewItem.productName,
@@ -133,7 +181,7 @@ const Orders = () => {
         customerName: reviewOrder?.customerName || user?.email?.split('@')[0],
         rating,
         comment,
-        images: reviewImages.filter(img => img.trim() !== ""),
+        images: uploadedUrls,
         createdAt: serverTimestamp(),
       };
 
@@ -147,10 +195,13 @@ const Orders = () => {
         userId: user?.uid,
         isUsed: false,
         createdAt: serverTimestamp(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days
       };
 
       await addDoc(collection(db, "coupons"), couponData);
+
+      // 3. Update local state to restrict further reviews
+      setReviewedProductIds(prev => new Set([...prev, reviewItem.productId]));
 
       setGeneratedCoupon(couponCode);
       setReviewModalOpen(false);
@@ -422,18 +473,25 @@ const Orders = () => {
                                       </p>
                                     )}
                                     {order.status === "delivered" && (
-                                      <Button 
-                                        size="sm" 
-                                        variant="outline" 
-                                        className="mt-2 h-7 text-[10px] font-bold px-3"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleOpenReview(order, item);
-                                        }}
-                                      >
-                                        <StarFilled className="w-3 h-3 mr-1.5 text-yellow-500 fill-yellow-500" />
-                                        Rate & Review
-                                      </Button>
+                                      reviewedProductIds.has(item.productId) ? (
+                                        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
+                                          <CheckCircle className="w-3 h-3" />
+                                          Reviewed
+                                        </div>
+                                      ) : (
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="mt-2 h-7 text-[10px] font-bold px-3 hover:bg-yellow-500/10 hover:text-yellow-500 hover:border-yellow-500/50 transition-all"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleOpenReview(order, item);
+                                          }}
+                                        >
+                                          <StarFilled className="w-3 h-3 mr-1.5 text-yellow-500 fill-yellow-500" />
+                                          Rate & Review
+                                        </Button>
+                                      )
                                     )}
                                   </div>
                                 </div>
@@ -600,31 +658,43 @@ const Orders = () => {
             </div>
 
             {/* Images */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Product Images (URLs)</label>
-              {reviewImages.map((url, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <Input 
-                    placeholder="https://example.com/shoe.jpg"
-                    className="bg-gray-800 border-gray-700 focus:border-blue-500 rounded-lg flex-1"
-                    value={url}
-                    onChange={(e) => {
-                      const newImages = [...reviewImages];
-                      newImages[idx] = e.target.value;
-                      setReviewImages(newImages);
-                    }}
-                  />
-                  {idx === reviewImages.length - 1 && reviewImages.length < 3 && (
-                    <Button 
-                      variant="outline" 
-                      className="shrink-0 border-gray-700"
-                      onClick={() => setReviewImages([...reviewImages, ""])}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Share Photos (Max 3)</label>
+              
+              <div className="grid grid-cols-3 gap-3">
+                {previewUrls.map((url, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-800 bg-gray-800 group">
+                    <img src={url} alt="Preview" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => removeImage(idx)}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
                     >
-                      +
-                    </Button>
-                  )}
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                {previewUrls.length < 3 && (
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-gray-800 hover:border-blue-500/50 hover:bg-blue-500/5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all group">
+                    <Plus className="w-6 h-6 text-gray-600 group-hover:text-blue-400" />
+                    <span className="text-[10px] font-bold text-gray-600 group-hover:text-blue-400">ADD</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      multiple 
+                      className="hidden" 
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {previewUrls.length === 0 && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-800/50 border border-gray-800/50">
+                  <ImageIcon className="w-4 h-4 text-gray-500" />
+                  <p className="text-[11px] text-gray-500 italic">No photos selected yet</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

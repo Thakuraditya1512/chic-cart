@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertCircle, ArrowRight, ShoppingBag, MapPin, CheckCircle2, Navigation, Tag, Ticket } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc, orderBy } from "firebase/firestore";
 import { toast } from "sonner";
 
 // Standard WhatsApp Icon SVG
@@ -60,6 +60,8 @@ const Checkout = () => {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
+  const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
+  const [showSavedAddresses, setShowSavedAddresses] = useState(false);
 
   // Redirect if no items in cart
   useEffect(() => {
@@ -93,15 +95,74 @@ const Checkout = () => {
     window.open(whatsappUrl, "_blank");
   };
 
-  // Pre-fill email if user is logged in
+  // Pre-fill email and fetch previous addresses if user is logged in
   useEffect(() => {
     if (user?.email) {
       setCustomerData((prev) => ({
         ...prev,
         email: user.email || "",
+        fullName: user.displayName || prev.fullName,
       }));
+      fetchPreviousAddresses();
     }
   }, [user]);
+
+  const fetchPreviousAddresses = async () => {
+    try {
+      const ordersRef = collection(db, "orders");
+      const q = query(ordersRef, where("userId", "==", user?.uid), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      
+      const addresses: any[] = [];
+      const seen = new Set();
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.lane1 && data.city) {
+          const key = `${data.lane1}-${data.city}-${data.zipCode}`.toLowerCase();
+          if (!seen.has(key)) {
+            addresses.push({
+              lane1: data.lane1,
+              lane2: data.lane2 || "",
+              landmark: data.landmark || "",
+              city: data.city,
+              zipCode: data.zipCode,
+              googleMapsLink: data.location?.googleMapsLink || "",
+              location: data.location || null
+            });
+            seen.add(key);
+          }
+        }
+      });
+      setPreviousAddresses(addresses.slice(0, 3)); // Limit to last 3 unique addresses
+    } catch (error) {
+      console.error("Error fetching previous addresses:", error);
+    }
+  };
+
+  const selectPreviousAddress = (addr: any) => {
+    setAddressData({
+      lane1: addr.lane1,
+      lane2: addr.lane2,
+      landmark: addr.landmark,
+      city: addr.city,
+      zipCode: addr.zipCode,
+      googleMapsLink: addr.googleMapsLink,
+    });
+    if (addr.location) {
+      setLocationData({
+        latitude: addr.location.latitude,
+        longitude: addr.location.longitude,
+        accuracy: null
+      });
+      setLocationStatus("success");
+    } else {
+      setLocationData(null);
+      setLocationStatus("idle");
+    }
+    setShowSavedAddresses(false);
+    toast.success("Address selected!");
+  };
 
   const handleCustomerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -414,6 +475,64 @@ const Checkout = () => {
                     <CardDescription>Where should we deliver your order?</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {previousAddresses.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="text-xs font-bold text-primary uppercase tracking-widest">Saved Addresses</label>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-7 text-[10px] font-black uppercase tracking-tighter"
+                            onClick={() => setShowSavedAddresses(!showSavedAddresses)}
+                          >
+                            {showSavedAddresses ? "Hide" : "Select Previous"}
+                          </Button>
+                        </div>
+                        
+                        <AnimatePresence>
+                          {showSavedAddresses && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="space-y-2 overflow-hidden"
+                            >
+                              {previousAddresses.map((addr, idx) => (
+                                <div 
+                                  key={idx}
+                                  onClick={() => selectPreviousAddress(addr)}
+                                  className="p-3 rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors text-xs"
+                                >
+                                  <p className="font-bold mb-0.5">{addr.lane1}</p>
+                                  <p className="text-muted-foreground">{addr.city}, {addr.zipCode}</p>
+                                </div>
+                              ))}
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full h-8 text-[10px] font-bold uppercase"
+                                onClick={() => {
+                                  setAddressData({
+                                    lane1: "",
+                                    lane2: "",
+                                    landmark: "",
+                                    city: "",
+                                    zipCode: "",
+                                    googleMapsLink: "",
+                                  });
+                                  setLocationData(null);
+                                  setLocationStatus("idle");
+                                  setShowSavedAddresses(false);
+                                }}
+                              >
+                                Use Another Address
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
                     <form onSubmit={handleAddressSubmit} className="space-y-4">
                       {/* Location Access */}
                       <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 mb-6">
