@@ -117,7 +117,7 @@ const DarkTooltip = ({ active, payload, label }: any) => {
                     <span className="text-white/50">{p.name}:</span>
                     <span className="text-white font-semibold">
                         {p.name?.toLowerCase().includes("revenue") || p.name?.toLowerCase().includes("total")
-                            ? `$${fmt(p.value)}`
+                            ? `₹${fmt(p.value)}`
                             : p.value}
                     </span>
                 </div>
@@ -234,7 +234,7 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
                 {[
                     {
                         icon: DollarSign, label: "Total Revenue", color: EMERALD,
-                        value: `$${fmt(stats.totalRevenue)}`,
+                        value: `₹${fmt(stats.totalRevenue)}`,
                     },
                     {
                         icon: ShoppingBag, label: "Total Orders", color: ACCENT,
@@ -242,7 +242,7 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
                     },
                     {
                         icon: TrendingUp, label: "Avg. Order Value", color: CYAN,
-                        value: `$${fmt(stats.avgOrder)}`,
+                        value: `₹${fmt(stats.avgOrder)}`,
                     },
                     {
                         icon: CheckCircle, label: "Delivered", color: AMBER,
@@ -321,7 +321,7 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
                             yAxisId="rev"
                             tick={{ fill: "#ffffff30", fontSize: 10 }}
                             tickLine={false} axisLine={false}
-                            tickFormatter={v => `$${v}`}
+                            tickFormatter={v => `₹${v.toLocaleString('en-IN')}`}
                         />
                         <YAxis
                             yAxisId="ord"

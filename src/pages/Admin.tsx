@@ -28,6 +28,7 @@ interface Product {
   description: string;
   brandId: string;
   image: string;
+  images?: string[];
   rating?: number;
   reviews?: number;
   inStock?: boolean;
@@ -111,7 +112,7 @@ const Admin = () => {
 
   const [productForm, setProductForm] = useState({
     name: "", price: "", originalPrice: "", description: "",
-    image: "", rating: "4.5", reviews: "0", inStock: true, sizes: [] as string[],
+    image: "", images: [] as string[], rating: "4.5", reviews: "0", inStock: true, sizes: [] as string[],
   });
 
   useEffect(() => {
@@ -235,7 +236,7 @@ const Admin = () => {
     setFormType("product"); setEditing(null);
     setProductForm({
       name: "", price: "", originalPrice: "", description: "",
-      image: "", rating: "4.5", reviews: "0", inStock: true, sizes: []
+      image: "", images: [], rating: "4.5", reviews: "0", inStock: true, sizes: []
     });
     setImagePreview(""); setError(""); setShowForm(true);
   };
@@ -252,6 +253,7 @@ const Admin = () => {
       name: p.name, price: String(p.price),
       originalPrice: p.originalPrice ? String(p.originalPrice) : "",
       description: p.description, image: p.image,
+      images: p.images || [],
       rating: String(p.rating || 4.5), reviews: String(p.reviews || 0),
       inStock: p.inStock ?? true, sizes: p.sizes || [],
     });
@@ -297,14 +299,19 @@ const Admin = () => {
     if (!selectedBrand) { setError("No brand selected"); return; }
     if (!productForm.name.trim()) { setError("Product name is required"); return; }
     if (!productForm.price || Number(productForm.price) <= 0) { setError("Price must be > 0"); return; }
-    if (!productForm.image.trim()) { setError("Image URL is required"); return; }
     const rating = Number(productForm.rating);
     if (isNaN(rating) || rating < 0 || rating > 5) { setError("Rating must be 0–5"); return; }
+    
+    const allImages = [productForm.image.trim(), ...productForm.images].filter(Boolean);
+    if (allImages.length === 0) { setError("At least one image is required"); return; }
+    
     const data = {
       name: productForm.name.trim(), price: Number(productForm.price),
       originalPrice: productForm.originalPrice ? Number(productForm.originalPrice) : null,
       brandId: selectedBrand.id, description: productForm.description.trim(),
-      image: productForm.image.trim(), rating, reviews: Number(productForm.reviews) || 0,
+      image: allImages[0], 
+      images: allImages,
+      rating, reviews: Number(productForm.reviews) || 0,
       inStock: productForm.inStock, sizes: productForm.sizes,
       updatedAt: new Date().toISOString(),
     };
@@ -477,7 +484,7 @@ const Admin = () => {
                 { label: "Brands", value: brands.length, unit: "" },
                 { label: "Products", value: products.length, unit: "" },
                 { label: "Featured", value: featuredProducts.size, unit: "" },
-                { label: "Inventory", value: `$${products.reduce((s, p) => s + p.price, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, unit: "" },
+                { label: "Inventory", value: `₹${products.reduce((s, p) => s + p.price, 0).toLocaleString('en-IN')}`, unit: "" },
               ].map(stat => (
                 <div key={stat.label}
                   className="rounded-2xl border border-white/6 bg-[#0d0d18] p-5">
@@ -541,6 +548,42 @@ const Admin = () => {
                           onError={() => setImagePreview("")}
                           className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-white/5" />
                         <p className="text-xs text-white/30 truncate flex-1">{imagePreview}</p>
+                      </div>
+                    )}
+
+                    {formType === "product" && (
+                      <div className="mt-4 space-y-3">
+                        <label className={labelCls}>Additional Images</label>
+                        {productForm.images.map((url, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <input
+                              value={url}
+                              onChange={(e) => {
+                                const newImages = [...productForm.images];
+                                newImages[idx] = e.target.value;
+                                setProductForm(f => ({ ...f, images: newImages }));
+                              }}
+                              placeholder="Additional Image URL"
+                              className={inputCls}
+                            />
+                            <button
+                              onClick={() => {
+                                const newImages = productForm.images.filter((_, i) => i !== idx);
+                                setProductForm(f => ({ ...f, images: newImages }));
+                              }}
+                              className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => setProductForm(f => ({ ...f, images: [...f.images, ""] }))}
+                          className="flex items-center gap-2 text-xs font-semibold text-[#6c5ce7] hover:text-[#7c6cf7] transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Add Image
+                        </button>
                       </div>
                     )}
                   </div>
@@ -813,9 +856,9 @@ const Admin = () => {
                           </div>
                           <h3 className="font-bold text-white truncate mb-1">{p.name}</h3>
                           <div className="flex items-baseline gap-2 mb-2">
-                            <span className="font-bold text-white">${p.price.toFixed(2)}</span>
+                            <span className="font-bold text-white">₹{p.price.toLocaleString('en-IN')}</span>
                             {p.originalPrice && (
-                              <span className="text-sm text-white/25 line-through">${p.originalPrice.toFixed(2)}</span>
+                              <span className="text-sm text-white/25 line-through">₹{p.originalPrice.toLocaleString('en-IN')}</span>
                             )}
                           </div>
                           {p.rating && (
@@ -876,7 +919,7 @@ const Admin = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-white text-sm truncate">{product.name}</p>
                           <p className="text-xs text-white/35 mt-0.5">
-                            {brand?.name} · ${product.price.toFixed(2)}
+                            {brand?.name} · ₹{product.price.toLocaleString('en-IN')}
                           </p>
                         </div>
                         <button onClick={() => toggleFeatured(product.id)}
@@ -939,7 +982,7 @@ const Admin = () => {
                           </div>
                           <div>
                             <p className="text-[10px] text-white/25 uppercase tracking-widest">Total</p>
-                            <p className="text-sm font-bold text-white">${order.total.toFixed(2)}</p>
+                            <p className="text-sm font-bold text-white">₹{order.total.toLocaleString('en-IN')}</p>
                           </div>
                           <span className={`hidden sm:inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border
                             ${STATUS_COLORS[order.status] || "text-white/40 bg-white/5 border-white/10"}`}>
@@ -977,11 +1020,11 @@ const Admin = () => {
                                         <div className="flex justify-between gap-2">
                                           <p className="text-sm font-medium text-white truncate">{item.productName}</p>
                                           <p className="text-sm font-bold text-white flex-shrink-0">
-                                            ${(item.price * item.quantity).toFixed(2)}
+                                            ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                                           </p>
                                         </div>
                                         <p className="text-xs text-white/35 mt-0.5">
-                                          Qty {item.quantity} × ${item.price.toFixed(2)}
+                                          Qty {item.quantity} × ₹{item.price.toLocaleString('en-IN')}
                                           {item.size && ` · Size ${item.size}`}
                                         </p>
                                       </div>

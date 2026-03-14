@@ -63,12 +63,12 @@ const Checkout = () => {
     cartItems.forEach(item => {
       message += `Product: ${item.product.name}\n`;
       message += `Quantity: ${item.quantity}\n`;
-      message += `Price: $${item.product.price.toFixed(2)}\n\n`;
+      message += `Price: ₹${item.product.price.toLocaleString('en-IN')}\n\n`;
     });
 
     const currentTotal = totalPrice + (totalPrice > 1000 ? 0 : 50);
 
-    message += `Total: $${currentTotal.toFixed(2)}\n\n`;
+    message += `Total: ₹${currentTotal.toLocaleString('en-IN')}\n\n`;
     message += "Please confirm the order.";
 
     const encodedMessage = encodeURIComponent(message);
@@ -154,7 +154,7 @@ const Checkout = () => {
           return itemData;
         }),
         subtotal: totalPrice,
-        codCharge: totalPrice > 1000 ? 0 : 50, // Free COD for orders > $1000
+        codCharge: totalPrice > 1000 ? 0 : 50, // Free COD for orders > 1000
         total: totalPrice + (totalPrice > 1000 ? 0 : 50),
         paymentMethod: "COD",
         status: "pending",
@@ -428,7 +428,7 @@ const Checkout = () => {
                       <span className="text-muted-foreground">
                         {item.product.name} × {item.quantity}
                       </span>
-                      <span className="font-medium">${(item.product.price * item.quantity).toFixed(2)}</span>
+                      <span className="font-medium">₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</span>
                     </div>
                   ))}
                 </div>
@@ -436,16 +436,16 @@ const Checkout = () => {
                 <div className="border-t border-border/50 pt-3 space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>₹{totalPrice.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">COD Charge</span>
-                    <span>{totalPrice > 1000 ? "Free" : "$50"}</span>
+                    <span>{totalPrice > 1000 ? "Free" : "₹50"}</span>
                   </div>
                   <div className="flex justify-between font-bold text-base pt-2 border-t border-border/50">
                     <span>Total</span>
                     <span className="text-primary">
-                      ${(totalPrice + (totalPrice > 1000 ? 0 : 50)).toFixed(2)}
+                      ₹{(totalPrice + (totalPrice > 1000 ? 0 : 50)).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ const Checkout = () => {
                 <div className="p-3 rounded-lg bg-muted/30 text-xs mt-2">
                   <p className="text-muted-foreground">
                     ✓ Cash on Delivery (COD)
-                    <br />✓ Free shipping on orders &gt; $1000
+                    <br />✓ Free shipping on orders &gt; ₹1000
                     <br />✓ Track your order in real-time
                   </p>
                 </div>

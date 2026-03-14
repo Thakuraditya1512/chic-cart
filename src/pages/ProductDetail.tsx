@@ -32,6 +32,7 @@ const ProductDetail = () => {
   const [wishlisted, setWishlisted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [imageZoomed, setImageZoomed] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -120,26 +121,53 @@ const ProductDetail = () => {
         </Link>
 
         <div className="grid md:grid-cols-2 gap-8 md:gap-16">
-          {/* Image */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="relative aspect-[3/4] rounded-lg overflow-hidden bg-secondary cursor-zoom-in"
-            onClick={() => setImageZoomed(!imageZoomed)}
-          >
-            <img
-              src={product.image}
-              alt={product.name}
-              className={`w-full h-full object-cover transition-transform duration-500 ${imageZoomed ? "scale-150" : "scale-100"}`}
-            />
-            {product.badge && (
-              <span className={`absolute top-4 left-4 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm ${
-                product.badge === "sale" ? "bg-sale text-sale-foreground" : "bg-badge text-badge-foreground"
-              }`}>
-                {product.badge}
-              </span>
+          <div className="flex flex-col gap-4">
+            {/* Main Image */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative aspect-[3/4] rounded-lg overflow-hidden bg-secondary cursor-zoom-in"
+              onClick={() => setImageZoomed(!imageZoomed)}
+            >
+              <img
+                src={product.images && product.images.length > 0 ? product.images[activeImageIndex] : product.image}
+                key={activeImageIndex}
+                alt={product.name}
+                className={`w-full h-full object-cover transition-transform duration-500 ${imageZoomed ? "scale-150" : "scale-100"}`}
+              />
+              {product.badge && (
+                <span className={`absolute top-4 left-4 text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm ${
+                  product.badge === "sale" ? "bg-sale text-sale-foreground" : "bg-badge text-badge-foreground"
+                }`}>
+                  {product.badge}
+                </span>
+              )}
+
+              {/* Tap to Scroll Overlay (Mobile indication) */}
+              {product.images && product.images.length > 1 && (
+                <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] text-white font-bold uppercase tracking-widest pointer-events-none">
+                  Tap to slide
+                </div>
+              )}
+            </motion.div>
+
+            {/* Thumbnails / Image Dots */}
+            {product.images && product.images.length > 1 && (
+              <div className="flex justify-center gap-2 overflow-x-auto py-2 no-scrollbar">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImageIndex(idx)}
+                    className={`w-12 h-16 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
+                      activeImageIndex === idx ? "border-[#6c5ce7]" : "border-transparent opacity-50"
+                    }`}
+                  >
+                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
             )}
-          </motion.div>
+          </div>
 
           {/* Details */}
           <motion.div
@@ -160,9 +188,9 @@ const ProductDetail = () => {
             </div>
 
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-2xl font-bold text-foreground">${product.price.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
               {product.originalPrice && (
-                <span className="text-lg text-muted-foreground line-through">${product.originalPrice.toFixed(2)}</span>
+                <span className="text-lg text-muted-foreground line-through">₹{product.originalPrice.toLocaleString('en-IN')}</span>
               )}
               {product.originalPrice && (
                 <span className="text-xs font-bold uppercase px-2 py-1 bg-sale text-sale-foreground rounded-sm">

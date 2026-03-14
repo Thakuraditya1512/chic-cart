@@ -61,7 +61,7 @@ const SearchOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <h3 className="text-sm font-medium text-foreground line-clamp-2">{product.name}</h3>
-                  <p className="text-sm font-semibold text-foreground mt-0.5">${product.price.toFixed(2)}</p>
+                  <p className="text-sm font-semibold text-foreground mt-0.5">₹{product.price.toLocaleString('en-IN')}</p>
                 </Link>
               ))}
             </div>

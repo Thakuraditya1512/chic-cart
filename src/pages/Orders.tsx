@@ -261,7 +261,7 @@ const Orders = () => {
                       }`}>Order Total</p>
                       <p className={`text-2xl font-bold ${
                         isDarkMode ? "text-blue-400" : "text-blue-600"
-                      }`}>${order.total.toFixed(2)}</p>
+                      }`}>₹{order.total.toLocaleString('en-IN')}</p>
                     </div>
                   </div>
 
@@ -313,7 +313,7 @@ const Orders = () => {
                                 <p className={`text-xs mb-2 ${
                                   isDarkMode ? "text-gray-400" : "text-gray-600"
                                 }`}>
-                                  Quantity: {item.quantity} × ${item.price.toFixed(2)}
+                                  Quantity: {item.quantity} × ₹{item.price.toLocaleString('en-IN')}
                                 </p>
                                 {item.size && (
                                   <p className={`text-xs mb-2 capitalize ${
@@ -332,7 +332,7 @@ const Orders = () => {
                                 <div className={`text-sm font-semibold ${
                                   isDarkMode ? "text-blue-400" : "text-blue-600"
                                 }`}>
-                                  ${(item.price * item.quantity).toFixed(2)}
+                                  ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                                 </div>
                               </div>
                             </div>
@@ -348,17 +348,17 @@ const Orders = () => {
                       }`}>
                         <div className="flex justify-between">
                           <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>Subtotal</span>
-                          <span className={isDarkMode ? "text-white" : "text-gray-900"}>${order.subtotal.toFixed(2)}</span>
+                          <span className={isDarkMode ? "text-white" : "text-gray-900"}>₹{order.subtotal.toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className={isDarkMode ? "text-gray-400" : "text-gray-600"}>COD Charge</span>
-                          <span className={isDarkMode ? "text-white" : "text-gray-900"}>${order.codCharge.toFixed(2)}</span>
+                          <span className={isDarkMode ? "text-white" : "text-gray-900"}>₹{order.codCharge.toLocaleString('en-IN')}</span>
                         </div>
                         <div className={`flex justify-between font-bold pt-2 border-t ${
                           isDarkMode ? "border-gray-700" : "border-gray-200"
                         }`}>
                           <span className={isDarkMode ? "text-white" : "text-gray-900"}>Total</span>
-                          <span className={`${isDarkMode ? "text-blue-400" : "text-blue-600"}`}>${order.total.toFixed(2)}</span>
+                          <span className={`${isDarkMode ? "text-blue-400" : "text-blue-600"}`}>₹{order.total.toLocaleString('en-IN')}</span>
                         </div>
                       </div>
 

@@ -30,10 +30,10 @@ const CartDrawer = () => {
     items.forEach(item => {
       message += `Product: ${item.product.name}\n`;
       message += `Quantity: ${item.quantity}\n`;
-      message += `Price: $${item.product.price.toFixed(2)}\n\n`;
+      message += `Price: ₹${item.product.price.toLocaleString('en-IN')}\n\n`;
     });
 
-    message += `Total: $${totalPrice.toFixed(2)}\n\n`;
+    message += `Total: ₹${totalPrice.toLocaleString('en-IN')}\n\n`;
     message += "Please confirm the order.";
 
     const encodedMessage = encodeURIComponent(message);
@@ -105,7 +105,7 @@ const CartDrawer = () => {
                     </Link>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-medium text-foreground line-clamp-2">{item.product.name}</h3>
-                      <p className="text-sm font-semibold text-foreground mt-1">${item.product.price.toFixed(2)}</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">₹{item.product.price.toLocaleString('en-IN')}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <button
                           onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
@@ -138,7 +138,7 @@ const CartDrawer = () => {
               <div className="p-4 border-t border-border space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="text-lg font-semibold text-foreground">${totalPrice.toFixed(2)}</span>
+                  <span className="text-lg font-semibold text-foreground">₹{totalPrice.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex flex-col gap-2">
                   <button
