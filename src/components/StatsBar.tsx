@@ -52,7 +52,7 @@ const AnimatedCounter = ({
     </span>
   );
 };
-
+//chekcing 
 const StatsBar = () => {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
