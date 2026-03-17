@@ -32,10 +32,18 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
-const AppRoutes = () => {
-  const { user, isAdmin, loading } = useAuth();
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { user, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  return children;
+};
+
+const AppRoutes = () => {
+  const { user, isAdmin, loading } = useAuth();
 
   return (
     <Routes>
@@ -46,17 +54,17 @@ const AppRoutes = () => {
       {/* If already logged in, prevent going back to login */}
       <Route
         path="/login"
-        element={user ? <Navigate to={isAdmin ? "/admin/flexthekicks" : "/"} /> : <Login />}
+        element={loading ? <LoadingScreen /> : user ? <Navigate to={isAdmin ? "/admin/flexthekicks" : "/"} /> : <Login />}
       />
 
       <Route
         path="/signup"
-        element={user ? <Navigate to="/" /> : <Signup />}
+        element={loading ? <LoadingScreen /> : user ? <Navigate to="/" /> : <Signup />}
       />
 
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/orders" element={<Orders />} />
-      <Route path="/orders/:id" element={<Orders />} />
+      <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+      <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+      <Route path="/orders/:id" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
 
       <Route path="/admin" element={<Navigate to="/admin/flexthekicks" replace />} />
       <Route

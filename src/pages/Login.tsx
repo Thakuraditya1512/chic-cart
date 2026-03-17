@@ -35,7 +35,9 @@ const Login = () => {
     try {
       setLoading(true);
       await login(email, password);
-      navigate("/");
+      // Don't navigate manually — the /login route in App.tsx
+      // will detect the auth state change and redirect to the
+      // correct destination (admin panel for admins, home for users)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Login failed";
       setError(errorMsg);
