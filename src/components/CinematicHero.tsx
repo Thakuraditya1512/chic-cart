@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const CinematicHero = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
+  const textRef = useRef<HTMLDivElement>(null);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -22,11 +28,9 @@ const CinematicHero = () => {
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.playbackRate = 0.8;
-      // Force play to ensure videos start immediately on most browsers
       videoRef.current.play().catch(e => console.log("Autoplay prevented:", e));
     }
 
-    // Hide intro after 2.5 seconds
     const timer = setTimeout(() => {
       setShowIntro(false);
     }, 2500);
@@ -34,10 +38,41 @@ const CinematicHero = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // GSAP text reveal animation
+  useEffect(() => {
+    if (!showIntro && textRef.current) {
+      gsap.fromTo(
+        textRef.current,
+        { opacity: 0, y: 60, scale: 0.95 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          scale: 1,
+          duration: 1.2, 
+          ease: "power3.out",
+          delay: 0.3
+        }
+      );
+    }
+  }, [showIntro]);
+
+  // Scroll indicator bounce animation
+  useEffect(() => {
+    if (!showIntro && scrollIndicatorRef.current) {
+      gsap.to(scrollIndicatorRef.current, {
+        y: 8,
+        duration: 1,
+        repeat: -1,
+        yoyo: true,
+        ease: "power2.inOut"
+      });
+    }
+  }, [showIntro]);
+
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[100vh] overflow-hidden bg-black"
+      className="relative w-full h-[100dvh] overflow-hidden bg-black"
     >
       {/* Hero Background - Video on Mobile, Image on Large Screens */}
       <motion.div style={{ scale: videoScale }} className="absolute inset-0">
@@ -64,47 +99,33 @@ const CinematicHero = () => {
           }}
         />
         
-        {/* Fallback/Loading state for larger screens if needed, otherwise background color handles it */}
         <div className="absolute inset-0 bg-black/20 z-10" />
       </motion.div>
 
       {/* Intro Sequence vs Content */}
-      <AnimatePresence mode="wait">
-        {showIntro ? (
+      <motion.div
+        key={showIntro ? "intro" : "content"}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 1 }}
+        className="relative z-20 flex flex-col items-center justify-end h-full text-center px-4 pb-24 sm:pb-32 md:pb-24"
+      >
+        {!showIntro && (
           <motion.div
-            key="intro"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.5 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
-          >
-            {/* <h1 className="font-cursive text-7xl sm:text-[8rem] md:text-[10rem] text-white leading-none font-normal drop-shadow-2xl">
-              FlexTheKicks
-            </h1> */}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="content"
+            ref={textRef}
             style={{ y: textY, opacity: textOpacity }}
-            className="relative z-20 flex flex-col items-center justify-end h-full text-center px-4 pb-24"
+            className="flex flex-col items-center justify-center mb-6"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center justify-center mb-6"
-            >
-              <h1 className="font-cursive text-5xl sm:text-6xl md:text-7xl text-white leading-none font-normal drop-shadow-2xl mb-4">
-                FlexTheKicks
-              </h1>
-              <p className="text-xs md:text-sm uppercase tracking-[0.4em] text-white/80 font-sans font-medium drop-shadow-lg drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]">
-                Spring / Summer 2026 Collection
-              </p>
-            </motion.div>
+            <h1 className="font-cursive text-[3rem] sm:text-[4.5rem] md:text-7xl text-white leading-none font-normal drop-shadow-2xl mb-4">
+              FlexTheKicks
+            </h1>
+            <p className="text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.4em] text-white/80 font-sans font-medium drop-shadow-lg max-w-xs sm:max-w-md">
+              Spring / Summer 2026 Collection
+            </p>
           </motion.div>
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* Scroll indicator */}
       {!showIntro && (
@@ -112,17 +133,14 @@ const CinematicHero = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
         >
-          {/* <span className="text-white/60 drop-shadow-lg text-[10px] uppercase tracking-[0.3em] font-sans font-medium">
+          <span className="text-white/60 drop-shadow-lg text-[10px] uppercase tracking-[0.3em] font-sans font-medium">
             Scroll
-          </span> */}
-          {/* <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          >
+          </span>
+          <div ref={scrollIndicatorRef}>
             <ChevronDown size={16} className="text-white/60 drop-shadow-lg" />
-          </motion.div> */}
+          </div>
         </motion.div>
       )}
     </section>

@@ -288,8 +288,8 @@ export default function Checkout() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
-        <div className="grid lg:grid-cols-[1fr_380px] gap-8 items-start">
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:gap-8 items-start">
 
           {/* ── Left: Steps ── */}
           <div className="space-y-4">
@@ -516,8 +516,8 @@ export default function Checkout() {
             </AnimatePresence>
           </div>
 
-          {/* ── Right: Order Summary ── */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="sticky top-20">
+          {/* ── Right: Order Summary ── (Shows first on mobile) */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:sticky lg:top-20 order-first lg:order-last mb-6 lg:mb-0">
             <div className={`${cardBg} rounded-3xl border overflow-hidden shadow-sm`}>
               {/* Header */}
               <div className={`px-6 py-5 border-b ${divider} flex items-center justify-between`}>
@@ -675,4 +675,4 @@ function CtaButton({ type = "button", label, onClick, disabled, icon, darkMode }
       {icon || <>{label} <ArrowRight className="w-4 h-4" /></>}
     </button>
   );
-}
+}

@@ -5,15 +5,17 @@ import {
   signOut,
   onAuthStateChanged,
   User,
+  signInWithPopup,
 } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db, googleProvider } from "@/lib/firebase";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signup: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
   userRole: string | null;
@@ -77,6 +79,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const loginWithGoogle = async () => {
+    setError(null);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+
+      // Check if user exists in Firestore, if not create
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          email: user.email,
+          role: "user",
+          createdAt: serverTimestamp(),
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        });
+      }
+      setUserRole(userSnap.exists() ? userSnap.data().role : "user");
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      setError(error.message);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     setError(null);
     await signOut(auth);
@@ -89,6 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loading,
         signup,
         login,
+        loginWithGoogle,
         logout,
         error,
         userRole,
