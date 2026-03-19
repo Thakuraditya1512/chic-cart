@@ -149,71 +149,96 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
       <div ref={shoeRef} className="relative mb-6">
         <svg
           viewBox="0 0 120 80"
-          className="w-28 h-20 sm:w-36 sm:h-24 text-foreground"
+          className="w-28 h-20 sm:w-36 sm:h-24"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
+          <defs>
+            <linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#FF6B6B" />
+              <stop offset="50%" stopColor="#4ECDC4" />
+              <stop offset="100%" stopColor="#45B7D1" />
+            </linearGradient>
+            <linearGradient id="toeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FF6B6B" />
+              <stop offset="100%" stopColor="#FFA07A" />
+            </linearGradient>
+            <linearGradient id="heelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#9B59B6" />
+              <stop offset="100%" stopColor="#8E44AD" />
+            </linearGradient>
+            <linearGradient id="lacesGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#F39C12" />
+              <stop offset="100%" stopColor="#E67E22" />
+            </linearGradient>
+          </defs>
+
           {/* Sole */}
           <path 
             className="shoe-part"
             d="M10 55 Q10 65 20 65 L95 65 Q110 65 115 55 Q118 50 115 45 L110 42" 
-            fill="currentColor"
-            fillOpacity="0.1"
+            fill="#2C3E50"
+            stroke="#fff"
+            strokeWidth="1"
           />
           {/* Midsole stripe */}
           <path 
             className="shoe-part"
             d="M12 58 L112 58" 
+            stroke="#4ECDC4"
             strokeWidth="2"
-            opacity="0.5"
+            strokeLinecap="round"
+            opacity="0.8"
           />
-          {/* Upper body */}
+          {/* Upper body - gradient */}
           <path 
             className="shoe-part"
             d="M20 55 L25 35 Q28 25 40 25 L65 25 Q75 25 80 30 L95 42 L110 42 Q115 42 115 48 L115 52" 
-            fill="currentColor"
-            fillOpacity="0.05"
+            fill="url(#shoeGrad)"
+            opacity="0.9"
           />
-          {/* Toe cap */}
+          {/* Toe cap - gradient */}
           <path 
             className="shoe-part"
             d="M95 42 Q110 42 115 48 L115 55 Q110 62 95 62 L90 62 L90 42 Z" 
-            fill="currentColor"
-            fillOpacity="0.15"
+            fill="url(#toeGrad)"
+            opacity="0.8"
           />
-          {/* Heel counter */}
+          {/* Heel counter - gradient */}
           <path 
             className="shoe-part"
             d="M20 55 L22 40 Q23 35 28 35 L35 35 L35 55" 
-            fill="currentColor"
-            fillOpacity="0.2"
+            fill="url(#heelGrad)"
+            opacity="0.8"
           />
-          {/* Laces area */}
+          {/* Laces area - gradient */}
           <path 
             className="shoe-part"
             d="M40 25 L45 40 L70 40 L65 25" 
-            fill="currentColor"
-            fillOpacity="0.1"
+            fill="url(#lacesGrad)"
+            opacity="0.7"
           />
           {/* Laces */}
-          <line className="shoe-part" x1="48" y1="28" x2="52" y2="38" strokeWidth="2" />
-          <line className="shoe-part" x1="55" y1="28" x2="59" y2="38" strokeWidth="2" />
-          <line className="shoe-part" x1="62" y1="28" x2="66" y2="38" strokeWidth="2" />
+          <line className="shoe-part" x1="48" y1="28" x2="52" y2="38" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+          <line className="shoe-part" x1="55" y1="28" x2="59" y2="38" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+          <line className="shoe-part" x1="62" y1="28" x2="66" y2="38" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
           {/* Swoosh/Logo line */}
           <path 
             className="shoe-part"
             d="M45 45 Q60 50 75 42 Q85 38 90 45" 
+            stroke="#fff"
             strokeWidth="2.5"
-            opacity="0.8"
+            strokeLinecap="round"
+            fill="none"
           />
         </svg>
 
         {/* Glow effects */}
-        <div className="absolute inset-0 blur-2xl bg-foreground/10 rounded-full scale-125 -z-10" />
-        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-3 bg-foreground/20 rounded-full blur-md" />
+        <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-red-500/20 via-cyan-500/20 to-blue-500/20 rounded-full scale-125 -z-10" />
+        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-20 h-3 bg-gradient-to-r from-red-500/30 to-blue-500/30 rounded-full blur-md" />
       </div>
 
       {/* FTK Text - Modern Kinetic Typography */}
