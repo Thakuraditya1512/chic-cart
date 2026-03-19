@@ -27,14 +27,18 @@ const Index = () => {
         {/* 3. 3D Shoe showcase — Apple-style dark section */}
         <ShoeShowcase />
 
+
+       {/* 6. Featured products + horizontal scroll */}
+        <FeaturedProducts />
+
         {/* 4. Editorial lookbook grid */}
         <EditorialLookbook />
 
         {/* 5. Social proof stats */}
         <StatsBar />
 
-        {/* 6. Featured products + horizontal scroll */}
-        <FeaturedProducts />
+        {/* 6. Featured products + horizontal scroll
+        <FeaturedProducts /> */}
 
         {/* 7. Premium CTA / Sale banner */}
         <PremiumCTA />
