@@ -14,6 +14,20 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import Support from "./pages/Support";
+import NewDrops from "./pages/NewDrops";
+import Brands from "./pages/Brands";
+import Sale from "./pages/Sale";
+import AllProducts from "./pages/AllProducts";
+import AboutUs from "./pages/AboutUs";
+import Careers from "./pages/Careers";
+import Blog from "./pages/Blog";
+import FAQ from "./pages/FAQ";
+import Shipping from "./pages/Shipping";
+import Returns from "./pages/Returns";
+import SizeGuide from "./pages/SizeGuide";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import LoadingScreen from "./components/LoadingScreen";
 import { useTheme } from "./hooks/useTheme";
 import { toast } from "sonner";
@@ -92,6 +106,22 @@ const AppRoutes = () => {
         <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route path="/orders/:id" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        
+        {/* Footer Pages */}
+        <Route path="/support" element={<Support />} />
+        <Route path="/new-drops" element={<NewDrops />} />
+        <Route path="/brands" element={<Brands />} />
+        <Route path="/sale" element={<Sale />} />
+        <Route path="/products" element={<AllProducts />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/shipping" element={<Shipping />} />
+        <Route path="/returns" element={<Returns />} />
+        <Route path="/size-guide" element={<SizeGuide />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
         <Route
           path="/admin"

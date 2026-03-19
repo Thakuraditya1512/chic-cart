@@ -79,7 +79,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0, x: -30 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[9px] sm:text-[10px] md:text-xs uppercase tracking-[0.4em] text-foreground/50 mb-3 sm:mb-4 font-sans"
+              className="text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.35em] text-foreground/80 mb-3 sm:mb-4 font-sans font-bold"
             >
               Exclusive Release
             </motion.p>
