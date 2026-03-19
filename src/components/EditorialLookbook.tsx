@@ -31,14 +31,14 @@ const EditorialLookbook = () => {
       gridClass: "",
       mobileOrder: "order-3",
     },
-    {
-      image: "/shoe-white.png",
-      title: "Clean Break",
-      subtitle: "Minimal. Timeless.",
-      tag: "04",
-      gridClass: "md:col-span-2",
-      mobileOrder: "order-4",
-    },
+    // {
+    //   image: "/shoe-white.png",
+    //   title: "Clean Break",
+    //   subtitle: "Minimal. Timeless.",
+    //   tag: "04",
+    //   gridClass: "md:col-span-2",
+    //   mobileOrder: "order-4",
+    // },
   ];
 
   return (

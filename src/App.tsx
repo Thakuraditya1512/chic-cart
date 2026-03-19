@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import LoadingScreen from "./components/LoadingScreen";
 import { useTheme } from "./hooks/useTheme";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -26,9 +27,16 @@ const AdminRoute = ({ children }: { children: JSX.Element }) => {
 
   if (loading) return <LoadingScreen />;
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (!isAdmin) return <Navigate to="/" replace />;
+  if (!isAdmin) {
+    toast.error("Access Denied", {
+      description: "You do not have administrator privileges to access the admin panel.",
+    });
+    return <Navigate to="/" replace />;
+  }
 
   return children;
 };
@@ -63,14 +71,17 @@ const AppRoutes = () => {
       )}
       
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route 
+          path="/" 
+          element={loading ? <LoadingScreen /> : (user && isAdmin ? <Navigate to="/admin" replace /> : <Index />)} 
+        />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/brand/:brandId" element={<BrandDetail />} />
 
         {/* If already logged in, prevent going back to login */}
         <Route
           path="/login"
-          element={loading ? <LoadingScreen /> : user ? <Navigate to={isAdmin ? "/admin/flexthekicks" : "/"} /> : <Login />}
+          element={loading ? <LoadingScreen /> : user ? <Navigate to={isAdmin ? "/admin" : "/"} /> : <Login />}
         />
 
         <Route
@@ -82,15 +93,15 @@ const AppRoutes = () => {
         <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
         <Route path="/orders/:id" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
 
-        <Route path="/admin" element={<Navigate to="/admin/flexthekicks" replace />} />
         <Route
-          path="/admin/flexthekicks"
+          path="/admin"
           element={
             <AdminRoute>
               <Admin />
             </AdminRoute>
           }
         />
+        <Route path="/admin/flexthekicks" element={<Navigate to="/admin" replace />} />
 
         {/* Unknown pages → Redirect to Home */}
         <Route path="*" element={<Navigate to="/" replace />} />

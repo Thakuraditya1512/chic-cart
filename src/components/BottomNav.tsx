@@ -1,41 +1,24 @@
-import { Home, ShoppingBag, User } from "lucide-react";
+import { Home, ShoppingBag, User, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const BottomNav = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const { totalItems, setIsCartOpen } = useCart();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
 
+  if (!isAdmin) return null;
+
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border">
-      <div className="flex items-center justify-around h-14">
-        <button onClick={() => navigate("/")} className="flex flex-col items-center gap-0.5 text-foreground p-2">
-          <Home size={20} />
-          <span className="text-[10px] font-medium">Home</span>
-        </button>
-        <button onClick={() => setIsCartOpen(true)} className="flex flex-col items-center gap-0.5 text-muted-foreground p-2 relative">
-          <ShoppingBag size={20} />
-          {totalItems > 0 && (
-            <span className="absolute top-0.5 right-1 bg-badge text-badge-foreground text-[9px] font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full">
-              {totalItems}
-            </span>
-          )}
-          <span className="text-[10px] font-medium">Cart</span>
-        </button>
-        <button
-          onClick={() => {
-            if (user) {
-              navigate("/orders");
-            } else {
-              navigate("/login");
-            }
-          }}
-          className="flex flex-col items-center gap-0.5 text-muted-foreground p-2"
+    <nav className="md:hidden fixed bottom-1 left-0 right-0 z-50 bg-background/0 backdrop-blur-none border-t-0 pointer-events-none">
+      <div className="container mx-auto px-4 flex justify-end pb-4">
+        <button 
+          onClick={() => navigate("/admin")} 
+          className="pointer-events-auto flex flex-col items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full shadow-lg shadow-primary/30 animate-pulse border-2 border-primary-foreground/20"
         >
-          <User size={20} />
-          <span className="text-[10px] font-medium">Profile</span>
+          <LayoutDashboard size={16} />
+          <span className="text-[8px] font-bold uppercase tracking-tighter">Admin</span>
         </button>
       </div>
     </nav>

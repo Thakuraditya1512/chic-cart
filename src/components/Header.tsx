@@ -10,7 +10,7 @@ import gsap from "gsap";
 const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const navigate = useNavigate();
   const { totalItems, setIsCartOpen } = useCart();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -95,7 +95,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                     exit={{ rotate: 90, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <X size={22} />
+                    <X size={18} />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -105,7 +105,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                     exit={{ rotate: -90, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Menu size={22} />
+                    <Menu size={18} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -130,6 +130,14 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                 <span className="absolute -bottom-1 left-0 w-0 h-px bg-foreground group-hover:w-full transition-all duration-300" />
               </a>
             ))}
+            {isAdmin && (
+              <Link
+                  to="/admin"
+                className="text-[10px] font-sans font-bold uppercase tracking-[0.2em] px-3 py-1.5 bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-all border border-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+              >
+                Admin Panel
+              </Link>
+            )}
           </nav>
 
           {/* Right: Actions */}
@@ -140,7 +148,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               className="hidden md:flex p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Search"
             >
-              <Search size={18} />
+              <Search size={16} />
             </button>
 
             {/* Theme Toggle */}
@@ -149,7 +157,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
 
             {/* Profile / Orders button */}
@@ -164,7 +172,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Profile"
             >
-              <User size={18} />
+              <User size={16} />
             </button>
 
             {/* Cart Button */}
@@ -173,7 +181,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
               aria-label="Cart"
             >
-              <ShoppingBag size={18} />
+              <ShoppingBag size={16} />
               {totalItems > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -207,7 +215,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                 className="p-2 text-foreground"
                 aria-label="Close menu"
               >
-                <X size={22} />
+                <X size={18} />
               </button>
             </div>
 
@@ -218,27 +226,24 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                   ref={(el) => { menuItemsRef.current[i] = el; }}
                   href={link.to}
                   onClick={() => setMenuOpen(false)}
-                  className="w-full text-4xl sm:text-5xl font-display font-bold text-foreground hover:opacity-60 transition-opacity py-3 border-b border-border/30 flex items-center justify-between group"
+                  className="w-full text-2xl sm:text-3xl font-display font-bold text-foreground hover:opacity-60 transition-opacity py-3 border-b border-border/30 flex items-center justify-between group"
                 >
                   {link.label}
-                  <ArrowRight size={24} className="opacity-0 group-hover:opacity-100 transition-opacity -rotate-45" />
+                  <ArrowRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity -rotate-45" />
                 </a>
               ))}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="w-full text-2xl sm:text-3xl font-display font-bold text-primary hover:opacity-60 transition-opacity py-3 border-b border-border/30 flex items-center justify-between group"
+                >
+                  Admin Panel
+                  <ArrowRight size={16} className="opacity-100 -rotate-45" />
+                </Link>
+              )}
             </nav>
 
-            {/* Quick actions */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border/50">
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  onSearchOpen();
-                }}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-foreground text-background rounded-full text-sm font-sans font-semibold uppercase tracking-[0.1em]"
-              >
-                <Search size={16} />
-                Search Products
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

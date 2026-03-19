@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
 import {
   collection, addDoc, serverTimestamp, query, where,
-  getDocs, updateDoc, doc, orderBy
+  getDocs, updateDoc, doc, orderBy, getDoc
 } from "firebase/firestore";
 import { toast } from "sonner";
 
@@ -31,7 +31,7 @@ const STEPS: { id: Step; label: string; icon: any }[] = [
   { id: "review", label: "Review", icon: CheckCircle2 },
 ];
 
-const WHATSAPP_NUMBER = "1234567890";
+const WHATSAPP_NUMBER = "+919398415366";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -105,10 +105,38 @@ export default function Checkout() {
     if (!user) { setInitialLoading(false); return; }
     try {
       setInitialLoading(true);
-      const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
+      
       const addresses: any[] = [];
       const seen = new Set();
+
+      // 1. First, check the user's profile for a saved address
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const profileData = userDoc.data();
+        if (profileData.address && profileData.address.lane1) {
+          const addr = profileData.address;
+          const key = `${addr.lane1}-${addr.city}-${addr.zipCode}`.toLowerCase();
+          const profileAddr = { ...addr, isProfile: true };
+          addresses.push(profileAddr);
+          seen.add(key);
+          
+          // Auto-select and confirm the profile address
+          setSelectedAddressIdx(0);
+          setAddressMode("selected");
+          
+          // Auto-fill customer data if available in profile
+          setCustomerData(prev => ({
+            ...prev,
+            fullName: profileData.fullName || prev.fullName,
+            phone: profileData.phone || prev.phone
+          }));
+        }
+      }
+
+      // 2. Then fetch addresses from previous orders
+      const q = query(collection(db, "orders"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
         if (data.lane1 && data.city) {
@@ -119,7 +147,7 @@ export default function Checkout() {
           }
         }
       });
-      const result = addresses.slice(0, 4);
+      const result = addresses.slice(0, 5);
       setPreviousAddresses(result);
       setAddressMode(result.length > 0 ? "saved" : "new");
     } catch (e) {
@@ -198,6 +226,30 @@ export default function Checkout() {
         total: finalTotal, paymentMethod: "COD", status: "pending", createdAt: serverTimestamp(),
       };
       const docRef = await addDoc(collection(db, "orders"), orderData);
+
+      // Save/Update address and contact info in user's permanent profile
+      if (user?.uid) {
+        try {
+          await updateDoc(doc(db, "users", user.uid), {
+            fullName: customerData.fullName,
+            phone: customerData.phone,
+            address: {
+              lane1: addressData.lane1,
+              lane2: addressData.lane2,
+              landmark: addressData.landmark,
+              city: addressData.city,
+              zipCode: addressData.zipCode,
+              googleMapsLink: addressData.googleMapsLink,
+              location: locationData ? { latitude: locationData.latitude, longitude: locationData.longitude } : null
+            },
+            updatedAt: serverTimestamp()
+          });
+        } catch (profileErr) {
+          console.error("Failed to update user profile address:", profileErr);
+          // Don't fail the whole order if profile update fails
+        }
+      }
+
       if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
       toast.success("Order placed successfully! 🎉");
       clearCart(); navigate("/orders");
@@ -224,7 +276,7 @@ export default function Checkout() {
             <motion.div animate={{ rotate: 360, borderRadius: ["40%", "50%", "40%"] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               className="w-24 h-24 border-2 border-emerald-500/20 border-t-emerald-500" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Package className={`w-8 h-8 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"} animate-pulse`} />
+              <Package className={`w-6 h-6 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"} animate-pulse`} />
             </div>
           </div>
           <div className="text-center space-y-1">
@@ -376,7 +428,12 @@ export default function Checkout() {
                                   </div>
                                   {addr.location && (
                                     <div className="flex items-center gap-1.5 mt-2 ml-5 text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">
-                                      <Navigation className="w-2.5 h-2.5" /> GPS location saved
+                                      <Navigation className="w-2.5 h-2.5" /> {addr.isProfile ? "Primary profile address" : "GPS location saved"}
+                                    </div>
+                                  )}
+                                  {addr.isProfile && !addr.location && (
+                                    <div className="flex items-center gap-1.5 mt-2 ml-5 text-[10px] font-semibold text-blue-500 uppercase tracking-wider">
+                                      <CheckCircle2 className="w-2.5 h-2.5" /> Primary profile address
                                     </div>
                                   )}
                                 </motion.button>
@@ -591,7 +648,7 @@ export default function Checkout() {
               <div className={`px-6 py-4 border-b ${divider}`}>
                 <button onClick={handleWhatsAppCheckout}
                   className="w-full py-3 bg-[#25D366] hover:bg-[#22c55e] text-white text-sm font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#25D366]/20">
-                  <WhatsAppIcon className="w-4 h-4" /> Order via WhatsApp
+                  <WhatsAppIcon className="w-3.5 h-3.5" /> Order via WhatsApp
                 </button>
               </div>
 
@@ -672,7 +729,7 @@ function CtaButton({ type = "button", label, onClick, disabled, icon, darkMode }
   return (
     <button type={type} onClick={onClick} disabled={disabled}
       className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-6 ${darkMode ? "bg-white text-black hover:bg-zinc-200" : "bg-[#0f0f0f] text-white hover:bg-black/80"} disabled:opacity-50 text-sm font-semibold rounded-2xl transition-all active:scale-[0.98]`}>
-      {icon || <>{label} <ArrowRight className="w-4 h-4" /></>}
+      {icon || <>{label} <ArrowRight className="w-3.5 h-3.5" /></>}
     </button>
   );
 }

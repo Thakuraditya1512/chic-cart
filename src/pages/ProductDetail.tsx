@@ -10,7 +10,7 @@ import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where, orderBy, documentId, limit } from "firebase/firestore";
 import { Product } from "@/types";
 import LoadingScreen from "@/components/LoadingScreen";
 
@@ -46,6 +46,7 @@ const ProductDetail = () => {
   const [imageZoomed, setImageZoomed] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const imageRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const addToCartBtnRef = useRef<HTMLButtonElement>(null);
@@ -158,6 +159,38 @@ const ProductDetail = () => {
   useEffect(() => {
     if (product) {
       document.title = `${product.name} | FTK - Flex The Kicks`;
+      
+      // Update recently viewed in localStorage
+      const stored = localStorage.getItem("recentlyViewed");
+      let ids: string[] = stored ? JSON.parse(stored) : [];
+      ids = [product.id, ...ids.filter(id => id !== product.id)].slice(0, 8);
+      localStorage.setItem("recentlyViewed", JSON.stringify(ids));
+      
+      // Fetch recently viewed items (excluding current)
+      const fetchRecentItems = async () => {
+        const otherIds = ids.filter(id => id !== product.id).slice(0, 4);
+        if (otherIds.length === 0) {
+          setRecentlyViewed([]);
+          return;
+        }
+
+        try {
+          const q = query(collection(db, "products"), where(documentId(), "in", otherIds));
+          const snap = await getDocs(q);
+          const items = snap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            rating: d.data().rating || 4.5
+          } as Product));
+          // Sort them to match requested order
+          const sortedItems = items.sort((a, b) => otherIds.indexOf(a.id) - otherIds.indexOf(b.id));
+          setRecentlyViewed(sortedItems);
+        } catch (err) {
+          console.error("Error fetching recently viewed products:", err);
+        }
+      };
+      
+      fetchRecentItems();
     }
   }, [product]);
 
@@ -375,6 +408,100 @@ const ProductDetail = () => {
           </div>
         </div>
 
+        {/* Recently Viewed */}
+        {recentlyViewed.length > 0 && (
+          <section className="mt-12 sm:mt-16 md:mt-24">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <div>
+                <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1">
+                  Recently Viewed
+                </h2>
+                <p className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-[0.2em] font-bold">
+                  Items you've explored recently
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              {recentlyViewed.map((p, i) => (
+                <motion.div
+                  key={`recent-${p.id}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* You Might Like (Related) */}
+        {relatedProducts.length > 0 && (
+          <section className="mt-12 sm:mt-16 md:mt-24">
+            <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <div>
+                <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-1">
+                  You Might Also Like
+                </h2>
+                <p className="text-muted-foreground text-[10px] sm:text-xs uppercase tracking-[0.2em] font-bold">
+                  Hand-picked curation just for you
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+              {relatedProducts.map((p, i) => (
+                <motion.div
+                  key={`related-${p.id}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Disclaimer & Affordability Paragraph */}
+        <section className="mt-12 sm:mt-16 md:mt-24">
+          <div className="max-w-4xl mx-auto">
+            <div className="p-6 sm:p-8 md:p-12 rounded-3xl border border-border bg-card/20 backdrop-blur-sm relative overflow-hidden group">
+              {/* Decorative accent */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-700" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="h-px w-8 bg-primary" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">FlexTheKicks Quality Standard</span>
+                </div>
+
+                <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-6 transition-colors">
+                  Why FlexTheKicks?
+                </h2>
+                
+                <div className="space-y-6">
+                  <div className="p-4 rounded-xl bg-sale/10 border border-sale/20">
+                    <p className="text-xs sm:text-sm font-bold text-sale-foreground flex items-center gap-2">
+                       DISCLAIMER: 1st Copy Premium Quality
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-2 leading-relaxed">
+                      Please note: These products are high-quality <strong>1st copies</strong>, not original brand manufactured. They are meticulously crafted to offer the same premium aesthetic, comfort, and build quality as the originals at a fraction of the cost.
+                    </p>
+                  </div>
+
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed italic border-l-2 border-primary/30 pl-6 py-1">
+                    "At FlexTheKicks, we believe premium style shouldn't come with a premium price tag. We specializes in high-quality '1st copy' replicas that mirror the design, comfort, and durability of original releases. By sourcing directly and focusing on craftsmanship rather than brand markups, we provide you with the look you love at a price that makes sense. Whether you're a hardcore sneakerhead or just looking for everyday comfort, our collection offers the perfect balance of luxury aesthetics and affordability."
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Reviews Section */}
         <section className="mt-12 sm:mt-16 md:mt-24 p-4 sm:p-6 md:p-10 rounded-2xl sm:rounded-3xl border border-border bg-card/10">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4 sm:gap-8 mb-8 sm:mb-12">
@@ -438,29 +565,6 @@ const ProductDetail = () => {
             )}
           </div>
         </section>
-
-        {/* Related */}
-        {relatedProducts.length > 0 && (
-          <section className="mt-12 sm:mt-16 md:mt-24">
-            <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-2 sm:mb-3">
-              More from {brand?.name || "this Brand"}
-            </h2>
-            <p className="text-muted-foreground text-xs sm:text-sm md:text-base mb-6 sm:mb-8">Check out other shoes from this brand</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-              {relatedProducts.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <ProductCard product={p} />
-                </motion.div>
-              ))}
-            </div>
-          </section>
-        )}
       </main>
       <BottomNav onSearchOpen={() => setSearchOpen(true)} />
       <CartDrawer />

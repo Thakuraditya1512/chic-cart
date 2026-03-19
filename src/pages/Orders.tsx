@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Star as StarFilled, X, Plus, Loader2, LogOut, Truck, CheckCircle, Clock, Moon, Sun, Navigation, MapPin, Package, ShoppingBag, Star, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
+import { Star as StarFilled, X, Plus, Loader2, LogOut, Truck, CheckCircle, Clock, Moon, Sun, Navigation, MapPin, Package, ShoppingBag, Star, ChevronDown, ChevronUp, Copy, Check, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy } from "firebase/firestore";
@@ -204,7 +204,7 @@ const Orders = () => {
             <motion.div animate={{ rotate: 360, borderRadius: ["40%", "50%", "40%"] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               className="w-24 h-24 border-2 border-blue-500/20 border-t-blue-500" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <ShoppingBag className={`w-8 h-8 ${isDarkMode ? "text-blue-400" : "text-blue-600"} animate-pulse`} />
+              <ShoppingBag className={`w-6 h-6 ${isDarkMode ? "text-blue-400" : "text-blue-600"} animate-pulse`} />
             </div>
           </div>
           <div className="text-center space-y-1">
@@ -226,11 +226,20 @@ const Orders = () => {
 
         {/* ── Header ── */}
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="mb-10 flex items-start justify-between">
-          <div className="space-y-1">
-            <h1 className={`text-4xl font-black tracking-tighter ${textPrimary}`}>MY ACCOUNT</h1>
-            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${textMuted}`}>
-              {user?.email}
-            </p>
+          <div className="flex items-start gap-3">
+            <button 
+              onClick={() => navigate("/")}
+              className={`p-2 rounded-xl border mt-1 transition-all md:hidden ${cardBg} ${textMuted} hover:${textSub}`}
+              aria-label="Go back"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="space-y-1">
+              <h1 className={`text-3xl md:text-4xl font-black tracking-tighter ${textPrimary}`}>MY ACCOUNT</h1>
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${textMuted}`}>
+                {user?.email}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2 mt-1">
             <button onClick={() => setIsDarkMode(!isDarkMode)}
@@ -238,8 +247,8 @@ const Orders = () => {
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button onClick={handleLogout}
-              className={`h-9 px-4 rounded-xl flex items-center gap-2 border text-sm font-medium transition-all ${cardBg} ${textSub}`}>
-              <LogOut className="w-3.5 h-3.5" />
+              className={`h-8 px-3 rounded-xl flex items-center gap-1.5 border text-[11px] font-bold uppercase tracking-wider transition-all ${cardBg} ${textSub} hover:bg-red-500/5 hover:text-red-500 hover:border-red-500/30`}>
+              <LogOut className="w-3 h-3" />
               <span>Sign out</span>
             </button>
           </div>
@@ -386,7 +395,7 @@ const Orders = () => {
         <DialogContent className={`max-w-sm rounded-3xl border p-0 overflow-hidden shadow-2xl ${isDarkMode ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-[#0a0a0f]"}`}>
           <div className="bg-gradient-to-br from-blue-600 via-blue-600 to-indigo-600 p-8 text-center">
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-7 h-7 text-white" />
+              <CheckCircle className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">Review Submitted!</h2>
             <p className="text-blue-100/70 text-sm">You've earned a reward</p>
