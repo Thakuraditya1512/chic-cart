@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight, Bell, Check, Info, Tag as TagIcon, BellOff } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import { useTheme } from "@/hooks/useTheme";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import gsap from "gsap";
@@ -11,8 +12,11 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const navigate = useNavigate();
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin } = useAuth();
+  const { notifications, unreadCount, markAsRead } = useNotification();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -36,6 +40,17 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  // Close notifications on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // GSAP menu animation
   useEffect(() => {
@@ -192,6 +207,115 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                 </motion.span>
               )}
             </button>
+
+            {/* Notifications */}
+            {user && (
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
+                  aria-label="Notifications"
+                >
+                  <Bell size={16} className={notifOpen ? "text-foreground" : ""} />
+                  {unreadCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-sans font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full"
+                    >
+                      {unreadCount}
+                    </motion.span>
+                  )}
+                </button>
+
+                <AnimatePresence>
+                  {notifOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className={`absolute right-0 mt-3 w-80 md:w-96 max-h-[480px] overflow-hidden rounded-2xl border ${
+                        isDark ? "bg-black/95 border-white/10" : "bg-white border-black/10"
+                      } shadow-2xl backdrop-blur-xl z-[60]`}
+                    >
+                      <div className="p-4 border-b border-border/50 flex items-center justify-between">
+                        <h3 className="font-display font-bold text-sm">Notifications</h3>
+                        {unreadCount > 0 && (
+                          <span className="text-[10px] font-sans font-medium bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full">
+                            {unreadCount} New
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="overflow-y-auto max-h-[400px] py-1 custom-scrollbar">
+                        {notifications.length === 0 ? (
+                          <div className="py-12 px-4 text-center">
+                            <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-3">
+                              <BellOff size={20} className="text-muted-foreground/50" />
+                            </div>
+                            <p className="text-sm text-muted-foreground">No notifications yet</p>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => {
+                            const isRead = notif.target === "all" 
+                              ? notif.readBy?.includes(user.uid) 
+                              : notif.isRead;
+                            
+                            return (
+                              <div
+                                key={notif.id}
+                                onClick={() => {
+                                  if (!isRead) markAsRead(notif.id);
+                                  if (notif.link) navigate(notif.link);
+                                  setNotifOpen(false);
+                                }}
+                                className={`px-4 py-4 border-b border-border/30 last:border-0 cursor-pointer transition-colors ${
+                                  isRead ? "opacity-60" : isDark ? "bg-white/5" : "bg-black/5"
+                                } hover:${isDark ? "bg-white/10" : "bg-black/10"}`}
+                              >
+                                <div className="flex gap-3">
+                                  <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                    notif.type === 'coupon' ? 'bg-emerald-500/10 text-emerald-500' :
+                                    notif.type === 'update' ? 'bg-blue-500/10 text-blue-500' :
+                                    'bg-amber-500/10 text-amber-500'
+                                  }`}>
+                                    {notif.type === 'coupon' ? <TagIcon size={14} /> :
+                                     notif.type === 'update' ? <Info size={14} /> :
+                                     <Bell size={14} />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                      <h4 className={`text-sm font-semibold truncate ${!isRead ? "text-foreground" : "text-muted-foreground"}`}>
+                                        {notif.title}
+                                      </h4>
+                                      {!isRead && <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 ml-2" />}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                                      {notif.message}
+                                    </p>
+                                    <span className="text-[10px] text-muted-foreground/60 font-medium">
+                                      {notif.createdAt?.toDate ? 
+                                        new Intl.DateTimeFormat('en-IN', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          hour: 'numeric',
+                                          minute: 'numeric'
+                                        }).format(notif.createdAt.toDate()) : 
+                                        'Just now'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </motion.header>

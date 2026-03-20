@@ -40,6 +40,17 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
+    // Notifications - read for target users, write for admin
+    match /notifications/{docId} {
+      allow read: if request.auth != null && (
+        resource.data.target == 'all' || 
+        resource.data.target == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      allow create, update, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

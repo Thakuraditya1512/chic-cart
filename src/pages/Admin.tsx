@@ -5,7 +5,7 @@ import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
   ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
-  MessageSquare, Star as StarFilled, LogOut
+  MessageSquare, Star as StarFilled, LogOut, Bell, Info, Tag as TagIcon
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
@@ -99,7 +99,7 @@ interface Review {
   createdAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -158,6 +158,16 @@ const Admin = () => {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [formType, setFormType] = useState<"brand" | "product">("brand");
   const [featuredProducts, setFeaturedProducts] = useState<Set<string>>(new Set());
+  const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
+  const [notifForm, setNotifForm] = useState({
+    title: "",
+    message: "",
+    type: "general" as "general" | "coupon" | "update",
+    targetType: "all" as "all" | "specific",
+    targetUserId: "",
+    link: ""
+  });
+  const [sendingNotif, setSendingNotif] = useState(false);
 
   const [brandForm, setBrandForm] = useState({ name: "", description: "", image: "" });
 
@@ -173,6 +183,7 @@ const Admin = () => {
     fetchUsers();
     fetchCoupons();
     fetchReviews();
+    fetchAdminNotifications();
   }, []);
 
   // ─── Data Fetchers ──────────────────────────────────────────────────────────
@@ -254,6 +265,62 @@ const Admin = () => {
       setReviews(list);
     } catch {
       toast.error("Failed to fetch reviews");
+    }
+  };
+
+  const fetchAdminNotifications = async () => {
+    try {
+      const snap = await getDocs(query(collection(db, "notifications"), orderBy("createdAt", "desc")));
+      setAdminNotifications(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (error) {
+      console.error("Error fetching admin notifications:", error);
+      // Fallback if index not ready
+      const snap = await getDocs(collection(db, "notifications"));
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a: any, b: any) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setAdminNotifications(list);
+    }
+  };
+
+  const handleSendNotification = async () => {
+    if (!notifForm.title.trim() || !notifForm.message.trim()) {
+      toast.error("Title and message are required");
+      return;
+    }
+    if (notifForm.targetType === "specific" && !notifForm.targetUserId) {
+      toast.error("Please select a user");
+      return;
+    }
+
+    try {
+      setSendingNotif(true);
+      const { sendNotification } = await import("@/lib/notification");
+      const data: any = {
+        title: notifForm.title.trim(),
+        message: notifForm.message.trim(),
+        type: notifForm.type,
+        target: notifForm.targetType === "all" ? "all" : notifForm.targetUserId,
+      };
+      if (notifForm.link.trim()) data.link = notifForm.link.trim();
+      
+      await sendNotification(data);
+      toast.success("Notification sent!");
+      setNotifForm({
+        title: "",
+        message: "",
+        type: "general",
+        targetType: "all",
+        targetUserId: "",
+        link: ""
+      });
+      fetchAdminNotifications();
+    } catch (error: any) {
+      console.error("Notification send error:", error);
+      toast.error("Failed to send notification", {
+        description: error.message || "An unknown error occurred"
+      });
+    } finally {
+      setSendingNotif(false);
     }
   };
 
@@ -494,6 +561,7 @@ const Admin = () => {
     { id: "users" as TabId, label: "Users", icon: Shield, count: users.length },
     { id: "coupons" as TabId, label: "Coupons", icon: Ticket, count: coupons.length },
     { id: "reviews" as TabId, label: "Reviews", icon: MessageSquare, count: reviews.length },
+    { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -1568,6 +1636,165 @@ const Admin = () => {
                     </motion.div>
                   ))
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "notifications" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <SectionLabel>Send Notification</SectionLabel>
+                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-right">
+                  Broadcast coupons, updates, or alerts
+                </p>
+              </div>
+
+              {/* Send Form */}
+              <div className="p-6 rounded-2xl border border-white/8 bg-[#0d0d18] space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Notification Title *</label>
+                    <input 
+                      value={notifForm.title}
+                      onChange={e => setNotifForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="e.g. Flash Sale Live! ⚡"
+                      className={inputCls} 
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Type</label>
+                    <select 
+                      value={notifForm.type}
+                      onChange={e => setNotifForm(prev => ({ ...prev, type: e.target.value as any }))}
+                      className={inputCls}
+                    >
+                      <option value="general" className="bg-[#0d0d18]">General Alert</option>
+                      <option value="coupon" className="bg-[#0d0d18]">Coupon / Discount</option>
+                      <option value="update" className="bg-[#0d0d18]">New Arrival / Update</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Message *</label>
+                  <textarea 
+                    value={notifForm.message}
+                    onChange={e => setNotifForm(prev => ({ ...prev, message: e.target.value }))}
+                    placeholder="Enter the notification content..."
+                    rows={2}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Target Audience</label>
+                    <div className="flex gap-4 p-2 rounded-lg bg-white/3 border border-white/5">
+                      <button 
+                        onClick={() => setNotifForm(prev => ({ ...prev, targetType: "all" }))}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${
+                          notifForm.targetType === "all" ? "bg-[#6c5ce7] text-white" : "text-white/30 hover:text-white/60"
+                        }`}
+                      >
+                        All Users
+                      </button>
+                      <button 
+                        onClick={() => setNotifForm(prev => ({ ...prev, targetType: "specific" }))}
+                        className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all ${
+                          notifForm.targetType === "specific" ? "bg-[#6c5ce7] text-white" : "text-white/30 hover:text-white/60"
+                        }`}
+                      >
+                        Specific User
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {notifForm.targetType === "specific" && (
+                    <div>
+                      <label className={labelCls}>Select User</label>
+                      <select 
+                        value={notifForm.targetUserId}
+                        onChange={e => setNotifForm(prev => ({ ...prev, targetUserId: e.target.value }))}
+                        className={inputCls}
+                      >
+                        <option value="" className="bg-[#0d0d18]">Choose a user...</option>
+                        {users.map(u => (
+                          <option key={u.id} value={u.id} className="bg-[#0d0d18]">
+                            {u.fullName || u.email} ({u.email})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {notifForm.targetType === "all" && (
+                    <div>
+                      <label className={labelCls}>Action Link (Optional)</label>
+                      <input 
+                        value={notifForm.link}
+                        onChange={e => setNotifForm(prev => ({ ...prev, link: e.target.value }))}
+                        placeholder="/sale or /product/123"
+                        className={inputCls} 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <button 
+                  onClick={handleSendNotification}
+                  disabled={sendingNotif}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl 
+                    bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white font-bold transition-all
+                    shadow-lg shadow-[#6c5ce7]/10 disabled:opacity-50"
+                >
+                  {sendingNotif ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+                  {sendingNotif ? "Sending..." : "Send Notification Now"}
+                </button>
+              </div>
+
+              {/* History */}
+              <div className="space-y-3">
+                <SectionLabel>Recent Notifications</SectionLabel>
+                <div className="space-y-2">
+                  {adminNotifications.length === 0 ? (
+                    <EmptyState title="No notifications sent" subtitle="Your broadcast history will appear here." />
+                  ) : (
+                    adminNotifications.map(notif => (
+                      <div key={notif.id} className="p-4 rounded-xl border border-white/6 bg-[#0a0a14] flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          notif.type === 'coupon' ? 'bg-emerald-500/10 text-emerald-500' :
+                          notif.type === 'update' ? 'bg-blue-500/10 text-blue-500' :
+                          'bg-amber-500/10 text-amber-500'
+                        }`}>
+                          {notif.type === 'coupon' ? <TagIcon size={18} /> :
+                           notif.type === 'update' ? <Info size={18} /> :
+                           <Bell size={18} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-white truncate">{notif.title}</h4>
+                            <span className="text-[10px] font-mono text-white/20">
+                              {notif.target === 'all' ? 'BROADCAST' : 'PRIVATE'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/40 line-clamp-1">{notif.message}</p>
+                        </div>
+                        <button 
+                          onClick={async () => {
+                            if (confirm("Delete this notification?")) {
+                              await deleteDoc(doc(db, "notifications", notif.id));
+                              toast.success("Notification deleted");
+                              fetchAdminNotifications();
+                            }
+                          }}
+                          className="p-2 rounded-lg text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
