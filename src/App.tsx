@@ -29,6 +29,7 @@ import SizeGuide from "./pages/SizeGuide";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import LoadingScreen from "./components/LoadingScreen";
+import ScrollToTop from "./components/ScrollToTop";
 import { useTheme } from "./hooks/useTheme";
 import { toast } from "sonner";
 
@@ -84,6 +85,7 @@ const AppRoutes = () => {
         </div>
       )}
       
+      <ScrollToTop />
       <Routes>
         <Route 
           path="/" 

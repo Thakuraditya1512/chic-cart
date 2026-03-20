@@ -81,7 +81,7 @@ const ShoeShowcase = () => {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.35em] text-foreground/80 mb-3 sm:mb-4 font-sans font-bold"
             >
-              Exclusive Release
+                     <span className="padding " style={{ paddingLeft: '20px' }}>Exclusive Release</span>
             </motion.p>
 
             <motion.h2
