@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import OrderAnalytics from "@/components/OrderAnalytics"; // ← add this import
 import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
   ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
-  MessageSquare, Star as StarFilled, LogOut, Bell, Info, Tag as TagIcon
+  MessageSquare, Star as StarFilled, LogOut, Bell, Info, Tag as TagIcon, MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notification";
+import { SupportChat, ChatMessage, subscribeToAllChats, subscribeToChatMessages, addChatMessage, updateChatStatus, markMessagesAsRead } from "@/lib/chat";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ interface Review {
   createdAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -179,6 +180,14 @@ const Admin = () => {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Chat support state
+  const [supportChats, setSupportChats] = useState<SupportChat[]>([]);
+  const [selectedChat, setSelectedChat] = useState<SupportChat | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [sendingChatMessage, setSendingChatMessage] = useState(false);
+  const chatUnsubscribeRef = useRef<(() => void) | null>(null);
 
   // Set your secure password here
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
@@ -430,6 +439,29 @@ const Admin = () => {
     }
   };
 
+  const handleSendChatMessage = async () => {
+    if (!chatInput.trim() || !selectedChat?.id) return;
+    
+    try {
+      setSendingChatMessage(true);
+      await addChatMessage(selectedChat.id, "admin", chatInput.trim());
+      setChatInput("");
+      toast.success("Message sent");
+    } catch (error) {
+      toast.error("Failed to send message");
+    } finally {
+      setSendingChatMessage(false);
+    }
+  };
+
+  // Subscribe to all chats for admin
+  useEffect(() => {
+    const unsubscribe = subscribeToAllChats((chats) => {
+      setSupportChats(chats);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const openEditReview = (review: Review) => {
     setEditingReview(review);
     setEditReviewRating(review.rating);
@@ -657,6 +689,7 @@ const Admin = () => {
     { id: "coupons" as TabId, label: "Coupons", icon: Ticket, count: coupons.length },
     { id: "reviews" as TabId, label: "Reviews", icon: MessageSquare, count: reviews.length },
     { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
+    { id: "chats" as TabId, label: "Chats", icon: MessageCircle, count: supportChats.filter(c => c.unreadCount > 0).length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -2002,6 +2035,160 @@ const Admin = () => {
                     ))
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/*  CHATS TAB                                                        */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === "chats" && (
+            <div className="h-[calc(100vh-200px)] flex gap-4">
+              {/* Chat List */}
+              <div className="w-80 flex-shrink-0 rounded-2xl border border-white/6 bg-[#0d0d18] overflow-hidden flex flex-col">
+                <div className="p-4 border-b border-white/6">
+                  <h2 className="text-sm font-bold text-white">Support Chats</h2>
+                  <p className="text-[11px] text-white/30 mt-0.5">
+                    {supportChats.filter(c => c.status === "pending_admin").length} pending replies
+                  </p>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  {supportChats.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <MessageCircle className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                      <p className="text-xs text-white/40">No chats yet</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/5">
+                      {supportChats.map(chat => (
+                        <button
+                          key={chat.id}
+                          onClick={() => {
+                            setSelectedChat(chat);
+                            if (chat.id) {
+                              if (chatUnsubscribeRef.current) {
+                                chatUnsubscribeRef.current();
+                              }
+                              chatUnsubscribeRef.current = subscribeToChatMessages(chat.id, (msgs) => {
+                                setChatMessages(msgs);
+                              });
+                              markMessagesAsRead(chat.id, "admin");
+                            }
+                          }}
+                          className={`w-full p-3 text-left transition-colors hover:bg-white/5 ${
+                            selectedChat?.id === chat.id ? "bg-white/10" : ""
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 ${
+                              chat.status === "pending_admin" ? "bg-amber-400" :
+                              chat.status === "active" ? "bg-green-400" : "bg-white/20"
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">{chat.userName}</p>
+                              <p className="text-[11px] text-white/40 truncate">{chat.userEmail}</p>
+                              <p className="text-[10px] text-white/30 truncate mt-1">
+                                {chat.lastMessage || "No messages yet"}
+                              </p>
+                            </div>
+                            {chat.unreadCount > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-[#6c5ce7] text-white text-[10px] font-bold">
+                                {chat.unreadCount}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Chat Window */}
+              <div className="flex-1 rounded-2xl border border-white/6 bg-[#0d0d18] overflow-hidden flex flex-col">
+                {selectedChat ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="p-4 border-b border-white/6 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-white">{selectedChat.userName}</h3>
+                        <p className="text-[11px] text-white/40">{selectedChat.userEmail}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={selectedChat.status}
+                          onChange={async (e) => {
+                            if (selectedChat.id) {
+                              await updateChatStatus(selectedChat.id, e.target.value as any);
+                              toast.success("Status updated");
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70"
+                        >
+                          <option value="active">Active</option>
+                          <option value="pending_admin">Pending</option>
+                          <option value="resolved">Resolved</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {chatMessages.map((msg, idx) => (
+                        <div
+                          key={msg.id || idx}
+                          className={`flex ${msg.sender === "user" ? "justify-start" : "justify-end"}`}
+                        >
+                          <div className={`max-w-[70%] px-3 py-2 rounded-xl text-sm ${
+                            msg.sender === "user"
+                              ? "bg-white/10 text-white"
+                              : msg.sender === "admin"
+                              ? "bg-[#6c5ce7] text-white"
+                              : "bg-white/5 text-white/70 border border-white/10"
+                          }`}>
+                            <p>{msg.text}</p>
+                            <p className="text-[9px] opacity-50 mt-1">
+                              {msg.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Input */}
+                    <div className="p-4 border-t border-white/6">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter" && chatInput.trim()) {
+                              handleSendChatMessage();
+                            }
+                          }}
+                          placeholder="Type your message..."
+                          className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#6c5ce7]/50"
+                        />
+                        <button
+                          onClick={handleSendChatMessage}
+                          disabled={!chatInput.trim() || sendingChatMessage}
+                          className="px-4 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+                        >
+                          {sendingChatMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send"}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-3" />
+                      <p className="text-sm text-white/40">Select a chat to start messaging</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

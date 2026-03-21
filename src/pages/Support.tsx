@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { ArrowLeft, Send, MessageCircle, Phone, Mail, HelpCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Send, MessageCircle, Phone, Mail, HelpCircle, CheckCircle, Bot } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ChatBot from '@/components/ChatBot';
 
 const Support = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const Support = () => {
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -52,15 +54,31 @@ const Support = () => {
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="min-h-screen bg-background py-12 sm:py-16 md:py-20"
-    >
-      <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
-        {/* Back Button */}
+    <div>
+      {/* ChatBot */}
+      <ChatBot isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setChatOpen(!chatOpen)}
+        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-[#6c5ce7] to-[#a855f7] text-white shadow-lg shadow-[#6c5ce7]/30 hover:shadow-xl hover:shadow-[#6c5ce7]/40 hover:scale-105 transition-all duration-300 flex items-center justify-center group"
+        aria-label="Open chat support"
+      >
+        {chatOpen ? (
+          <ArrowLeft size={24} className="group-hover:-translate-x-0.5 transition-transform" />
+        ) : (
+          <div className="flex items-center gap-1">
+            <Bot size={24} className="group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+          </div>
+        )}
+      </button>
+
+      <div ref={containerRef} className="min-h-screen pt-20 sm:pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        {/* Back Link */}
         <Link
           to="/"
-          className="support-animate inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-sans mb-6 sm:mb-8"
+          className="inline-flex items-center gap-2 text-sm font-sans text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
           <ArrowLeft size={16} />
           Back to Home
