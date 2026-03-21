@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notification";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -168,6 +169,19 @@ const Admin = () => {
     link: ""
   });
   const [sendingNotif, setSendingNotif] = useState(false);
+  const [showCouponForm, setShowCouponForm] = useState(false);
+  const [couponForm, setCouponForm] = useState({
+    code: "",
+    discountPercent: "",
+    userId: "",
+    expiresAt: ""
+  });
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Set your secure password here
+  const ADMIN_DELETE_PASSWORD = "Thakur@206";
 
   const [brandForm, setBrandForm] = useState({ name: "", description: "", image: "" });
 
@@ -294,7 +308,6 @@ const Admin = () => {
 
     try {
       setSendingNotif(true);
-      const { sendNotification } = await import("@/lib/notification");
       const data: any = {
         title: notifForm.title.trim(),
         message: notifForm.message.trim(),
@@ -332,6 +345,88 @@ const Admin = () => {
       fetchReviews();
     } catch {
       toast.error("Failed to delete review");
+    }
+  };
+
+  const handleCreateCoupon = async () => {
+    if (!couponForm.code.trim()) {
+      toast.error("Coupon code is required");
+      return;
+    }
+    if (!couponForm.discountPercent || Number(couponForm.discountPercent) <= 0 || Number(couponForm.discountPercent) > 100) {
+      toast.error("Discount percentage must be between 1 and 100");
+      return;
+    }
+
+    try {
+      const couponData = {
+        code: couponForm.code.trim().toUpperCase(),
+        discountPercent: Number(couponForm.discountPercent),
+        userId: couponForm.userId || null,
+        isUsed: false,
+        createdAt: serverTimestamp(),
+        expiresAt: couponForm.expiresAt ? new Date(couponForm.expiresAt) : null
+      };
+
+      await addDoc(collection(db, "coupons"), couponData);
+      toast.success("Coupon created successfully!");
+      setCouponForm({ code: "", discountPercent: "", userId: "", expiresAt: "" });
+      setShowCouponForm(false);
+      fetchCoupons();
+    } catch (error: any) {
+      console.error("Error creating coupon:", error);
+      toast.error("Failed to create coupon", {
+        description: error.message || "An unknown error occurred"
+      });
+    }
+  };
+
+  const handleDeleteAllData = async () => {
+    if (deletePassword !== ADMIN_DELETE_PASSWORD) {
+      toast.error("Incorrect password!");
+      return;
+    }
+
+    if (!confirm("⚠️ DANGER: This will permanently delete ALL orders, notifications, and reviews. This action cannot be undone! Are you absolutely sure?")) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      
+      // Delete all orders
+      const ordersSnap = await getDocs(collection(db, "orders"));
+      const orderDeletePromises = ordersSnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(orderDeletePromises);
+      
+      // Delete all notifications
+      const notifsSnap = await getDocs(collection(db, "notifications"));
+      const notifDeletePromises = notifsSnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(notifDeletePromises);
+      
+      // Delete all reviews
+      const reviewsSnap = await getDocs(collection(db, "reviews"));
+      const reviewDeletePromises = reviewsSnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(reviewDeletePromises);
+      
+      toast.success("✅ All orders, notifications, and reviews have been deleted permanently!");
+      
+      // Refresh data
+      fetchOrders();
+      fetchAdminNotifications();
+      fetchReviews();
+      
+      // Close modal and reset password
+      setShowDeleteAllModal(false);
+      setDeletePassword("");
+      
+    } catch (error: any) {
+      console.error("Error deleting data:", error);
+      toast.error("Failed to delete data", {
+        description: error.message || "An unknown error occurred"
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -642,6 +737,22 @@ const Admin = () => {
             >
               <LogOut className="w-3 h-3" />
             </button>
+          </div>
+          
+          {/* Danger Zone */}
+          <div className="pt-4 border-t border-white/6">
+            <button
+              onClick={() => setShowDeleteAllModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50
+                text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider transition-all"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Delete All Data
+            </button>
+            <p className="text-[9px] text-white/20 text-center mt-2 leading-tight">
+              Remove all orders, notifications & reviews
+            </p>
           </div>
         </div>
       </aside>
@@ -1439,10 +1550,106 @@ const Admin = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
                 <SectionLabel>Generated Coupons</SectionLabel>
-                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                  Auto-generated on product reviews
-                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowCouponForm(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg
+                      bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-sm font-semibold transition-all
+                      shadow-lg shadow-[#6c5ce7]/20 active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Coupon
+                  </button>
+                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                    Auto-generated on product reviews
+                  </p>
+                </div>
               </div>
+
+              {/* Coupon Creation Form */}
+              <AnimatePresence>
+                {showCouponForm && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="rounded-2xl border border-white/8 bg-[#0d0d18] overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/6">
+                      <h2 className="text-sm font-bold text-white">Create New Coupon</h2>
+                      <button onClick={() => setShowCouponForm(false)}
+                        className="p-1.5 rounded-lg hover:bg-white/6 text-white/40 hover:text-white transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="p-6 space-y-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelCls}>Coupon Code *</label>
+                          <input
+                            value={couponForm.code}
+                            onChange={e => setCouponForm(prev => ({ ...prev, code: e.target.value }))}
+                            placeholder="e.g. SUMMER20"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Discount Percentage *</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={couponForm.discountPercent}
+                            onChange={e => setCouponForm(prev => ({ ...prev, discountPercent: e.target.value }))}
+                            placeholder="e.g. 20"
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelCls}>Assign to User (Optional)</label>
+                          <select
+                            value={couponForm.userId}
+                            onChange={e => setCouponForm(prev => ({ ...prev, userId: e.target.value }))}
+                            className={inputCls}
+                          >
+                            <option value="">All Users</option>
+                            {users.map(u => (
+                              <option key={u.id} value={u.id}>
+                                {u.fullName || u.email}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className={labelCls}>Expiry Date (Optional)</label>
+                          <input
+                            type="date"
+                            value={couponForm.expiresAt}
+                            onChange={e => setCouponForm(prev => ({ ...prev, expiresAt: e.target.value }))}
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 px-6 py-4 border-t border-white/6 bg-[#0a0a12]">
+                      <button onClick={handleCreateCoupon}
+                        className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[#6c5ce7]
+                          hover:bg-[#7c6cf7] text-white text-sm font-semibold transition-all">
+                        <Ticket className="w-3.5 h-3.5" />
+                        Create Coupon
+                      </button>
+                      <button onClick={() => setShowCouponForm(false)}
+                        className="px-5 py-2 rounded-lg border border-white/10 text-white/50
+                          hover:text-white/80 text-sm transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               <div className="grid gap-3">
                 {coupons.length === 0 ? (
@@ -1801,6 +2008,98 @@ const Admin = () => {
 
         </div>
       </main>
+
+      {/* Delete All Data Modal */}
+      <AnimatePresence>
+        {showDeleteAllModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowDeleteAllModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d0d18] overflow-hidden"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 space-y-6">
+                {/* Header */}
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <Trash2 className="w-6 h-6 text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-2">Delete All Data</h3>
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    This will permanently delete all orders, notifications, and reviews. 
+                    This action cannot be undone.
+                  </p>
+                </div>
+
+                {/* Warning */}
+                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-red-400">
+                      <p className="font-semibold mb-1">⚠️ Danger Zone</p>
+                      <p className="text-red-300/80 text-xs leading-relaxed">
+                        You are about to delete {orders.length} orders, {adminNotifications.length} notifications, 
+                        and {reviews.length} reviews permanently.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Password Input */}
+                <div>
+                  <label className={labelCls}>Enter Admin Password</label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={e => setDeletePassword(e.target.value)}
+                    placeholder="Enter password to confirm"
+                    className={inputCls}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteAllModal(false)}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/50
+                      hover:text-white/80 text-sm font-semibold transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAllData}
+                    disabled={isDeleting || !deletePassword}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                      bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-all
+                      disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        Delete All
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
