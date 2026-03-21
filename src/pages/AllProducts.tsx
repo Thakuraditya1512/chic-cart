@@ -15,7 +15,8 @@ interface Product {
   price: number;
   salePrice?: number;
   image: string;
-  badge?: string;
+  badge?: "new" | "sale" | "trending";
+  rating: number;
 }
 
 const AllProducts = () => {
