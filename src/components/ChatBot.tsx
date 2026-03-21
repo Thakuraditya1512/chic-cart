@@ -95,15 +95,20 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
   }, [isOpen, user]);
 
   const handleSend = async () => {
-    if (!input.trim() || !chatId || isLoading) return;
+    if (!input.trim() || !chatId || isLoading) {
+      console.log("Cannot send:", { input: input.trim(), chatId, isLoading });
+      return;
+    }
 
     const userMessage = input.trim();
     setInput("");
     setIsLoading(true);
 
     try {
+      console.log("Sending message to chat:", chatId);
       // Add user message
       await addChatMessage(chatId, "user", userMessage);
+      console.log("Message sent successfully");
 
       // If in human mode, don't auto-respond
       if (isHumanMode) {
@@ -137,8 +142,9 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
         
         toast.info("Connecting you to a human agent...");
       }
-    } catch (error) {
-      toast.error("Failed to send message");
+    } catch (error: any) {
+      console.error("Failed to send message:", error);
+      toast.error("Failed to send message: " + (error.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }

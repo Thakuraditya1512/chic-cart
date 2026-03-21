@@ -176,22 +176,33 @@ export async function addChatMessage(
   sender: "user" | "bot" | "admin",
   text: string
 ): Promise<void> {
-  const messageData: Omit<ChatMessage, "id"> = {
-    chatId,
-    sender,
-    text,
-    timestamp: serverTimestamp(),
-    read: sender === "user", // User's own messages are marked read
-  };
-  
-  await addDoc(collection(db, "chatMessages"), messageData);
-  
-  // Update chat's last message and timestamp
-  await updateDoc(doc(db, "supportChats", chatId), {
-    lastMessage: text,
-    updatedAt: serverTimestamp(),
-    unreadCount: sender === "user" ? 1 : 0,
-  });
+  try {
+    console.log("Adding message:", { chatId, sender, text: text.substring(0, 50) });
+    
+    const messageData: Omit<ChatMessage, "id"> = {
+      chatId,
+      sender,
+      text,
+      timestamp: serverTimestamp(),
+      read: sender === "user", // User's own messages are marked read
+    };
+    
+    const docRef = await addDoc(collection(db, "chatMessages"), messageData);
+    console.log("Message added with ID:", docRef.id);
+    
+    // Update chat's last message and timestamp
+    await updateDoc(doc(db, "supportChats", chatId), {
+      lastMessage: text,
+      updatedAt: serverTimestamp(),
+      unreadCount: sender === "user" ? 1 : 0,
+    });
+    console.log("Chat updated successfully");
+  } catch (error: any) {
+    console.error("Error in addChatMessage:", error);
+    console.error("Error code:", error.code);
+    console.error("Error message:", error.message);
+    throw error;
+  }
 }
 
 // Get chat messages
