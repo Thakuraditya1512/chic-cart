@@ -322,13 +322,13 @@ const ProductDetail = () => {
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} size={12} className={`sm:w-3.5 sm:h-3.5 ${i < Math.floor(reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) : product.rating) ? "fill-foreground text-foreground" : "text-border"}`} />
+                  <Star key={i} size={12} className={`sm:w-3.5 sm:h-3.5 ${i < Math.floor(reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) : (product.rating || 0)) ? "fill-foreground text-foreground" : "text-border"}`} />
                 ))}
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {reviews.length > 0 
                   ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
-                  : product.rating} 
+                  : (product.rating || 0)} 
                 ({reviews.length} reviews)
               </span>
             </div>
@@ -511,12 +511,12 @@ const ProductDetail = () => {
                 <div className="text-3xl sm:text-4xl font-bold text-foreground">
                   {reviews.length > 0 
                     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
-                    : product.rating}
+                    : (product.rating || 0)}
                 </div>
                 <div>
                   <div className="flex items-center gap-0.5 sm:gap-1 mb-1">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} size={14} className={`sm:w-4 sm:h-4 ${i < Math.floor(reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) : product.rating) ? "fill-foreground text-foreground" : "text-border text-muted-foreground"}`} />
+                      <Star key={i} size={14} className={`sm:w-4 sm:h-4 ${i < Math.floor(reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length) : (product.rating || 0)) ? "fill-foreground text-foreground" : "text-border text-muted-foreground"}`} />
                     ))}
                   </div>
                   <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider font-semibold">Based on {reviews.length} reviews</p>

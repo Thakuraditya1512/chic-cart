@@ -7,7 +7,7 @@ const EditorialLookbook = () => {
 
   const cards = [
     {
-      image: "/shoe-hero.png",
+      image: "https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/shoe-hero.png",
       title: "Urban Edge",
       subtitle: "Street-ready performance",
       tag: "01",
@@ -16,7 +16,7 @@ const EditorialLookbook = () => {
       mobileOrder: "order-1",
     },
     {
-      image: "/shoe-dark.png",
+      image: "https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/shoe-dark.png",
       title: "Midnight Run",
       subtitle: "Stealth meets comfort",
       tag: "02",
@@ -24,7 +24,7 @@ const EditorialLookbook = () => {
       mobileOrder: "order-2",
     },
     {
-      image: "/shoe-editorial.png",
+      image: "https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/shoe-editorial.png",
       title: "Dual Tone",
       subtitle: "Light & shadow collection",
       tag: "03",

@@ -45,7 +45,6 @@ const CinematicHero = () => {
       vid.play().catch((e) => console.log("Autoplay prevented:", e));
     };
 
-    // If already ready, play immediately; otherwise wait
     if (vid.readyState >= 3) {
       tryPlay();
     } else {
@@ -96,19 +95,16 @@ const CinematicHero = () => {
     return () => { anim.kill(); };
   }, [showIntro, isMobile]);
 
-  // ── Large screen: render nothing at all ──────────────────────────────────
   if (!isMobile) {
     return null;
   }
 
-  // ── Mobile: full cinematic hero ──────────────────────────────────────────
   return (
     <section
       ref={containerRef}
       className="relative w-full overflow-hidden bg-black"
       style={{ height: "100dvh" }}
     >
-      {/* Video layer — hardware-accelerated, no jank */}
       <motion.div
         style={{ scale: videoScale }}
         className="absolute inset-0 will-change-transform"
@@ -127,18 +123,17 @@ const CinematicHero = () => {
           style={{
             opacity: videoLoaded ? 1 : 0,
             transition: "opacity 0.8s ease",
-            // Force GPU compositing for smooth playback
             transform: "translateZ(0)",
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
           }}
         >
-          {/* Offer both formats so the browser picks the fastest decoder */}
-          <source src="/bn.webm" type="video/webm" />
-          <source src="/bn.mp4" type="video/mp4" />
+          <source
+            src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/bn.mp4"
+            type="video/mp4"
+          />
         </video>
 
-        {/* Subtle darkening gradient — bottom-heavy so text pops */}
         <div
           className="absolute inset-0 z-10"
           style={{
@@ -148,7 +143,6 @@ const CinematicHero = () => {
         />
       </motion.div>
 
-      {/* Text content */}
       <motion.div
         key={showIntro ? "intro" : "content"}
         initial={{ opacity: 0 }}
@@ -189,7 +183,6 @@ const CinematicHero = () => {
         )}
       </motion.div>
 
-      {/* Scroll indicator */}
       {!showIntro && (
         <motion.div
           initial={{ opacity: 0 }}

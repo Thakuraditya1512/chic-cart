@@ -7,7 +7,7 @@ export interface Product {
   images?: string[];
   category?: string;
   brandId?: string;
-  rating: number;
+  rating?: number;
   badge?: 'new' | 'sale' | 'trending';
   description?: string;
   sizes?: string[];

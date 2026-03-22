@@ -115,7 +115,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         <div className="flex items-center gap-1 mb-1">
           <Star size={11} className="fill-foreground text-foreground" />
           <span className="text-[10px] sm:text-[11px] text-muted-foreground font-sans">
-            {product.rating}
+            {product.rating || 0}
           </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

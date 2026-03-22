@@ -1208,7 +1208,7 @@ const Admin = () => {
                               <span className="text-sm text-white/25 line-through">₹{p.originalPrice.toLocaleString('en-IN')}</span>
                             )}
                           </div>
-                          {p.rating && (
+                          {p.rating !== undefined && (
                             <div className="flex items-center gap-1.5">
                               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                               <span className="text-sm font-medium text-white/70">{p.rating}</span>

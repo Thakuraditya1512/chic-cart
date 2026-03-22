@@ -178,7 +178,7 @@ const ShoeShowcase = () => {
               transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
               <video
-                src="/wb.mp4"
+                src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/wb.mp4"
                 autoPlay
                 muted
                 loop
