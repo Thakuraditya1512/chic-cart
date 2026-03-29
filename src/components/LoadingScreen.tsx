@@ -22,13 +22,13 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
       // FTK letters animation - 3D flip reveal
       const letters = ftkRef.current?.querySelectorAll('.ftk-letter');
       if (letters) {
-        gsap.set(letters, { 
-          opacity: 0, 
+        gsap.set(letters, {
+          opacity: 0,
           rotateY: -90,
           transformOrigin: "center center",
-          transformPerspective: 1000 
+          transformPerspective: 1000
         });
-        
+
         tl.to(letters, {
           opacity: 1,
           rotateY: 0,
@@ -42,7 +42,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
       const shoeParts = shoeRef.current?.querySelectorAll('.shoe-part');
       if (shoeParts) {
         gsap.set(shoeParts, { opacity: 0, x: -20 });
-        
+
         tl.to(shoeParts, {
           opacity: 1,
           x: 0,
@@ -177,47 +177,47 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
           </defs>
 
           {/* Sole */}
-          <path 
+          <path
             className="shoe-part"
-            d="M10 55 Q10 65 20 65 L95 65 Q110 65 115 55 Q118 50 115 45 L110 42" 
+            d="M10 55 Q10 65 20 65 L95 65 Q110 65 115 55 Q118 50 115 45 L110 42"
             fill="#2C3E50"
             stroke="#fff"
             strokeWidth="1"
           />
           {/* Midsole stripe */}
-          <path 
+          <path
             className="shoe-part"
-            d="M12 58 L112 58" 
+            d="M12 58 L112 58"
             stroke="#4ECDC4"
             strokeWidth="2"
             strokeLinecap="round"
             opacity="0.8"
           />
           {/* Upper body - gradient */}
-          <path 
+          <path
             className="shoe-part"
-            d="M20 55 L25 35 Q28 25 40 25 L65 25 Q75 25 80 30 L95 42 L110 42 Q115 42 115 48 L115 52" 
+            d="M20 55 L25 35 Q28 25 40 25 L65 25 Q75 25 80 30 L95 42 L110 42 Q115 42 115 48 L115 52"
             fill="url(#shoeGrad)"
             opacity="0.9"
           />
           {/* Toe cap - gradient */}
-          <path 
+          <path
             className="shoe-part"
-            d="M95 42 Q110 42 115 48 L115 55 Q110 62 95 62 L90 62 L90 42 Z" 
+            d="M95 42 Q110 42 115 48 L115 55 Q110 62 95 62 L90 62 L90 42 Z"
             fill="url(#toeGrad)"
             opacity="0.8"
           />
           {/* Heel counter - gradient */}
-          <path 
+          <path
             className="shoe-part"
-            d="M20 55 L22 40 Q23 35 28 35 L35 35 L35 55" 
+            d="M20 55 L22 40 Q23 35 28 35 L35 35 L35 55"
             fill="url(#heelGrad)"
             opacity="0.8"
           />
           {/* Laces area - gradient */}
-          <path 
+          <path
             className="shoe-part"
-            d="M40 25 L45 40 L70 40 L65 25" 
+            d="M40 25 L45 40 L70 40 L65 25"
             fill="url(#lacesGrad)"
             opacity="0.7"
           />
@@ -226,9 +226,9 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
           <line className="shoe-part" x1="55" y1="28" x2="59" y2="38" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
           <line className="shoe-part" x1="62" y1="28" x2="66" y2="38" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
           {/* Swoosh/Logo line */}
-          <path 
+          <path
             className="shoe-part"
-            d="M45 45 Q60 50 75 42 Q85 38 90 45" 
+            d="M45 45 Q60 50 75 42 Q85 38 90 45"
             stroke="#fff"
             strokeWidth="2.5"
             strokeLinecap="round"
@@ -256,7 +256,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
         <span className="ftk-letter inline-block text-5xl sm:text-6xl md:text-7xl lg:text-8xl">
           K
         </span>
-        
+
         {/* Decorative dot */}
         <span className="ftk-letter inline-block w-2 h-2 sm:w-3 sm:h-3 bg-foreground rounded-full mt-4 sm:mt-6" />
       </div>
@@ -279,7 +279,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
       {/* Loading status text */}
       <div className="mt-4 h-5">
         <p className="text-xs text-muted-foreground/60 font-sans animate-pulse">
-          {variant === 'product' ? 'Loading product...' : 'Loading experience...'}
+          {variant === 'product' ? 'Loading product...' : 'Loading...'}
         </p>
       </div>
     </div>

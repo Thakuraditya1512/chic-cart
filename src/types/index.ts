@@ -93,8 +93,9 @@ export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'coupon' | 'update' | 'general';
+  type: 'sale' | 'coupon' | 'new_arrival' | 'restock';
   target: 'all' | string; // 'all' or specific userId
+  isActive: boolean;
   isRead?: boolean; // For private notifications
   readBy?: string[]; // For 'all' notifications
   createdAt: any;

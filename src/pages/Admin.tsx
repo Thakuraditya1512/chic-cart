@@ -1,18 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import OrderAnalytics from "@/components/OrderAnalytics"; // ← add this import
+import OrderAnalytics from "@/components/OrderAnalytics";
 import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
-  ChevronRight, User, Shield, Tag, Package, Star, LayoutDashboard, Ticket,
+  ChevronRight, User, Shield, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
-  MessageSquare, Star as StarFilled, LogOut, Bell, Info, Tag as TagIcon, MessageCircle
+  MessageSquare, LogOut, Bell, Info, Tag as TagIcon
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notification";
-import { SupportChat, ChatMessage, subscribeToAllChats, subscribeToChatMessages, addChatMessage, updateChatStatus, markMessagesAsRead } from "@/lib/chat";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -101,7 +100,19 @@ interface Review {
   createdAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats";
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'sale' | 'coupon' | 'new_arrival' | 'restock';
+  target: string;
+  link?: string;
+  isActive: boolean;
+  createdAt: any;
+  updatedAt?: any;
+}
+
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -161,13 +172,15 @@ const Admin = () => {
   const [formType, setFormType] = useState<"brand" | "product">("brand");
   const [featuredProducts, setFeaturedProducts] = useState<Set<string>>(new Set());
   const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
+  const [editingNotif, setEditingNotif] = useState<any | null>(null);
   const [notifForm, setNotifForm] = useState({
     title: "",
     message: "",
-    type: "general" as "general" | "coupon" | "update",
+    type: "sale" as "sale" | "coupon" | "new_arrival" | "restock",
     targetType: "all" as "all" | "specific",
     targetUserId: "",
-    link: ""
+    link: "",
+    isActive: true
   });
   const [sendingNotif, setSendingNotif] = useState(false);
   const [showCouponForm, setShowCouponForm] = useState(false);
@@ -180,14 +193,6 @@ const Admin = () => {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Chat support state
-  const [supportChats, setSupportChats] = useState<SupportChat[]>([]);
-  const [selectedChat, setSelectedChat] = useState<SupportChat | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const [sendingChatMessage, setSendingChatMessage] = useState(false);
-  const chatUnsubscribeRef = useRef<(() => void) | null>(null);
 
   // Set your secure password here
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
@@ -322,28 +327,53 @@ const Admin = () => {
         message: notifForm.message.trim(),
         type: notifForm.type,
         target: notifForm.targetType === "all" ? "all" : notifForm.targetUserId,
+        isActive: notifForm.isActive,
+        updatedAt: serverTimestamp(),
       };
       if (notifForm.link.trim()) data.link = notifForm.link.trim();
       
-      await sendNotification(data);
-      toast.success("Notification sent!");
+      if (editingNotif) {
+        await updateDoc(doc(db, "notifications", editingNotif.id), data);
+        toast.success("Notification updated!");
+      } else {
+        await sendNotification(data);
+        toast.success("Notification sent!");
+      }
+
       setNotifForm({
         title: "",
         message: "",
-        type: "general",
+        type: "sale",
         targetType: "all",
         targetUserId: "",
-        link: ""
+        link: "",
+        isActive: true
       });
+      setEditingNotif(null);
       fetchAdminNotifications();
     } catch (error: any) {
-      console.error("Notification send error:", error);
-      toast.error("Failed to send notification", {
+      console.error("Notification operation error:", error);
+      toast.error(editingNotif ? "Failed to update notification" : "Failed to send notification", {
         description: error.message || "An unknown error occurred"
       });
     } finally {
       setSendingNotif(false);
     }
+  };
+
+  const openEditNotif = (notif: any) => {
+    setEditingNotif(notif);
+    setNotifForm({
+      title: notif.title,
+      message: notif.message,
+      type: notif.type as any,
+      targetType: notif.target === "all" ? "all" : "specific",
+      targetUserId: notif.target === "all" ? "" : notif.target,
+      link: notif.link || "",
+      isActive: notif.isActive ?? true
+    });
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteReview = async (reviewId: string) => {
@@ -439,28 +469,6 @@ const Admin = () => {
     }
   };
 
-  const handleSendChatMessage = async () => {
-    if (!chatInput.trim() || !selectedChat?.id) return;
-    
-    try {
-      setSendingChatMessage(true);
-      await addChatMessage(selectedChat.id, "admin", chatInput.trim());
-      setChatInput("");
-      toast.success("Message sent");
-    } catch (error) {
-      toast.error("Failed to send message");
-    } finally {
-      setSendingChatMessage(false);
-    }
-  };
-
-  // Subscribe to all chats for admin
-  useEffect(() => {
-    const unsubscribe = subscribeToAllChats((chats) => {
-      setSupportChats(chats);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const openEditReview = (review: Review) => {
     setEditingReview(review);
@@ -681,7 +689,7 @@ const Admin = () => {
   // ─── Tab config ─────────────────────────────────────────────────────────────
 
   const tabs = [
-    { id: "brands" as TabId, label: "Brands", icon: Tag, count: brands.length },
+    { id: "brands" as TabId, label: "Brands", icon: TagIcon, count: brands.length },
     { id: "products" as TabId, label: "Shoes", icon: Package, count: products.length },
     { id: "featured" as TabId, label: "Featured", icon: Star, count: featuredProducts.size },
     { id: "customers" as TabId, label: "Orders", icon: LayoutDashboard, count: orders.length },
@@ -689,7 +697,6 @@ const Admin = () => {
     { id: "coupons" as TabId, label: "Coupons", icon: Ticket, count: coupons.length },
     { id: "reviews" as TabId, label: "Reviews", icon: MessageSquare, count: reviews.length },
     { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
-    { id: "chats" as TabId, label: "Chats", icon: MessageCircle, count: supportChats.filter(c => c.unreadCount > 0).length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -1507,7 +1514,7 @@ const Admin = () => {
                             </span>
                           </div>
                           <p className="text-xs text-white/50">{user.email}</p>
-                          {user.phone && <p className="text-xs text-white/40 mt-1 flex items-center gap-1.5"><Tag className="w-3 h-3" /> {user.phone}</p>}
+                          {user.phone && <p className="text-xs text-white/40 mt-1 flex items-center gap-1.5"><TagIcon className="w-3 h-3" /> {user.phone}</p>}
                         </div>
                       </div>
 
@@ -1776,7 +1783,7 @@ const Admin = () => {
                           {[1, 2, 3, 4, 5].map(star => (
                             <button key={star} onClick={() => setEditReviewRating(star)}
                               className="transition-transform hover:scale-110 active:scale-95">
-                              <StarFilled className={`w-8 h-8 transition-colors ${star <= editReviewRating ? "text-amber-400 fill-amber-400" : "text-white/10 fill-white/10"}`} />
+                              <Star className={`w-8 h-8 transition-colors ${star <= editReviewRating ? "text-amber-400 fill-amber-400" : "text-white/10 fill-white/10"}`} />
                             </button>
                           ))}
                         </div>
@@ -1837,7 +1844,7 @@ const Admin = () => {
                           {/* Stars */}
                           <div className="flex items-center gap-1 mb-2">
                             {[1, 2, 3, 4, 5].map(star => (
-                              <StarFilled key={star}
+                              <Star key={star}
                                 className={`w-4 h-4 ${star <= review.rating ? "text-amber-400 fill-amber-400" : "text-white/10 fill-white/10"}`} />
                             ))}
                             <span className="text-xs font-semibold text-white/50 ml-1">{review.rating}/5</span>
@@ -1883,10 +1890,31 @@ const Admin = () => {
           {activeTab === "notifications" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <SectionLabel>Send Notification</SectionLabel>
-                <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-right">
-                  Broadcast coupons, updates, or alerts
-                </p>
+                <SectionLabel>{editingNotif ? "Edit Notification" : "Send Notification"}</SectionLabel>
+                <div className="flex items-center gap-4">
+                  {editingNotif && (
+                    <button 
+                      onClick={() => {
+                        setEditingNotif(null);
+                        setNotifForm({
+                          title: "",
+                          message: "",
+                          type: "sale",
+                          targetType: "all",
+                          targetUserId: "",
+                          link: "",
+                          isActive: true
+                        });
+                      }}
+                      className="text-[10px] text-red-400 font-bold uppercase tracking-widest hover:text-red-300 transition-colors"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-right">
+                    Broadcast coupons, updates, or alerts
+                  </p>
+                </div>
               </div>
 
               {/* Send Form */}
@@ -1901,17 +1929,33 @@ const Admin = () => {
                       className={inputCls} 
                     />
                   </div>
-                  <div>
-                    <label className={labelCls}>Type</label>
-                    <select 
-                      value={notifForm.type}
-                      onChange={e => setNotifForm(prev => ({ ...prev, type: e.target.value as any }))}
-                      className={inputCls}
-                    >
-                      <option value="general" className="bg-[#0d0d18]">General Alert</option>
-                      <option value="coupon" className="bg-[#0d0d18]">Coupon / Discount</option>
-                      <option value="update" className="bg-[#0d0d18]">New Arrival / Update</option>
-                    </select>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className={labelCls}>Type</label>
+                      <select 
+                        value={notifForm.type}
+                        onChange={e => setNotifForm(prev => ({ ...prev, type: e.target.value as any }))}
+                        className={inputCls}
+                      >
+                        <option value="sale" className="bg-[#0d0d18]">Flash Sale</option>
+                        <option value="coupon" className="bg-[#0d0d18]">Coupon / Discount</option>
+                        <option value="new_arrival" className="bg-[#0d0d18]">New Arrival</option>
+                        <option value="restock" className="bg-[#0d0d18]">Restock Alert</option>
+                      </select>
+                    </div>
+                    <div className="w-24">
+                      <label className={labelCls}>Status</label>
+                      <button
+                        onClick={() => setNotifForm(prev => ({ ...prev, isActive: !prev.isActive }))}
+                        className={`w-full py-2.5 rounded-lg border text-xs font-bold transition-all ${
+                          notifForm.isActive 
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                            : "bg-red-500/10 border-red-500/30 text-red-400"
+                        }`}
+                      >
+                        {notifForm.isActive ? "ACTIVE" : "INACTIVE"}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1988,7 +2032,7 @@ const Admin = () => {
                     shadow-lg shadow-[#6c5ce7]/10 disabled:opacity-50"
                 >
                   {sendingNotif ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
-                  {sendingNotif ? "Sending..." : "Send Notification Now"}
+                  {sendingNotif ? (editingNotif ? "Updating..." : "Sending...") : (editingNotif ? "Update Notification" : "Send Notification Now")}
                 </button>
               </div>
 
@@ -2003,34 +2047,51 @@ const Admin = () => {
                       <div key={notif.id} className="p-4 rounded-xl border border-white/6 bg-[#0a0a14] flex items-center gap-4">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                           notif.type === 'coupon' ? 'bg-emerald-500/10 text-emerald-500' :
-                          notif.type === 'update' ? 'bg-blue-500/10 text-blue-500' :
+                          notif.type === 'sale' ? 'bg-rose-500/10 text-rose-500' :
+                          notif.type === 'new_arrival' ? 'bg-blue-500/10 text-blue-500' :
                           'bg-amber-500/10 text-amber-500'
                         }`}>
                           {notif.type === 'coupon' ? <TagIcon size={18} /> :
-                           notif.type === 'update' ? <Info size={18} /> :
+                           notif.type === 'sale' ? <Star size={18} /> :
+                           notif.type === 'new_arrival' ? <Info size={18} /> :
                            <Bell size={18} />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-white truncate">{notif.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-bold text-white truncate">{notif.title}</h4>
+                              {!notif.isActive && (
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-red-500/20 text-red-500 border border-red-500/30 uppercase">Draft</span>
+                              )}
+                            </div>
                             <span className="text-[10px] font-mono text-white/20">
                               {notif.target === 'all' ? 'BROADCAST' : 'PRIVATE'}
                             </span>
                           </div>
                           <p className="text-xs text-white/40 line-clamp-1">{notif.message}</p>
                         </div>
-                        <button 
-                          onClick={async () => {
-                            if (confirm("Delete this notification?")) {
-                              await deleteDoc(doc(db, "notifications", notif.id));
-                              toast.success("Notification deleted");
-                              fetchAdminNotifications();
-                            }
-                          }}
-                          className="p-2 rounded-lg text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => openEditNotif(notif)}
+                            className="p-2 rounded-lg text-white/10 hover:text-white/80 hover:bg-white/5 transition-colors"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={async () => {
+                              if (confirm("Delete this notification?")) {
+                                await deleteDoc(doc(db, "notifications", notif.id));
+                                toast.success("Notification deleted");
+                                fetchAdminNotifications();
+                              }
+                            }}
+                            className="p-2 rounded-lg text-white/10 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -2039,159 +2100,6 @@ const Admin = () => {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════════════════════════════ */}
-          {/*  CHATS TAB                                                        */}
-          {/* ══════════════════════════════════════════════════════════════════ */}
-          {activeTab === "chats" && (
-            <div className="h-[calc(100vh-200px)] flex gap-4">
-              {/* Chat List */}
-              <div className="w-80 flex-shrink-0 rounded-2xl border border-white/6 bg-[#0d0d18] overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-white/6">
-                  <h2 className="text-sm font-bold text-white">Support Chats</h2>
-                  <p className="text-[11px] text-white/30 mt-0.5">
-                    {supportChats.filter(c => c.status === "pending_admin").length} pending replies
-                  </p>
-                </div>
-                <div className="flex-1 overflow-y-auto">
-                  {supportChats.length === 0 ? (
-                    <div className="p-8 text-center">
-                      <MessageCircle className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                      <p className="text-xs text-white/40">No chats yet</p>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-white/5">
-                      {supportChats.map(chat => (
-                        <button
-                          key={chat.id}
-                          onClick={() => {
-                            setSelectedChat(chat);
-                            if (chat.id) {
-                              if (chatUnsubscribeRef.current) {
-                                chatUnsubscribeRef.current();
-                              }
-                              chatUnsubscribeRef.current = subscribeToChatMessages(chat.id, (msgs) => {
-                                setChatMessages(msgs);
-                              });
-                              markMessagesAsRead(chat.id, "admin");
-                            }
-                          }}
-                          className={`w-full p-3 text-left transition-colors hover:bg-white/5 ${
-                            selectedChat?.id === chat.id ? "bg-white/10" : ""
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`w-2 h-2 rounded-full mt-1.5 ${
-                              chat.status === "pending_admin" ? "bg-amber-400" :
-                              chat.status === "active" ? "bg-green-400" : "bg-white/20"
-                            }`} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-white truncate">{chat.userName}</p>
-                              <p className="text-[11px] text-white/40 truncate">{chat.userEmail}</p>
-                              <p className="text-[10px] text-white/30 truncate mt-1">
-                                {chat.lastMessage || "No messages yet"}
-                              </p>
-                            </div>
-                            {chat.unreadCount > 0 && (
-                              <span className="px-1.5 py-0.5 rounded-full bg-[#6c5ce7] text-white text-[10px] font-bold">
-                                {chat.unreadCount}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Chat Window */}
-              <div className="flex-1 rounded-2xl border border-white/6 bg-[#0d0d18] overflow-hidden flex flex-col">
-                {selectedChat ? (
-                  <>
-                    {/* Chat Header */}
-                    <div className="p-4 border-b border-white/6 flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold text-white">{selectedChat.userName}</h3>
-                        <p className="text-[11px] text-white/40">{selectedChat.userEmail}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={selectedChat.status}
-                          onChange={async (e) => {
-                            if (selectedChat.id) {
-                              await updateChatStatus(selectedChat.id, e.target.value as any);
-                              toast.success("Status updated");
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70"
-                        >
-                          <option value="active">Active</option>
-                          <option value="pending_admin">Pending</option>
-                          <option value="resolved">Resolved</option>
-                          <option value="closed">Closed</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                      {chatMessages.map((msg, idx) => (
-                        <div
-                          key={msg.id || idx}
-                          className={`flex ${msg.sender === "user" ? "justify-start" : "justify-end"}`}
-                        >
-                          <div className={`max-w-[70%] px-3 py-2 rounded-xl text-sm ${
-                            msg.sender === "user"
-                              ? "bg-white/10 text-white"
-                              : msg.sender === "admin"
-                              ? "bg-[#6c5ce7] text-white"
-                              : "bg-white/5 text-white/70 border border-white/10"
-                          }`}>
-                            <p>{msg.text}</p>
-                            <p className="text-[9px] opacity-50 mt-1">
-                              {msg.timestamp?.toDate?.()?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Input */}
-                    <div className="p-4 border-t border-white/6">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter" && chatInput.trim()) {
-                              handleSendChatMessage();
-                            }
-                          }}
-                          placeholder="Type your message..."
-                          className="flex-1 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#6c5ce7]/50"
-                        />
-                        <button
-                          onClick={handleSendChatMessage}
-                          disabled={!chatInput.trim() || sendingChatMessage}
-                          className="px-4 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-sm font-semibold disabled:opacity-50 transition-colors"
-                        >
-                          {sendingChatMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send"}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                      <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                      <p className="text-sm text-white/40">Select a chat to start messaging</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
         </div>
       </main>

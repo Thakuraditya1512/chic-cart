@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight, Bell, Check, Info, Tag as TagIcon, BellOff } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight, Bell, Check, Info, Tag as TagIcon, BellOff, Star } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -12,7 +12,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const navigate = useNavigate();
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin } = useAuth();
-  const { notifications, unreadCount, markAsRead } = useNotification();
+  const { notifications, unreadCount, markAsRead, isNotificationRead } = useNotification();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -209,7 +209,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             </button>
 
             {/* Notifications */}
-            {user && (
+            {(user || (notifications && notifications.length > 0)) && (
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
@@ -248,7 +248,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                         )}
                       </div>
 
-                      <div className="overflow-y-auto max-h-[400px] py-1 custom-scrollbar">
+                      <div className="overflow-y-auto max-h-[400px] py-1 scrollbar-hide">
                         {notifications.length === 0 ? (
                           <div className="py-12 px-4 text-center">
                             <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mx-auto mb-3">
@@ -258,10 +258,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                           </div>
                         ) : (
                           notifications.map((notif) => {
-                            const isRead = notif.target === "all" 
-                              ? notif.readBy?.includes(user.uid) 
-                              : notif.isRead;
-                            
+                            const isRead = isNotificationRead(notif.id);
                             return (
                               <div
                                 key={notif.id}
@@ -277,18 +274,22 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                                 <div className="flex gap-3">
                                   <div className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                     notif.type === 'coupon' ? 'bg-emerald-500/10 text-emerald-500' :
-                                    notif.type === 'update' ? 'bg-blue-500/10 text-blue-500' :
+                                    notif.type === 'sale' ? 'bg-rose-500/10 text-rose-500' :
+                                    notif.type === 'new_arrival' ? 'bg-blue-500/10 text-blue-500' :
                                     'bg-amber-500/10 text-amber-500'
                                   }`}>
                                     {notif.type === 'coupon' ? <TagIcon size={14} /> :
-                                     notif.type === 'update' ? <Info size={14} /> :
+                                     notif.type === 'sale' ? <Star size={14} /> :
+                                     notif.type === 'new_arrival' ? <Info size={14} /> :
                                      <Bell size={14} />}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-0.5">
-                                      <h4 className={`text-sm font-semibold truncate ${!isRead ? "text-foreground" : "text-muted-foreground"}`}>
-                                        {notif.title}
-                                      </h4>
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <h4 className={`text-sm font-semibold truncate ${!isRead ? "text-foreground" : "text-muted-foreground"}`}>
+                                          {notif.title}
+                                        </h4>
+                                      </div>
                                       {!isRead && <div className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 ml-2" />}
                                     </div>
                                     <p className="text-xs text-muted-foreground line-clamp-2 mb-2">

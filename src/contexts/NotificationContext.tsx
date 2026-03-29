@@ -7,6 +7,7 @@ interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   markAsRead: (notificationId: string) => Promise<void>;
+  isNotificationRead: (notificationId: string) => boolean;
   loading: boolean;
 }
 
@@ -16,17 +17,38 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [localReadNotifs, setLocalReadNotifs] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!user) {
-      setNotifications([]);
-      setLoading(false);
-      return;
+    const stored = localStorage.getItem("read_notifications");
+    if (stored) {
+      try {
+        setLocalReadNotifs(JSON.parse(stored));
+      } catch (e) {
+        // ignore JSON parse error
+      }
     }
+  }, []);
 
+  const saveLocalRead = (id: string) => {
+    setLocalReadNotifs((prev) => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      localStorage.setItem("read_notifications", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  useEffect(() => {
     setLoading(true);
-    const unsubscribe = subscribeToNotifications(user.uid, (newNotifications) => {
-      setNotifications(newNotifications);
+    // User can be logged in or unauthenticated.
+    // We pass "unauthenticated" as the ID for anonymous users, fetching global ones.
+    const targetUserId = user ? user.uid : "unauthenticated";
+    
+    const unsubscribe = subscribeToNotifications(targetUserId, (newNotifications) => {
+      // Filter for active notifications
+      // All users see only active ones. Admin sees all when in Admin panel (handled there)
+      setNotifications(newNotifications.filter(n => n.isActive !== false));
       setLoading(false);
     });
 
@@ -34,19 +56,45 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   }, [user]);
 
   const unreadCount = notifications.filter(n => {
+    if (!user) {
+      return !localReadNotifs.includes(n.id);
+    }
     if (n.target === "all") {
-      return !n.readBy?.includes(user?.uid || "");
+      return !n.readBy?.includes(user.uid);
     }
     return !n.isRead;
   }).length;
 
   const markAsRead = async (notificationId: string) => {
-    if (!user) return;
     const notification = notifications.find(n => n.id === notificationId);
     if (!notification) return;
 
+    if (!user) {
+      // Unauthenticated users track read status locally
+      saveLocalRead(notificationId);
+      return;
+    }
+
     const isGlobal = notification.target === "all";
-    await markNotificationAsRead(notificationId, user.uid, isGlobal);
+    
+    // We can confidently mark read in Firebase if user is logged in
+    try {
+      await markNotificationAsRead(notificationId, user.uid, isGlobal);
+    } catch (err) {
+      console.error("Failed to mark notification as read in Firebase", err);
+    }
+  };
+
+  const isNotificationRead = (notificationId: string) => {
+    const n = notifications.find(notif => notif.id === notificationId);
+    if (!n) return false;
+    if (!user) {
+      return localReadNotifs.includes(notificationId);
+    }
+    if (n.target === "all") {
+      return !!n.readBy?.includes(user.uid);
+    }
+    return !!n.isRead;
   };
 
   return (
@@ -55,6 +103,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         notifications,
         unreadCount,
         markAsRead,
+        isNotificationRead,
         loading,
       }}
     >
