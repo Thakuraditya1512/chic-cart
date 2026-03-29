@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
-import { ArrowLeft, Grid3X3, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowLeft, Grid3X3, Filter, Search } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,12 @@ interface Product {
 
 const AllProducts = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialSearch = queryParams.get('search') || '';
+  
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+  const [shuffledProducts, setShuffledProducts] = useState<Product[]>([]);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['allProducts'],
@@ -51,6 +57,26 @@ const AllProducts = () => {
 
     return () => ctx.revert();
   }, []);
+
+  useEffect(() => {
+    if (products) {
+      setShuffledProducts([...products].sort(() => Math.random() - 0.5));
+    }
+  }, [products]);
+
+  // Re-sync with URL changes
+  useEffect(() => {
+    const currentSearch = new URLSearchParams(location.search).get('search');
+    if (currentSearch !== null) {
+      setSearchQuery(currentSearch);
+    }
+  }, [location.search]);
+
+  const filteredProducts = useMemo(() => {
+    return shuffledProducts.filter((p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [shuffledProducts, searchQuery]);
 
   if (isLoading) return <LoadingScreen />;
 
@@ -83,16 +109,37 @@ const AllProducts = () => {
             </p>
           </div>
 
-          <button className="inline-flex items-center gap-2 px-4 py-2.5 border border-foreground/20 rounded-lg text-sm font-sans hover:bg-foreground/5 transition-colors">
-            <Filter size={16} />
-            Filter
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Search Bar */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-muted-foreground group-focus-within:text-primary transition-colors" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search shoes by name..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  // Optionally update URL without reload
+                  const url = new URL(window.location.href);
+                  if (e.target.value) {
+                    url.searchParams.set('search', e.target.value);
+                  } else {
+                    url.searchParams.delete('search');
+                  }
+                  window.history.replaceState({}, '', url);
+                }}
+                className="pl-9 pr-4 py-2 bg-foreground/5 border border-foreground/10 rounded-full text-sm font-sans focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition-all w-full sm:w-64"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Products Grid */}
-        {products && products.length > 0 ? (
+        {filteredProducts && filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-            {products.map((product, index) => (
+            {filteredProducts.map((product, index) => (
               <div
                 key={product.id}
                 className="products-animate"

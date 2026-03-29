@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import OrderAnalytics from "@/components/OrderAnalytics";
+import OrderGeoMap from "@/components/OrderGeoMap";
 import {
-  Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X,
+  Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X, Search,
   ChevronRight, User, Shield, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
   MessageSquare, LogOut, Bell, Info, Tag as TagIcon
@@ -149,7 +151,8 @@ interface Coupon {
 
 const Admin = () => {
   const { logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>("brands");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab ] = useState<TabId>("brands");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -198,6 +201,7 @@ const Admin = () => {
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
 
   const [brandForm, setBrandForm] = useState({ name: "", description: "", image: "" });
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
 
   const [productForm, setProductForm] = useState({
     name: "", price: "", originalPrice: "", description: "",
@@ -727,11 +731,18 @@ const Admin = () => {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#08080f] text-white flex flex-col md:flex-row font-sans">
+    <div className="h-[100dvh] bg-[#08080f] text-white flex flex-col md:flex-row font-sans relative overflow-hidden overscroll-none">
+      
+      {/* ── Background Mesh Gradient ── */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#6c5ce7]/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#a855f7]/10 blur-[120px]" />
+      </div>
 
       {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
       <aside className="w-full md:w-60 lg:w-64 flex-shrink-0 border-b md:border-b-0 md:border-r border-white/6
-        bg-[#0a0a13] flex flex-col md:h-screen md:sticky md:top-0 z-40">
+        bg-[#0a0a13]/80 backdrop-blur-xl flex flex-col md:h-screen md:sticky md:top-0 z-40">
+
 
         {/* Logo */}
         <div className="px-7 py-8 hidden md:block">
@@ -744,9 +755,9 @@ const Admin = () => {
           <p className="text-[11px] text-white/30 tracking-widest uppercase pl-9">Control Panel</p>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 px-3 md:px-4 pb-4 md:pb-6 overflow-x-auto md:overflow-y-auto
-          flex md:flex-col gap-1 md:gap-0.5 no-scrollbar pt-3 md:pt-0">
+          flex items-center md:items-stretch md:flex-col gap-1 md:gap-0.5 no-scrollbar pt-3 md:pt-0">
+
           {tabs.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -754,45 +765,68 @@ const Admin = () => {
               <button
                 key={tab.id}
                 onClick={() => { setActiveTab(tab.id); setShowForm(false); }}
-                className={`relative flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm
-                  font-medium transition-all whitespace-nowrap md:whitespace-normal w-full text-left
-                  group ${active
-                    ? "bg-[#6c5ce7]/15 text-white"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/4"
-                  }`}
+                className={`relative group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300
+                  ${active 
+                    ? "text-white" 
+                    : "text-white/40 hover:text-white/70 hover:bg-white/5"}`}
               >
+                {/* Active Indicator Background */}
                 {active && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5
-                    rounded-r bg-[#6c5ce7]" />
+                  <motion.div
+                    layoutId="activeTabBg"
+                    className="absolute inset-0 bg-gradient-to-r from-[#6c5ce7]/20 to-[#a855f7]/20 border border-white/10 rounded-xl"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
                 )}
-                <Icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-[#6c5ce7]" : ""}`} />
-                <span className="flex-1">{tab.label}</span>
-                <span className={`text-[11px] px-1.5 py-0.5 rounded-md font-mono
-                  ${active ? "bg-[#6c5ce7]/20 text-[#a78bfa]" : "bg-white/5 text-white/25"}`}>
-                  {tab.count}
-                </span>
+                
+                <div className="relative flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-500
+                    ${active ? "bg-[#6c5ce7] text-white shadow-lg shadow-[#6c5ce7]/25" : "bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white/60"}`}>
+                    <Icon className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-semibold tracking-tight">{tab.label}</span>
+                </div>
+
+                {tab.count > 0 && (
+                  <span className={`relative text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all duration-500
+                    ${active ? "bg-white text-[#6c5ce7] border-white/20" : "bg-white/5 text-white/30 border-white/5 group-hover:border-white/10"}`}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             );
           })}
+          
+          {/* Mobile Signout Button (End of horizontal scroll) */}
+          <button
+            onClick={() => { logout(); navigate("/"); }}
+            className="md:hidden flex-shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl ml-2
+              text-[10px] font-bold uppercase tracking-widest text-[#ff5e00] bg-[#ff5e00]/10 border border-[#ff5e00]/20"
+          >
+            <LogOut className="w-3 h-3" />
+            Sign Out
+          </button>
         </nav>
 
         {/* Bottom badge */}
-        <div className="hidden md:block px-5 py-5 border-t border-white/6 space-y-4">
+        <div className="hidden md:block px-5 py-5 border-t border-white/6 space-y-4 relative mt-auto">
           <div className="flex items-center justify-between group">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6c5ce7] to-[#a855f7]
                 flex items-center justify-center text-[11px] font-bold">A</div>
               <div>
-                <p className="text-xs font-semibold text-white/80">Administrator</p>
-                <p className="text-[10px] text-white/30">Full access</p>
+                <p className="text-[11px] font-semibold text-white/80">Administrator</p>
+                <p className="text-[9px] text-white/30 uppercase tracking-widest">Full access</p>
               </div>
             </div>
+            
+            {/* Single Desktop Sign Out Button */}
             <button
-              onClick={() => logout()}
-              className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/30 hover:bg-red-400/10 transition-all"
+              onClick={() => { logout(); navigate("/"); }}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-[#ff5e00] hover:border-[#ff5e00]/30 hover:bg-[#ff5e00]/10 transition-all"
               title="Sign Out"
             >
-              <LogOut className="w-3 h-3" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
           
@@ -814,37 +848,79 @@ const Admin = () => {
         </div>
       </aside>
 
-      {/* ── Main ──────────────────────────────────────────────────────────────── */}
-      <main className="flex-1 min-w-0 overflow-auto">
+      {/* ── Main Content ────────────────────────────────────────────────────── */}
+      <main className="flex-1 relative z-10 overflow-auto">
         {/* Page header */}
-        <header className="sticky top-0 z-30 bg-[#08080f]/90 backdrop-blur border-b border-white/6
-          px-6 md:px-10 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-white tracking-tight">
-              {tabs.find(t => t.id === activeTab)?.label}
-            </h1>
-            <p className="text-[11px] text-white/30 tracking-wider uppercase mt-0.5">
-              {activeTab === "brands" && `${brands.length} registered brands`}
-              {activeTab === "products" && `${products.length} total products`}
-              {activeTab === "featured" && `${featuredProducts.size} featured`}
-              {activeTab === "customers" && `${orders.length} orders`}
-              {activeTab === "users" && `${users.length} registered users`}
-              {activeTab === "reviews" && `${reviews.length} total reviews`}
-            </p>
+        {/* Desktop Top Header Bar */}
+        <header className="hidden md:flex h-16 items-center justify-between px-8 border-b border-white/6 bg-[#08080f]/40 backdrop-blur-md sticky top-0 z-30">
+          <div className="flex items-center gap-3">
+            <h2 className="text-base font-bold text-white capitalize tracking-tight">{activeTab}</h2>
+            <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+            <p className="text-xs text-white/30 font-medium">Dashboard Overview</p>
           </div>
-
-          {(activeTab === "brands" || activeTab === "products") && (
-            <button
-              onClick={activeTab === "brands" ? openNewBrand : openNewProduct}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg
-                bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-sm font-semibold transition-all
-                shadow-lg shadow-[#6c5ce7]/20 active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              Add New
-            </button>
-          )}
+          <div className="flex items-center gap-5">
+            {/* Quick Actions / Notifications */}
+            <div className="flex items-center gap-2">
+              <button className="relative p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-colors">
+                <Bell className="w-4 h-4" />
+                {adminNotifications.length > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ff5e00] ring-2 ring-[#08080f]" />
+                )}
+              </button>
+            </div>
+            
+            <div className="w-px h-6 bg-white/10" />
+            
+            {/* Beautiful Profile Chip */}
+            <div className="flex items-center gap-3 px-2 py-1.5 rounded-2xl group cursor-pointer hover:bg-white/[0.03] border border-transparent hover:border-white/[0.05] transition-all">
+              <div className="hidden lg:flex flex-col items-end justify-center">
+                <span className="text-xs font-bold text-white group-hover:text-[#6c5ce7] transition-colors tracking-tight">Admin Console</span>
+                <span className="text-[9px] text-white/40 uppercase tracking-widest font-semibold flex items-center gap-1">
+                  <Shield className="w-2.5 h-2.5 text-emerald-400/70" /> Secured
+                </span>
+              </div>
+              <div className="relative">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center border border-white/10 shadow-lg shadow-[#6c5ce7]/20 group-hover:shadow-[#6c5ce7]/40 transition-shadow">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border-[2.5px] border-[#08080f] shadow-sm" title="Online" />
+              </div>
+            </div>
+          </div>
         </header>
+
+        {/* Mobile Header */}
+        <header className="md:hidden flex h-16 items-center px-6 border-b border-white/6 bg-[#08080f]/80 backdrop-blur-md sticky top-0 z-30">
+          <h2 className="text-sm font-bold text-white capitalize tracking-tight">{activeTab}</h2>
+        </header>
+
+        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white capitalize tracking-tight">{activeTab}</h3>
+                  <p className="text-xs text-white/40 mt-1 uppercase tracking-widest">Manage your {activeTab} settings and data</p>
+                </div>
+                {(activeTab === "brands" || activeTab === "products") && (
+                  <button
+                    onClick={activeTab === "brands" ? openNewBrand : openNewProduct}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl
+                      bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-xs font-bold uppercase tracking-wider transition-all
+                      shadow-xl shadow-[#6c5ce7]/20 active:scale-95 whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add {activeTab === "brands" ? "Brand" : "Product"}
+                  </button>
+                )}
+              </div>
+
 
         <div className="px-6 md:px-10 py-8 space-y-6">
 
@@ -1317,51 +1393,85 @@ const Admin = () => {
               {/* ── Analytics Dashboard ── */}
               <OrderAnalytics orders={orders} />
 
-              {/* ── Orders List ── */}
-              <div className="pt-2 pb-1">
-                <h3 className="text-sm font-bold text-white/60 uppercase tracking-widest text-[11px]">Order History</h3>
+              {/* ── Geo-Map section ── */}
+              {/* <OrderGeoMap orders={orders} /> */}
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 pb-2">
+                <div>
+                  <h3 className="text-sm font-bold text-white tracking-tight">Order Activity</h3>
+                  <p className="text-[10px] text-white/20 uppercase tracking-[0.2em] mt-0.5">Historical Logs</p>
+                </div>
+                
+                {/* Premium Search Bar */}
+                <div className="relative w-full sm:w-72 group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Search className="w-4 h-4 text-white/10 group-focus-within:text-[#6c5ce7] transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search Order ID or Customer..."
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 rounded-2xl bg-[#0d0d14]/60 border border-white/6
+                      text-xs text-white placeholder:text-white/10
+                      focus:outline-none focus:border-[#6c5ce7]/40 focus:ring-4 focus:ring-[#6c5ce7]/5 transition-all"
+                  />
+                </div>
               </div>
 
               {orders.length === 0 ? (
                 <EmptyState title="No orders yet" subtitle="Orders will appear here when customers check out." />
               ) : (
-                orders.map(order => {
+                orders
+                  .filter(o => {
+                    const id = o?.id || "";
+                    const name = o?.customerName || "";
+                    const query = orderSearchQuery.toLowerCase();
+                    return id.toLowerCase().includes(query) || name.toLowerCase().includes(query);
+                  })
+                  .map(order => {
                   const expanded = expandedOrder === order.id;
                   const statusIdx = ORDER_STATUSES.indexOf(order.status as any);
                   return (
                     <div key={order.id}
-                      className="rounded-2xl border border-white/6 bg-[#0d0d18] overflow-hidden">
+                      className="group relative rounded-2xl border border-white/6 bg-[#0d0d18]/40 hover:bg-[#0d0d18]/60 
+                        backdrop-blur-sm transition-all duration-300 overflow-hidden">
                       {/* Order row */}
                       <button
-                        onClick={() => setExpandedOrder(expanded ? null : order.id)}
-                        className="w-full flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0
-                          justify-between p-5 text-left hover:bg-white/2 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center
-                            justify-center text-xs font-bold text-white/40 flex-shrink-0">
-                            {order.customerName.charAt(0).toUpperCase()}
+                        onClick={() => setExpandedOrder(expanded ? null : order?.id)}
+                        className="w-full flex flex-col sm:flex-row sm:items-center p-5 text-left border-b border-transparent hover:border-white/5 transition-all">
+                        
+                        <div className="flex items-center gap-4 flex-1 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all
+                            ${expanded ? "bg-[#6c5ce7] text-white shadow-lg shadow-[#6c5ce7]/20" : "bg-white/5 text-white/30"}`}>
+                            {(order?.customerName?.[0] || "U").toUpperCase()}
                           </div>
-                          <div>
-                            <p className="font-semibold text-white text-sm">{order.customerName}</p>
-                            <p className="text-xs text-white/35">{order.email}</p>
+                          <div className="min-w-0 pr-4">
+                            <p className="font-bold text-white text-sm truncate tracking-tight">{order?.customerName || "Unknown Customer"}</p>
+                            <p className="text-[10px] text-white/20 font-mono mt-0.5 truncate uppercase tracking-widest">
+                              ID: {order?.id?.slice(0, 10) || "N/A"}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 sm:gap-6 ml-13">
-                          <div>
-                            <p className="text-[10px] text-white/25 uppercase tracking-widest">Order</p>
-                            <p className="text-xs font-mono text-white/50">#{order.id.slice(0, 8)}</p>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-6 mt-4 sm:mt-0">
+                          <div className="text-right hidden md:block">
+                            <p className="text-[10px] text-white/20 uppercase tracking-widest mb-0.5">Revenue</p>
+                            <p className="text-sm font-bold text-white tracking-tight">₹{(order?.total || 0).toLocaleString('en-IN')}</p>
                           </div>
-                          <div>
-                            <p className="text-[10px] text-white/25 uppercase tracking-widest">Total</p>
-                            <p className="text-sm font-bold text-white">₹{order.total.toLocaleString('en-IN')}</p>
+
+                          <div className="flex items-center gap-3">
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.2 rounded-full text-[10px] font-bold uppercase tracking-widest border
+                              ${STATUS_COLORS[order?.status || "pending"] || "text-white/40 bg-white/5 border-white/10"}`}>
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[order?.status || "pending"] || '#fff' }} />
+                              {STATUS_LABELS[order?.status || "pending"] || (order?.status || "pending")}
+                            </span>
+                            
+                            <div className={`p-1.5 rounded-lg border border-white/5 transition-all
+                              ${expanded ? "bg-[#6c5ce7]/20 text-[#6c5ce7] border-[#6c5ce7]/20" : "bg-white/5 text-white/20"}`}>
+                              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </div>
                           </div>
-                          <span className={`hidden sm:inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border
-                            ${STATUS_COLORS[order.status] || "text-white/40 bg-white/5 border-white/10"}`}>
-                            {STATUS_LABELS[order.status] || order.status}
-                          </span>
-                          {expanded
-                            ? <ChevronUp className="w-4 h-4 text-white/25 flex-shrink-0" />
-                            : <ChevronDown className="w-4 h-4 text-white/25 flex-shrink-0" />}
                         </div>
                       </button>
 
@@ -1372,8 +1482,8 @@ const Admin = () => {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="border-t border-white/6 overflow-hidden">
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="bg-black/20 border-t border-white/5 overflow-hidden">
                             <div className="p-5 space-y-5">
 
                               {/* Items */}
@@ -2125,8 +2235,9 @@ const Admin = () => {
               </div>
             </div>
           )}
-
-
+            </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
@@ -2234,14 +2345,17 @@ const EmptyState = ({
   subtitle: string;
   action?: { label: string; onClick: () => void };
 }) => (
-  <div className="flex flex-col items-center justify-center py-20 px-4 rounded-2xl
-    border border-dashed border-white/8 text-center">
-    <p className="text-sm font-semibold text-white/50 mb-1">{title}</p>
-    <p className="text-xs text-white/25">{subtitle}</p>
+  <div className="flex flex-col items-center justify-center py-24 px-6 rounded-[2rem]
+    border border-dashed border-white/5 bg-white/[0.01] text-center">
+    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+      <Package className="w-6 h-6 text-white/10" />
+    </div>
+    <h4 className="text-base font-bold text-white mb-2">{title}</h4>
+    <p className="text-xs text-white/30 max-w-[240px] leading-relaxed mx-auto">{subtitle}</p>
     {action && (
       <button onClick={action.onClick}
-        className="mt-5 px-5 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#7c6cf7]
-          text-white text-sm font-semibold transition-all">
+        className="mt-8 px-8 py-3 rounded-2xl bg-[#6c5ce7] hover:bg-[#7c6cf7]
+          text-white text-sm font-bold transition-all shadow-xl shadow-[#6c5ce7]/10 active:scale-95">
         {action.label}
       </button>
     )}
@@ -2271,7 +2385,13 @@ const IconBtn = ({
 );
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] uppercase tracking-widest font-bold text-white/25">{children}</p>
+  <div className="flex items-center gap-3">
+    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/5 md:hidden" />
+    <span className="text-[10px] uppercase tracking-[0.3em] font-black text-[#6c5ce7]/60 whitespace-nowrap">
+      {children}
+    </span>
+    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/5" />
+  </div>
 );
 
 export default Admin;

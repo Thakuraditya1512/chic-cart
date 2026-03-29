@@ -28,11 +28,11 @@ const Index = () => {
         <ShoeShowcase />
 
 
-       {/* 6. Featured products + horizontal scroll */}
-        <FeaturedProducts />
+        {/* 6. Featured products + horizontal scroll */}
+        {/* <FeaturedProducts /> */}
 
         {/* 4. Editorial lookbook grid */}
-        <EditorialLookbook />
+        {/* <EditorialLookbook /> */}
 
         {/* 5. Social proof stats */}
         <StatsBar />

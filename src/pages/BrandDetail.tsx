@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { ArrowLeft, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -24,6 +24,7 @@ const BrandDetail = () => {
   const navigate = useNavigate();
   const [brand, setBrand] = useState<Brand | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const productsGridRef = useRef<HTMLDivElement>(null);
 
@@ -93,7 +94,9 @@ const BrandDetail = () => {
         ...doc.data(),
         rating: doc.data().rating || 4.5,
       } as Product));
-      setProducts(fetchedProducts);
+      // Randomize the display order
+      const shuffledProducts = [...fetchedProducts].sort(() => Math.random() - 0.5);
+      setProducts(shuffledProducts);
     } catch (error) {
       console.error("Error fetching brand details:", error);
     } finally {
@@ -161,18 +164,34 @@ const BrandDetail = () => {
 
       {/* Products Section */}
       <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-12 md:py-16">
-        {/* Section Header */}
-        <div className="mb-6 sm:mb-10 md:mb-12">
-          <h2 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-1 sm:mb-2">
-            Our Collection
-          </h2>
-          <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
-            {products.length} {products.length === 1 ? "shoe" : "shoes"} available
-          </p>
+        {/* Section Header & Search */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-10 md:mb-12">
+          <div>
+            <h2 className="font-display text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-1 sm:mb-2">
+              Our Collection
+            </h2>
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
+              {products.length} {products.length === 1 ? "shoe" : "shoes"} available
+            </p>
+          </div>
+          
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={16} className="text-muted-foreground mr-2" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search in brand..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-foreground/5 border border-foreground/10 rounded-full text-sm font-sans focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition-all"
+            />
+          </div>
         </div>
 
         {/* Products Grid */}
-        {products.length === 0 ? (
+        {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
           <div className="text-center py-10 sm:py-16">
             <ShoppingCart className="w-10 h-10 sm:w-16 sm:h-16 text-muted-foreground/50 mx-auto mb-3 sm:mb-4" />
             <h3 className="text-base sm:text-xl font-semibold text-foreground mb-2">
@@ -190,7 +209,7 @@ const BrandDetail = () => {
           </div>
         ) : (
           <div ref={productsGridRef} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-            {products.map((product) => (
+            {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((product) => (
               <div
                 key={product.id}
                 className="brand-product-card"

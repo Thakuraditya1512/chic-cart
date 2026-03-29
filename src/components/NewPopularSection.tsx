@@ -5,6 +5,8 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Product } from "@/types";
 import gsap from "gsap";
+import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Brand {
   id: string;
@@ -13,11 +15,13 @@ interface Brand {
 
 const NewPopularSection = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [activeTab, setActiveTab] = useState("All");
   const [loading, setLoading] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const isInView = useInView(ref, { once: true, margin: "-80px" });
 
   useEffect(() => {
@@ -44,7 +48,10 @@ const NewPopularSection = () => {
             rating: doc.data().rating || 4.5,
           } as Product)
       );
-      setProducts(fetchedProducts);
+      
+      // Randomize the display order
+      const shuffledProducts = [...fetchedProducts].sort(() => Math.random() - 0.5);
+      setProducts(shuffledProducts);
     } catch (error) {
       console.error("Error fetching data:", error);
       setProducts([]);
@@ -56,12 +63,9 @@ const NewPopularSection = () => {
 
   const brandNames = ["All", ...brands.map((b) => b.name)];
 
-  const filtered =
-    activeTab === "All"
-      ? products
-      : products.filter(
-          (p) => brands.find((b) => b.id === p.brandId)?.name === activeTab
-        );
+  const filtered = products
+    .filter(p => activeTab === "All" || brands.find((b) => b.id === p.brandId)?.name === activeTab)
+    .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // GSAP tab switch animation
   useEffect(() => {
@@ -101,28 +105,54 @@ const NewPopularSection = () => {
           </motion.h2>
         </div>
 
-        {/* Filter Tabs */}
-        <motion.div
-          ref={tabsRef}
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex justify-center gap-2 mb-8 sm:mb-12 overflow-x-auto pb-3 scrollbar-hide px-2 -mx-2"
-        >
-          {brandNames.map((brand) => (
-            <button
-              key={brand}
-              onClick={() => setActiveTab(brand)}
-              className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[9px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] rounded-full transition-all duration-300 whitespace-nowrap flex-shrink-0 ${
-                activeTab === brand
-                  ? "bg-foreground text-background"
-                  : "bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-              }`}
-            >
-              {brand}
-            </button>
-          ))}
-        </motion.div>
+        {/* Filter Tabs & Search */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 sm:mb-12">
+          <motion.div
+            ref={tabsRef}
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex w-full sm:w-auto overflow-x-auto pb-3 scrollbar-hide px-2 -mx-2"
+          >
+            {brandNames.map((brand) => (
+              <button
+                key={brand}
+                onClick={() => setActiveTab(brand)}
+                className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[9px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] rounded-full transition-all duration-300 whitespace-nowrap flex-shrink-0 mr-2 ${
+                  activeTab === brand
+                    ? "bg-foreground text-background"
+                    : "bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                {brand}
+              </button>
+            ))}
+          </motion.div>
+
+          {/* Search Input */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={isInView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="relative w-full sm:w-64 flex-shrink-0"
+          >
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={16} className="text-muted-foreground" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search shoes by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQuery.trim()) {
+                  navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+              className="w-full pl-9 pr-4 py-2 bg-foreground/5 border border-foreground/10 rounded-full text-sm font-sans focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition-all"
+            />
+          </motion.div>
+        </div>
 
         {/* Products Grid */}
         {loading ? (

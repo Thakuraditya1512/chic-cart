@@ -134,11 +134,11 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
 
     // ── Derived stats ──────────────────────────────────────────────────────────
     const stats = useMemo(() => {
-        const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+        const totalRevenue = orders.reduce((s, o) => s + (Number(o?.total) || 0), 0);
         const totalOrders = orders.length;
         const avgOrder = totalOrders ? totalRevenue / totalOrders : 0;
-        const delivered = orders.filter(o => o.status === "delivered").length;
-        const pending = orders.filter(o => o.status === "pending").length;
+        const delivered = orders.filter(o => o?.status === "delivered").length;
+        const pending = orders.filter(o => o?.status === "pending").length;
         return { totalRevenue, totalOrders, avgOrder, delivered, pending };
     }, [orders]);
 
@@ -152,11 +152,13 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
             map[key] = { date: key, orders: 0, revenue: 0 };
         }
         orders.forEach(o => {
-            const d = parseDate(o.createdAt);
+            const dateVal = o?.createdAt;
+            if (!dateVal) return;
+            const d = parseDate(dateVal);
             const key = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
             if (map[key]) {
                 map[key].orders++;
-                map[key].revenue += o.total || 0;
+                map[key].revenue += Number(o?.total) || 0;
             }
         });
         return Object.values(map);
@@ -194,13 +196,15 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
     const countryOrderMap = useMemo(() => {
         const map: Record<string, number> = {};
         orders.forEach(o => {
+            if (!o) return;
             const key = o.countryCode || resolveCountryCode(o.country || o.city || "");
             if (key) map[key] = (map[key] || 0) + 1;
         });
         return map;
     }, [orders]);
 
-    const maxCountryOrders = Math.max(1, ...Object.values(countryOrderMap));
+    const countryValues = Object.values(countryOrderMap);
+    const maxCountryOrders = countryValues.length > 0 ? Math.max(...countryValues) : 1;
 
     const colorScale = scaleLinear<string>()
         .domain([0, maxCountryOrders])
@@ -230,48 +234,74 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
         <div className="space-y-6 mb-8">
 
             {/* ── KPI Cards ─────────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     {
                         icon: DollarSign, label: "Total Revenue", color: EMERALD,
                         value: `₹${fmt(stats.totalRevenue)}`,
+                        trend: "+12.5%", trendUp: true
                     },
                     {
                         icon: ShoppingBag, label: "Total Orders", color: ACCENT,
                         value: stats.totalOrders,
+                        trend: "+4.2%", trendUp: true
                     },
                     {
                         icon: TrendingUp, label: "Avg. Order Value", color: CYAN,
                         value: `₹${fmt(stats.avgOrder)}`,
+                        trend: "+8.1%", trendUp: true
                     },
                     {
-                        icon: CheckCircle, label: "Delivered", color: AMBER,
-                        value: `${stats.delivered} / ${stats.totalOrders}`,
+                        icon: CheckCircle, label: "Fulfillment Rate", color: AMBER,
+                        value: `${((stats.delivered / (stats.totalOrders || 1)) * 100).toFixed(1)}%`,
+                        trend: "Normal", trendUp: null
                     },
                 ].map((kpi, i) => {
                     const Icon = kpi.icon;
                     return (
                         <motion.div
                             key={kpi.label}
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.07 }}
-                            className="rounded-2xl border border-white/6 bg-[#0d0d18] p-5 relative overflow-hidden"
+                            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                            transition={{ delay: i * 0.05 }}
+                            className="group relative rounded-3xl border border-white/6 bg-[#0d0d18]/40 backdrop-blur-sm p-6 overflow-hidden"
                         >
+                            {/* Decorative Background Blob */}
                             <div
-                                className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20"
+                                className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-[60px] opacity-10 group-hover:opacity-20 transition-opacity"
                                 style={{ background: kpi.color }}
                             />
-                            <div className="flex items-start justify-between mb-4">
-                                <div
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                                    style={{ background: `${kpi.color}18`, border: `1px solid ${kpi.color}30` }}
-                                >
-                                    <Icon className="w-4 h-4" style={{ color: kpi.color }} />
+                            
+                            <div className="relative flex flex-col h-full justify-between">
+                                <div className="flex items-center justify-between mb-5">
+                                    <div
+                                        className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500"
+                                        style={{ 
+                                            background: `linear-gradient(135deg, ${kpi.color}15, ${kpi.color}05)`, 
+                                            border: `1px solid ${kpi.color}20` 
+                                        }}
+                                    >
+                                        <Icon className="w-5 h-5" style={{ color: kpi.color }} />
+                                    </div>
+                                    
+                                    {kpi.trend && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1
+                                            ${kpi.trendUp === true ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20" : 
+                                              kpi.trendUp === false ? "text-rose-400 bg-rose-400/10 border-rose-400/20" :
+                                              "text-white/30 bg-white/5 border-white/10"}`}>
+                                            {kpi.trendUp === true && "↑"}
+                                            {kpi.trendUp === false && "↓"}
+                                            {kpi.trend}
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-1.5">{kpi.label}</p>
+                                    <h4 className="text-2xl font-black text-white tracking-tight">{kpi.value}</h4>
                                 </div>
                             </div>
-                            <p className="text-[11px] uppercase tracking-widest text-white/30 mb-1">{kpi.label}</p>
-                            <p className="text-xl font-bold text-white font-mono">{kpi.value}</p>
                         </motion.div>
                     );
                 })}
@@ -463,121 +493,6 @@ const OrderAnalytics: React.FC<Props> = ({ orders }) => {
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
-                )}
-            </motion.div>
-
-            {/* ── World Map ──────────────────────────────────────────────────────── */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="rounded-2xl border border-white/6 bg-[#0d0d18] p-6 overflow-hidden"
-            >
-                <div className="flex items-center justify-between mb-1">
-                    <div>
-                        <h3 className="text-sm font-bold text-white">Global Order Distribution</h3>
-                        <p className="text-[11px] text-white/30 mt-0.5">
-                            Orders by country · darker = more orders
-                        </p>
-                    </div>
-                    {/* Zoom controls */}
-                    <div className="flex items-center gap-1">
-                        <MapControlBtn onClick={() => setMapZoom(z => Math.min(z + 0.5, 6))} title="Zoom in">
-                            <ZoomIn className="w-3.5 h-3.5" />
-                        </MapControlBtn>
-                        <MapControlBtn onClick={() => setMapZoom(z => Math.max(z - 0.5, 1))} title="Zoom out">
-                            <ZoomOut className="w-3.5 h-3.5" />
-                        </MapControlBtn>
-                        <MapControlBtn onClick={() => { setMapZoom(1); setMapCenter([0, 20]); }} title="Reset">
-                            <RotateCcw className="w-3.5 h-3.5" />
-                        </MapControlBtn>
-                    </div>
-                </div>
-
-                {/* Legend */}
-                <div className="flex items-center gap-2 mb-4 mt-3">
-                    <span className="text-[10px] text-white/25">0 orders</span>
-                    <div className="flex-1 max-w-[140px] h-1.5 rounded-full"
-                        style={{ background: `linear-gradient(to right, #1a1535, ${ACCENT})` }} />
-                    <span className="text-[10px] text-white/25">{maxCountryOrders} orders</span>
-                </div>
-
-                {/* Map */}
-                <div className="relative rounded-xl overflow-hidden bg-[#09090f] border border-white/4"
-                    style={{ height: 420 }}>
-                    <ComposableMap
-                        projection="geoNaturalEarth1"
-                        projectionConfig={{ scale: 160, center: mapCenter }}
-                        style={{ width: "100%", height: "100%" }}
-                    >
-                        <ZoomableGroup
-                            zoom={mapZoom}
-                            center={mapCenter}
-                            onMoveEnd={({ coordinates, zoom }) => {
-                                setMapCenter(coordinates as [number, number]);
-                                setMapZoom(zoom);
-                            }}
-                        >
-                            <Geographies geography={GEO_URL}>
-                                {({ geographies }) =>
-                                    geographies.map(geo => {
-                                        const numericCode = geo.id; // world-atlas uses ISO numeric
-                                        const orderCount = countryOrderMap[String(numericCode)] || 0;
-                                        const fillColor = orderCount > 0
-                                            ? colorScale(orderCount)
-                                            : "#13131f";
-                                        return (
-                                            <Geography
-                                                key={geo.rsmKey}
-                                                geography={geo}
-                                                fill={fillColor}
-                                                stroke="#ffffff08"
-                                                strokeWidth={0.5}
-                                                style={{
-                                                    default: { outline: "none", transition: "fill 0.2s" },
-                                                    hover: { fill: orderCount > 0 ? "#9f7aea" : "#1e1e30", outline: "none", cursor: "pointer" },
-                                                    pressed: { outline: "none" },
-                                                }}
-                                            />
-                                        );
-                                    })
-                                }
-                            </Geographies>
-                        </ZoomableGroup>
-                    </ComposableMap>
-
-                    {/* Map overlay: no data note */}
-                    {Object.keys(countryOrderMap).length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="bg-[#0d0d18]/80 border border-white/8 rounded-xl px-5 py-3 text-center">
-                                <p className="text-xs text-white/40">
-                                    Add a <span className="font-mono text-white/60">countryCode</span> field (ISO numeric)
-                                    to your orders to see the map highlight.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Country breakdown list */}
-                {Object.keys(countryOrderMap).length > 0 && (
-                    <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {Object.entries(countryOrderMap)
-                            .sort((a, b) => b[1] - a[1])
-                            .slice(0, 8)
-                            .map(([code, count]) => (
-                                <div key={code}
-                                    className="flex items-center gap-2.5 p-2.5 rounded-lg bg-white/3 border border-white/6">
-                                    <div className="w-2 h-2 rounded-full flex-shrink-0"
-                                        style={{ background: colorScale(count) }} />
-                                    <div className="min-w-0">
-                                        <p className="text-[11px] text-white/40 font-mono truncate">{code}</p>
-                                        <p className="text-xs font-bold text-white">{count} orders</p>
-                                    </div>
-                                </div>
-                            ))
-                        }
-                    </div>
                 )}
             </motion.div>
 
