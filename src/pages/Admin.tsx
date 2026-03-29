@@ -272,6 +272,15 @@ const Admin = () => {
     chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
+  useEffect(() => {
+    if (activeChat) {
+      document.body.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+    }
+    return () => document.body.classList.remove('no-scroll');
+  }, [activeChat]);
+
   // ─── Data Fetchers ──────────────────────────────────────────────────────────
 
   const fetchBrands = async () => {
@@ -819,7 +828,7 @@ const Admin = () => {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-[100dvh] bg-[#08080f] text-white flex flex-col md:flex-row font-sans relative overflow-hidden overscroll-none">
+    <div className="h-[100dvh] bg-[#08080f] text-white flex flex-col md:flex-row font-sans relative overflow-hidden overscroll-none fixed inset-0 w-full">
       
       {/* ── Background Mesh Gradient ── */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -978,11 +987,17 @@ const Admin = () => {
         </header>
 
         {/* Mobile Header */}
-        <header className="md:hidden flex h-16 items-center px-6 border-b border-white/6 bg-[#08080f]/80 backdrop-blur-md sticky top-0 z-30">
-          <h2 className="text-sm font-bold text-white capitalize tracking-tight">{activeTab}</h2>
+        <header className="md:hidden flex h-14 items-center justify-between px-4 border-b border-white/6 bg-[#08080f]/80 backdrop-blur-md sticky top-0 z-30">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center">
+              <Package className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider">{activeTab}</h2>
+          </div>
+          <p className="text-[10px] text-white/30 font-medium">KickAdmin</p>
         </header>
 
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -2112,9 +2127,9 @@ const Admin = () => {
           )}
 
           {activeTab === "chats" && (
-            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100dvh-200px)]">
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100dvh-180px)] md:h-[calc(100dvh-200px)]">
               {/* Chat List */}
-              <div className="w-full lg:w-80 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+              <div className={`w-full lg:w-80 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar ${activeChat ? 'hidden lg:flex' : 'flex'}`}>
                 <SectionLabel>Active Sessions</SectionLabel>
                 {supportChats.length === 0 ? (
                   <EmptyState title="No active chats" subtitle="Wait for users to request help." />
@@ -2123,7 +2138,7 @@ const Admin = () => {
                     <button
                       key={chat.id}
                       onClick={() => setActiveChat(chat)}
-                      className={`flex flex-col gap-2 p-4 rounded-2xl border transition-all text-left ${
+                      className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all text-left ${
                         activeChat?.id === chat.id
                           ? "bg-[#6c5ce7]/10 border-[#6c5ce7]/50 shadow-lg shadow-[#6c5ce7]/5"
                           : "bg-[#0d0d18] border-white/6 hover:border-white/12"
@@ -2131,26 +2146,26 @@ const Admin = () => {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-white/40">
+                          <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/40">
                             {chat.userName?.charAt(0).toUpperCase() || "U"}
                           </div>
-                          <span className="text-sm font-bold text-white truncate">{chat.userName}</span>
+                          <span className="text-xs font-bold text-white truncate max-w-[120px]">{chat.userName}</span>
                         </div>
                         {chat.unreadCount > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-[#6c5ce7] text-white text-[10px] font-black">
+                          <span className="px-1.5 py-0.5 rounded-full bg-[#6c5ce7] text-white text-[9px] font-black">
                             {chat.unreadCount}
                           </span>
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                        <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${
                           chat.status === "pending_admin" ? "bg-amber-500/10 text-amber-400" :
                           chat.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
                           "bg-white/5 text-white/30"
                         }`}>
                           {chat.status.replace("_", " ")}
                         </span>
-                        <span className="text-[9px] text-white/20 font-medium">
+                        <span className="text-[8px] text-white/20 font-medium">
                           {chat.updatedAt?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -2159,44 +2174,50 @@ const Admin = () => {
                 )}
               </div>
 
-              {/* Chat View */}
-              <div className="flex-1 flex flex-col rounded-[2rem] border border-white/8 bg-[#0d0d18] overflow-hidden shadow-2xl">
+              {/* Chat View - Pop on mobile or fixed on desktop */}
+              <div className={`flex-1 flex flex-col rounded-[1.5rem] md:rounded-[2rem] border border-white/8 bg-[#0d0d18] overflow-hidden shadow-2xl transition-all duration-300
+                ${activeChat 
+                  ? 'fixed inset-x-6 top-20 bottom-24 md:inset-auto md:relative z-[60] flex h-auto max-w-[calc(100vw-48px)] mx-auto' 
+                  : 'hidden md:flex'}`}>
                 {activeChat ? (
                   <>
                     {/* Chat Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/6 bg-white/[0.02]">
+                    <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/6 bg-white/[0.02]">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center border border-white/10">
-                          <User className="w-5 h-5 text-white" />
+                        <button onClick={() => setActiveChat(null)} className="md:hidden p-1.5 -ml-1 text-white/40 hover:text-white">
+                          <X className="w-4 h-4" />
+                        </button>
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center border border-white/10">
+                          <User className="w-4 h-4 md:w-5 md:h-5 text-white" />
                         </div>
                         <div>
-                          <h4 className="text-sm font-bold text-white tracking-tight">{activeChat.userName}</h4>
-                          <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                          <h4 className="text-xs md:text-sm font-bold text-white tracking-tight">{activeChat.userName}</h4>
+                          <p className="text-[8px] md:text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
                             <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" /> Live Session
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => resolveChat(activeChat.id!)}
-                        className="px-4 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-all"
+                        className="px-3 md:px-4 py-1 md:py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] md:text-xs font-bold uppercase tracking-widest transition-all"
                       >
                         Resolve
                       </button>
                     </div>
 
                     {/* Messages Area */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 custom-scrollbar bg-black/20">
                       {chatMessages.map((msg, i) => {
                         const isUser = msg.sender === "user";
                         return (
                           <div key={msg.id || i} className={`flex ${isUser ? "justify-start" : "justify-end"}`}>
-                            <div className={`max-w-[80%] p-3.5 rounded-2xl text-sm ${
+                            <div className={`max-w-[85%] md:max-w-[80%] p-3 md:p-3.5 rounded-2xl text-xs md:text-sm ${
                               isUser 
                                 ? "bg-white/5 text-white/80 rounded-bl-none" 
                                 : "bg-[#6c5ce7] text-white rounded-br-none shadow-lg shadow-[#6c5ce7]/20"
                             }`}>
                               {msg.text}
-                              <div className={`text-[10px] mt-1.5 font-medium ${isUser ? "text-white/20" : "text-white/50"}`}>
+                              <div className={`text-[8px] md:text-[10px] mt-1 md:mt-1.5 font-medium ${isUser ? "text-white/20" : "text-white/50"}`}>
                                 {msg.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
@@ -2207,7 +2228,7 @@ const Admin = () => {
                     </div>
 
                     {/* Chat Input */}
-                    <div className="p-4 bg-white/[0.02] border-t border-white/6">
+                    <div className="p-3 md:p-4 bg-[#0a0a14] border-t border-white/6 sticky bottom-0">
                       <div className="relative flex items-center gap-2">
                         <input
                           type="text"
@@ -2215,25 +2236,25 @@ const Admin = () => {
                           onChange={(e) => setAdminReply(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleAdminReply()}
                           placeholder="Type your response..."
-                          className="flex-1 px-4 py-3 rounded-xl bg-black/40 border border-white/8 text-sm text-white focus:outline-none focus:border-[#6c5ce7]/50 transition-all"
+                          className="flex-1 px-4 py-2.5 md:py-3 rounded-xl bg-black/40 border border-white/8 text-xs md:text-sm text-white focus:outline-none focus:border-[#6c5ce7]/50 transition-all"
                         />
                         <button
                           onClick={handleAdminReply}
                           disabled={sendingReply || !adminReply.trim()}
-                          className="w-11 h-11 rounded-xl bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white flex items-center justify-center transition-all disabled:opacity-50 shadow-lg shadow-[#6c5ce7]/20"
+                          className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white flex items-center justify-center transition-all disabled:opacity-50 shadow-lg shadow-[#6c5ce7]/20"
                         >
-                          {sendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-5 h-5" />}
+                          {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />}
                         </button>
                       </div>
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
-                    <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6">
-                      <MessageSquare className="w-10 h-10 text-white/10" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 md:p-12">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6">
+                      <MessageSquare className="w-8 h-8 md:w-10 md:h-10 text-white/10" />
                     </div>
-                    <h4 className="text-lg font-bold text-white mb-2">No selected conversation</h4>
-                    <p className="text-sm text-white/30 max-w-[280px]">Select a user session from the sidebar to start responding to inquiries.</p>
+                    <h4 className="text-base md:text-lg font-bold text-white mb-2">No selected conversation</h4>
+                    <p className="text-xs md:text-sm text-white/30 max-w-[280px]">Select a user session from the sidebar to start responding to inquiries.</p>
                   </div>
                 )}
               </div>
