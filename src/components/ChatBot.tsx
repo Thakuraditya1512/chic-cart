@@ -11,6 +11,7 @@ import {
   getBotResponse,
   flagForHumanHelp,
   notifyAdminForChat,
+  updateChatStatus,
   SupportChat,
   ChatMessage,
 } from "@/lib/chat";
@@ -46,31 +47,24 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
 
   // Initialize or load chat
   useEffect(() => {
-    if (!isOpen || !user) return;
+    if (!isOpen || !user) {
+      if (isOpen && !user) {
+        toast.error("Please login to use live support");
+      }
+      return;
+    }
 
     const initChat = async () => {
       try {
-        // Check for existing active chat
-        // For simplicity, we'll create a new chat each time for now
-        // In production, you'd want to resume existing active chats
+        setIsLoading(true);
+        // Check for existing active sessions first would be better, but for now we create/load
         const newChatId = await createSupportChat(
           user.uid,
-          user.displayName || "Guest User",
+          user.displayName || "User",
           user.email || "No email",
-          "General Support"
+          "Customer Support Session"
         );
         setChatId(newChatId);
-        
-        // Add welcome message
-        const welcomeMsg: ChatMessage = {
-          id: "welcome",
-          chatId: newChatId,
-          sender: "bot",
-          text: "Hello! 👋 Welcome to Chic Cart support! I'm here to help with your orders, returns, sizing, or any questions. How can I assist you today?",
-          timestamp: new Date(),
-          read: true,
-        };
-        setMessages([welcomeMsg]);
         
         // Subscribe to messages
         if (unsubscribeRef.current) {
@@ -79,9 +73,17 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
         
         unsubscribeRef.current = subscribeToChatMessages(newChatId, (updatedMessages) => {
           setMessages(updatedMessages);
+          // Check if any message is from admin to flip human mode
+          if (updatedMessages.some(m => m.sender === "admin")) {
+            setIsHumanMode(true);
+            setChatStatus("active");
+          }
         });
       } catch (error) {
-        toast.error("Failed to start chat");
+        console.error("Init chat error:", error);
+        toast.error("Failed to start support session");
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -95,8 +97,15 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
   }, [isOpen, user]);
 
   const handleSend = async () => {
-    if (!input.trim() || !chatId || isLoading) {
-      console.log("Cannot send:", { input: input.trim(), chatId, isLoading });
+    if (!input.trim() || isLoading) return;
+    
+    if (!user) {
+      toast.error("Please login to send messages");
+      return;
+    }
+
+    if (!chatId) {
+      toast.error("Session not initialized. Please wait...");
       return;
     }
 
@@ -105,17 +114,11 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
     setIsLoading(true);
 
     try {
-      console.log("Sending message to chat:", chatId);
-      // Add user message
+      // Add user message to Firestore
       await addChatMessage(chatId, "user", userMessage);
-      console.log("Message sent successfully");
 
-      // If in human mode, don't auto-respond
-      if (isHumanMode) {
-        // Notify admin that user sent a message
-        if (user) {
-          await notifyAdminForChat(chatId, user.displayName || "User", userMessage);
-        }
+      // If in human mode, don't auto-respond with bot
+      if (isHumanMode || chatStatus === "pending_admin") {
         setIsLoading(false);
         return;
       }
@@ -124,9 +127,9 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
       const { response, needsHuman } = getBotResponse(userMessage);
 
       // Small delay to make it feel natural
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Add bot response
+      // Add bot response to Firestore
       await addChatMessage(chatId, "bot", response);
 
       // If needs human help, flag it
@@ -136,15 +139,14 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
         setChatStatus("pending_admin");
         
         // Notify admin
-        if (user) {
-          await notifyAdminForChat(chatId, user.displayName || "User", userMessage);
-        }
+        await notifyAdminForChat(chatId, user.displayName || "User", userMessage);
         
-        toast.info("Connecting you to a human agent...");
+        // Add a system message locally/in DB
+        await addChatMessage(chatId, "bot", "System: Waiting to connect you with a human agent... please stay online.");
       }
     } catch (error: any) {
       console.error("Failed to send message:", error);
-      toast.error("Failed to send message: " + (error.message || "Unknown error"));
+      toast.error("Message failed to send. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -166,13 +168,13 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
       setIsHumanMode(true);
       setChatStatus("pending_admin");
       
-      await addChatMessage(chatId, "bot", "I'll connect you with our support team right away! An agent will join this chat shortly. Please wait a moment...");
+      await addChatMessage(chatId, "bot", "Waiting to connect you with a human agent... an admin will be with you shortly.");
       
       if (user) {
         await notifyAdminForChat(chatId, user.displayName || "User", "User requested human support");
       }
       
-      toast.success("Human support requested!");
+      toast.success("Connecting to human support...");
     } catch (error) {
       toast.error("Failed to request human support");
     } finally {
@@ -180,7 +182,45 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
     }
   };
 
+  const closeSession = async () => {
+    if (!chatId) return;
+    try {
+      setIsLoading(true);
+      await updateChatStatus(chatId, "resolved");
+      setChatStatus("resolved");
+      toast.success("Support session closed");
+      onClose();
+    } catch (error) {
+      toast.error("Failed to close session");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
+
+  if (!user) return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+        className="fixed bottom-24 right-4 sm:right-8 z-50 w-[calc(100vw-2rem)] sm:w-80 p-6 bg-[#0d0d18] rounded-2xl border border-white/10 shadow-2xl text-center"
+      >
+        <div className="w-12 h-12 rounded-full bg-[#6c5ce7]/10 flex items-center justify-center mx-auto mb-4">
+          <User className="w-6 h-6 text-[#6c5ce7]" />
+        </div>
+        <h3 className="text-white font-bold mb-2">Login Required</h3>
+        <p className="text-xs text-white/40 mb-4 leading-relaxed">Please login to your account to start a live support session with our team.</p>
+        <button 
+          onClick={onClose}
+          className="w-full py-2.5 rounded-xl bg-[#6c5ce7] text-white text-xs font-bold uppercase tracking-widest hover:bg-[#7c6cf7] transition-all"
+        >
+          Close
+        </button>
+      </motion.div>
+    </AnimatePresence>
+  );
 
   return (
     <AnimatePresence>
@@ -226,10 +266,10 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
             }`} />
             <span className="text-[10px] text-white/40 uppercase tracking-wider">
               {chatStatus === "active" ? "Bot Active" : 
-               chatStatus === "pending_admin" ? "Waiting for Agent" : "Resolved"}
+               chatStatus === "pending_admin" ? "Agent Connecting..." : "Resolved"}
             </span>
           </div>
-          {!isHumanMode && (
+          {chatStatus === "active" && !isHumanMode ? (
             <button
               onClick={requestHuman}
               disabled={isLoading}
@@ -237,8 +277,28 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
             >
               Talk to Human →
             </button>
-          )}
+          ) : chatStatus !== "resolved" ? (
+            <button
+              onClick={closeSession}
+              disabled={isLoading}
+              className="text-[10px] text-red-400/60 hover:text-red-400 font-medium transition-colors"
+            >
+              End Session
+            </button>
+          ) : null}
         </div>
+
+        {/* Waiting Overlay for Human Connection */}
+        {chatStatus === "pending_admin" && (
+          <div className="absolute inset-0 top-[88px] bottom-[72px] bg-[#0d0d18]/90 z-10 flex flex-col items-center justify-center p-8 text-center">
+            <div className="relative mb-4">
+              <div className="w-16 h-16 rounded-full border-2 border-[#6c5ce7]/20 border-t-[#6c5ce7] animate-spin" />
+              <Headphones className="absolute inset-0 m-auto w-6 h-6 text-[#6c5ce7]" />
+            </div>
+            <h4 className="text-white font-bold mb-2">Connecting to Agent</h4>
+            <p className="text-xs text-white/40 leading-relaxed">Please wait a moment while we connect you with a member of our support team. 👟</p>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[350px] min-h-[200px]">

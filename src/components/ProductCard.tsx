@@ -35,13 +35,13 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   // Touch device detection
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  
+
   useEffect(() => {
     setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
   return (
-    <div 
+    <div
       ref={cardRef}
       className="group relative"
       onMouseEnter={() => setIsHovered(true)}
@@ -63,22 +63,20 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Badge */}
         {product.badge && (
           <span
-            className={`absolute top-2 sm:top-3 left-2 sm:left-3 text-[8px] sm:text-[9px] font-sans font-bold uppercase tracking-[0.1em] px-2 sm:px-3 py-1 rounded-full ${
-              product.badge === "sale"
+            className={`absolute top-2 sm:top-3 left-2 sm:left-3 text-[8px] sm:text-[9px] font-sans font-bold uppercase tracking-[0.1em] px-2 sm:px-3 py-1 rounded-full ${product.badge === "sale"
                 ? "bg-sale text-sale-foreground"
                 : "bg-foreground text-background"
-            }`}
+              }`}
           >
             {product.badge}
           </span>
         )}
 
         {/* Quick add overlay - visible on hover for desktop, always visible on touch */}
-        <div 
+        <div
           ref={quickAddRef}
-          className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 transition-transform duration-300 ease-out ${
-            isTouchDevice ? "translate-y-0" : "translate-y-full group-hover:translate-y-0"
-          }`}
+          className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 transition-transform duration-300 ease-out ${isTouchDevice ? "translate-y-0" : "translate-y-full group-hover:translate-y-0"
+            }`}
         >
           <motion.button
             onClick={(e) => {

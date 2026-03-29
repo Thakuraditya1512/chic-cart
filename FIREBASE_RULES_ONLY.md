@@ -57,6 +57,35 @@ service cloud.firestore {
       allow delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    // Support Chat Sessions
+    match /supportChats/{chatId} {
+      allow read, update: if request.auth != null && (
+        resource.data.userId == request.auth.uid || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      allow create: if request.auth != null;
+    }
+
+    // Support Chat Messages
+    match /chatMessages/{msgId} {
+      allow read: if request.auth != null && (
+        get(/databases/$(database)/documents/supportChats/$(resource.data.chatId)).data.userId == request.auth.uid ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']))
+      );
+    }
+
+    // Admin Notifications for Chat
+    match /adminNotifications/{notifId} {
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow create: if request.auth != null; // Allow users to notify admin via bot
+    }
     
     // Deny all other access
     match /{document=**} {

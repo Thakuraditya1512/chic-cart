@@ -44,56 +44,52 @@ export interface SupportChat {
 // Auto-response templates for common questions
 const BOT_RESPONSES: { keywords: string[]; response: string }[] = [
   {
-    keywords: ["order", "track", "tracking", "where is my order", "shipment"],
-    response: "You can track your order by going to 'My Orders' in your profile. If you need more help, I can connect you with our support team."
+    keywords: ["order", "track", "tracking", "where is my order", "status", "shipment"],
+    response: "You can track your order in real-time by visiting the 'My Orders' section in your account dashboard. Simply click on your order ID to see the current shipping status and expected delivery date. 👟"
   },
   {
-    keywords: ["return", "refund", "exchange", "money back"],
-    response: "We offer easy returns within 7 days of delivery. Products must be unworn with original tags. Initiate a return from 'My Orders' or I can connect you with support."
+    keywords: ["return", "refund", "exchange", "money back", "replace"],
+    response: "We offer a hassle-free 7-day return policy. Items must be in their original, unworn condition with all tags attached. You can initiate a return or exchange request directly from the 'My Orders' page. Refunds are processed within 5-7 business days of checking the returned item."
   },
   {
-    keywords: ["size", "fitting", "fit", "too big", "too small", "measurement"],
-    response: "Each product page has a size guide. For specific sizing questions, I can connect you with our support team who can help you find the perfect fit!"
+    keywords: ["size", "fitting", "fit", "too big", "too small", "measurement", "guide"],
+    response: "Our sneakers generally follow standard international sizing. We highly recommend checking the 'Size Guide' button on each product page for specific measurements. If you're between sizes, we usually suggest going half a size up for maximum comfort!"
   },
   {
-    keywords: ["coupon", "discount", "code", "promo", "offer", "sale"],
-    response: "You can apply coupon codes at checkout. Check our homepage for current promotions! Need a specific coupon? I can connect you with support."
+    keywords: ["coupon", "discount", "code", "promo", "offer", "sale", "deal"],
+    response: "Looking for a deal? Check our 'Sale' section for up to 50% off! You can enter valid promo codes at the final step of the checkout process. Note: Coupons cannot be combined with already discounted sale items."
   },
   {
-    keywords: ["payment", "pay", "card", "upi", "failed", "transaction"],
-    response: "We accept all major cards, UPI, and wallets. If your payment failed, please try again or use a different method. For payment issues, I can connect you with support."
+    keywords: ["payment", "pay", "card", "upi", "failed", "transaction", "cash on delivery", "cod"],
+    response: "We accept all major Credit/Debit cards, UPI (Google Pay, PhonePe), and Net Banking. Currently, we only offer secure prepaid transactions to ensure the fastest delivery. If your payment failed, it will usually be auto-refunded by your bank within 48 hours."
   },
   {
-    keywords: ["delivery", "shipping", "ship", "time", "how long", "when will"],
-    response: "Standard delivery takes 3-7 business days. Express delivery (1-3 days) available for select locations. You can check delivery options at checkout!"
+    keywords: ["delivery", "shipping", "ship", "time", "how long", "when will", "arrival"],
+    response: "Standard shipping takes approximately 3-5 business days across India. Once your order ships, we'll send you a tracking link via email and SMS. We strive to get your kicks to your doorstep as fast as possible!"
   },
   {
-    keywords: ["cancel", "cancellation", "stop order"],
-    response: "Orders can be cancelled within 1 hour of placement or before they are shipped. Go to 'My Orders' to cancel if eligible."
+    keywords: ["cancel", "cancellation", "stop order", "incorrect address"],
+    response: "Orders can be cancelled within 1 hour of placement, provided they haven't been processed by our warehouse. Please head to your Orders page to see if your order is still eligible for cancellation."
   },
   {
-    keywords: ["contact", "phone", "call", "number", "email", "reach"],
-    response: "You can reach us at chiccart@gmail.com. For immediate assistance, use this chat or WhatsApp us at +91 9999999999!"
+    keywords: ["contact", "phone", "call", "number", "email", "reach", "whatsapp", "address"],
+    response: "Our dedicated support team is available Monday to Friday, 9 AM - 6 PM. You can email us at support@ftk.com or WhatsApp us at +91 9398415366. We're always here to help!"
   },
   {
-    keywords: ["product", "stock", "available", "in stock", "out of stock"],
-    response: "Product availability is shown on each product page. If an item is out of stock, you can sign up for restock notifications!"
+    keywords: ["authenticity", "original", "real", "fake", "legit", "genuine"],
+    response: "Authenticity is our top priority. Every pair of sneakers at FTK support is 100% genuine and sourced directly from authorized distributors. We guarantee the quality and legitimacy of every product we sell."
   },
   {
-    keywords: ["account", "login", "sign in", "password", "forgot"],
-    response: "Use the 'Login' button to access your account. If you forgot your password, click 'Forgot Password' on the login page."
+    keywords: ["hi", "hello", "hey", "good morning", "good evening", "good afternoon", "hola"],
+    response: "Hello! 👋 Welcome to FTK support's Premium Virtual Assistant. I'm here to help you find the perfect pair of kicks or answer any service questions. How can I make your shopping experience better today?"
   },
   {
-    keywords: ["wishlist", "save", "favorite", "heart"],
-    response: "Click the heart icon on any product to add it to your wishlist! Access your wishlist from your profile."
+    keywords: ["bye", "goodbye", "thank", "thanks", "awesome", "perfect"],
+    response: "You're very welcome! 😊 It was a pleasure assisting you. Feel free to reach out anytime you need more help. Happy shopping!"
   },
   {
-    keywords: ["hi", "hello", "hey", "good morning", "good evening", "good afternoon"],
-    response: "Hello! 👋 Welcome to Chic Cart support! I'm here to help with your orders, returns, sizing, or any questions. How can I assist you today?"
-  },
-  {
-    keywords: ["bye", "goodbye", "thank", "thanks"],
-    response: "You're welcome! 😊 Have a great day! If you need any more help, feel free to chat with us anytime."
+    keywords: ["help", "what can you do", "commands", "options"],
+    response: "I can assist you with the following topics:\n• 📦 Tracking your Order status\n• 🔁 Returns, Refunds & Exchanges\n• 📏 Sizing & Fitting recommendations\n• 💰 Coupon & Payment information\n• 🚚 Shipping & Delivery estimates\n• ✅ Authenticity & Product details\n\nSimply type a keyword like 'Order' or 'Size' to get started, or ask for a 'human' to speak with our live team!"
   }
 ];
 
@@ -146,13 +142,26 @@ Type your question or say 'human' to chat with our support team!`,
   return { response: randomResponse, needsHuman: randomResponse.includes("support team") || randomResponse.includes("human") };
 }
 
-// Create a new support chat
+// Create or retrieve an active support chat
 export async function createSupportChat(
   userId: string,
   userName: string,
   userEmail: string,
   subject: string = "General Inquiry"
 ): Promise<string> {
+  // Check for existing active/pending chat first
+  const q = query(
+    collection(db, "supportChats"),
+    where("userId", "==", userId),
+    where("status", "in", ["active", "pending_admin"]),
+    limit(1)
+  );
+  
+  const existingSnap = await getDocs(q);
+  if (!existingSnap.empty) {
+    return existingSnap.docs[0].id;
+  }
+
   const chatData: Omit<SupportChat, "id"> = {
     userId,
     userName,
@@ -167,6 +176,10 @@ export async function createSupportChat(
   };
   
   const docRef = await addDoc(collection(db, "supportChats"), chatData);
+  
+  // Add initial bot welcome
+  await addChatMessage(docRef.id, "bot", `Hello ${userName}! 👋 Welcome to FTK support. How can I help you today?`);
+  
   return docRef.id;
 }
 

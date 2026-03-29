@@ -14,6 +14,15 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notification";
+import { 
+  SupportChat, 
+  ChatMessage, 
+  subscribeToAllChats, 
+  addChatMessage, 
+  markMessagesAsRead,
+  subscribeToChatMessages,
+  updateChatStatus
+} from "@/lib/chat";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -114,7 +123,7 @@ interface Notification {
   updatedAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -196,6 +205,15 @@ const Admin = () => {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Support Chat State
+  const [supportChats, setSupportChats] = useState<SupportChat[]>([]);
+  const [activeChat, setActiveChat] = useState<SupportChat | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [adminReply, setAdminReply] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+  const chatSubRef = useRef<(() => void) | null>(null);
 
   // Set your secure password here
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
@@ -216,7 +234,43 @@ const Admin = () => {
     fetchCoupons();
     fetchReviews();
     fetchAdminNotifications();
+
+    // Subscribe to support chats
+    const unsubscribe = subscribeToAllChats((chats) => {
+      setSupportChats(chats);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  // Sub-subscription for active chat messages
+  useEffect(() => {
+    if (activeChat?.id) {
+      if (chatSubRef.current) chatSubRef.current();
+      
+      chatSubRef.current = subscribeToChatMessages(activeChat.id, (msgs) => {
+        setChatMessages(msgs);
+        markMessagesAsRead(activeChat.id as string, "admin");
+      });
+      
+      // Update local unread count
+      setSupportChats(prev => prev.map(c => c.id === activeChat.id ? { ...c, unreadCount: 0 } : c));
+    } else {
+      setChatMessages([]);
+      if (chatSubRef.current) {
+        chatSubRef.current();
+        chatSubRef.current = null;
+      }
+    }
+
+    return () => {
+      if (chatSubRef.current) chatSubRef.current();
+    };
+  }, [activeChat?.id]);
+
+  useEffect(() => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   // ─── Data Fetchers ──────────────────────────────────────────────────────────
 
@@ -362,6 +416,39 @@ const Admin = () => {
       });
     } finally {
       setSendingNotif(false);
+    }
+  };
+
+  const handleAdminReply = async () => {
+    if (!adminReply.trim() || !activeChat?.id || sendingReply) return;
+
+    try {
+      setSendingReply(true);
+      const text = adminReply.trim();
+      setAdminReply("");
+      
+      await addChatMessage(activeChat.id, "admin", text);
+      
+      // If chat was pending, make it active
+      if (activeChat.status === "pending_admin") {
+        await updateChatStatus(activeChat.id, "active");
+      }
+      
+    } catch (error) {
+      toast.error("Failed to send reply");
+      setAdminReply(adminReply); // Restore input on error
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  const resolveChat = async (id: string) => {
+    try {
+      await updateChatStatus(id, "resolved");
+      toast.success("Chat marked as resolved");
+      if (activeChat?.id === id) setActiveChat(null);
+    } catch (error) {
+      toast.error("Failed to resolve chat");
     }
   };
 
@@ -717,6 +804,7 @@ const Admin = () => {
     { id: "users" as TabId, label: "Users", icon: Shield, count: users.length },
     { id: "coupons" as TabId, label: "Coupons", icon: Ticket, count: coupons.length },
     { id: "reviews" as TabId, label: "Reviews", icon: MessageSquare, count: reviews.length },
+    { id: "chats" as TabId, label: "Support", icon: MessageSquare, count: supportChats.filter(c => c.unreadCount > 0 || c.status === "pending_admin").length },
     { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
   ];
 
@@ -2018,6 +2106,135 @@ const Admin = () => {
                       </div>
                     </motion.div>
                   ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "chats" && (
+            <div className="flex flex-col lg:flex-row gap-6 h-[calc(100dvh-200px)]">
+              {/* Chat List */}
+              <div className="w-full lg:w-80 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                <SectionLabel>Active Sessions</SectionLabel>
+                {supportChats.length === 0 ? (
+                  <EmptyState title="No active chats" subtitle="Wait for users to request help." />
+                ) : (
+                  supportChats.map(chat => (
+                    <button
+                      key={chat.id}
+                      onClick={() => setActiveChat(chat)}
+                      className={`flex flex-col gap-2 p-4 rounded-2xl border transition-all text-left ${
+                        activeChat?.id === chat.id
+                          ? "bg-[#6c5ce7]/10 border-[#6c5ce7]/50 shadow-lg shadow-[#6c5ce7]/5"
+                          : "bg-[#0d0d18] border-white/6 hover:border-white/12"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-bold text-white/40">
+                            {chat.userName?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                          <span className="text-sm font-bold text-white truncate">{chat.userName}</span>
+                        </div>
+                        {chat.unreadCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-[#6c5ce7] text-white text-[10px] font-black">
+                            {chat.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded ${
+                          chat.status === "pending_admin" ? "bg-amber-500/10 text-amber-400" :
+                          chat.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
+                          "bg-white/5 text-white/30"
+                        }`}>
+                          {chat.status.replace("_", " ")}
+                        </span>
+                        <span className="text-[9px] text-white/20 font-medium">
+                          {chat.updatedAt?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Chat View */}
+              <div className="flex-1 flex flex-col rounded-[2rem] border border-white/8 bg-[#0d0d18] overflow-hidden shadow-2xl">
+                {activeChat ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/6 bg-white/[0.02]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center border border-white/10">
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white tracking-tight">{activeChat.userName}</h4>
+                          <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" /> Live Session
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => resolveChat(activeChat.id!)}
+                        className="px-4 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest transition-all"
+                      >
+                        Resolve
+                      </button>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                      {chatMessages.map((msg, i) => {
+                        const isUser = msg.sender === "user";
+                        return (
+                          <div key={msg.id || i} className={`flex ${isUser ? "justify-start" : "justify-end"}`}>
+                            <div className={`max-w-[80%] p-3.5 rounded-2xl text-sm ${
+                              isUser 
+                                ? "bg-white/5 text-white/80 rounded-bl-none" 
+                                : "bg-[#6c5ce7] text-white rounded-br-none shadow-lg shadow-[#6c5ce7]/20"
+                            }`}>
+                              {msg.text}
+                              <div className={`text-[10px] mt-1.5 font-medium ${isUser ? "text-white/20" : "text-white/50"}`}>
+                                {msg.timestamp?.toDate()?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatMessagesEndRef} />
+                    </div>
+
+                    {/* Chat Input */}
+                    <div className="p-4 bg-white/[0.02] border-t border-white/6">
+                      <div className="relative flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={adminReply}
+                          onChange={(e) => setAdminReply(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleAdminReply()}
+                          placeholder="Type your response..."
+                          className="flex-1 px-4 py-3 rounded-xl bg-black/40 border border-white/8 text-sm text-white focus:outline-none focus:border-[#6c5ce7]/50 transition-all"
+                        />
+                        <button
+                          onClick={handleAdminReply}
+                          disabled={sendingReply || !adminReply.trim()}
+                          className="w-11 h-11 rounded-xl bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white flex items-center justify-center transition-all disabled:opacity-50 shadow-lg shadow-[#6c5ce7]/20"
+                        >
+                          {sendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
+                    <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-6">
+                      <MessageSquare className="w-10 h-10 text-white/10" />
+                    </div>
+                    <h4 className="text-lg font-bold text-white mb-2">No selected conversation</h4>
+                    <p className="text-sm text-white/30 max-w-[280px]">Select a user session from the sidebar to start responding to inquiries.</p>
+                  </div>
                 )}
               </div>
             </div>
