@@ -231,18 +231,19 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
         className="fixed bottom-24 right-4 sm:right-8 z-50 w-[calc(100vw-2rem)] sm:w-96 max-h-[600px] bg-[#0d0d18] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#6c5ce7] to-[#a855f7] border-b border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#6c5ce7] to-[#a855f7] border-b border-white/10 group/header">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              {isHumanMode ? (
-                <Headphones className="w-4 h-4 text-white" />
-              ) : (
-                <Bot className="w-4 h-4 text-white" />
-              )}
+            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center border border-white/10 shadow-inner group-hover/header:rotate-6 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white fill-current" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z" opacity="0.3"/>
+                <path d="M4.5,16.5V9L12,5.25L19.5,9V16.5L12,20.25L4.5,16.5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12,5.25V20.25M19.5,9L12,12.75L4.5,9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M8,11L11,13M8,13L11,15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">
-                {isHumanMode ? "Human Support" : "Chic Bot"}
+                {isHumanMode ? "Human Support" : "FTK Support"}
               </h3>
               <p className="text-[10px] text-white/70">
                 {isHumanMode ? "Agent will join soon" : "AI Assistant"}
@@ -293,7 +294,14 @@ export default function ChatBot({ isOpen, onClose }: ChatBotProps) {
           <div className="absolute inset-0 top-[88px] bottom-[72px] bg-[#0d0d18]/90 z-10 flex flex-col items-center justify-center p-8 text-center">
             <div className="relative mb-4">
               <div className="w-16 h-16 rounded-full border-2 border-[#6c5ce7]/20 border-t-[#6c5ce7] animate-spin" />
-              <Headphones className="absolute inset-0 m-auto w-6 h-6 text-[#6c5ce7]" />
+              <div className="absolute inset-0 m-auto w-7 h-7 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-full h-full text-[#6c5ce7] fill-current animate-bounce" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5Z" opacity="0.3"/>
+                  <path d="M4.5,16.5V9L12,5.25L19.5,9V16.5L12,20.25L4.5,16.5Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12,5.25V20.25M19.5,9L12,12.75L4.5,9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8,11L11,13M8,13L11,15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
             </div>
             <h4 className="text-white font-bold mb-2">Connecting to Agent</h4>
             <p className="text-xs text-white/40 leading-relaxed">Please wait a moment while we connect you with a member of our support team. 👟</p>
