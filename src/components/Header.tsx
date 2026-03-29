@@ -157,14 +157,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-0.5 md:gap-1">
-            {/* Search - Desktop */}
-            <button
-              onClick={onSearchOpen}
-              className="hidden md:flex p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
-              aria-label="Search"
-            >
-              <Search size={16} />
-            </button>
+
 
             {/* Theme Toggle */}
             <button
