@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star } from "lucide-react";
+import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import Header from "@/components/Header";
@@ -333,16 +333,22 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl border border-border bg-card/20 w-fit">
-              <span className="text-xl sm:text-2xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
-              {product.originalPrice && (
-                <span className="text-sm sm:text-lg text-muted-foreground line-through">₹{product.originalPrice.toLocaleString('en-IN')}</span>
-              )}
-              {product.originalPrice && (
-                <span className="text-[9px] sm:text-xs font-bold uppercase px-2 py-1 bg-sale text-sale-foreground rounded-sm">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% off
-                </span>
-              )}
+            <div className="flex flex-col gap-2 mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border border-border bg-card/20 w-fit">
+                <span className="text-xl sm:text-2xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
+                {product.originalPrice && (
+                  <span className="text-sm sm:text-lg text-muted-foreground line-through">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                )}
+                {product.originalPrice && (
+                  <span className="text-[9px] sm:text-xs font-bold uppercase px-2 py-1 bg-sale text-sale-foreground rounded-sm">
+                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% off
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest bg-emerald-500/5 px-3 py-1.5 rounded-lg w-fit border border-emerald-500/10">
+                <CheckCircle2 size={12} />
+                Cash on Delivery Available
+              </div>
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">

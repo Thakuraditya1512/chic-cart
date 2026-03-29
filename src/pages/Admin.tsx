@@ -420,6 +420,23 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteAllCoupons = async () => {
+    if (!confirm("⚠️ This will permanently delete ALL coupons. Are you sure?")) return;
+    try {
+      setIsDeleting(true);
+      const couponsSnap = await getDocs(collection(db, "coupons"));
+      const deletePromises = couponsSnap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      toast.success("All coupons deleted successfully");
+      fetchCoupons();
+    } catch (error: any) {
+      console.error("Error deleting all coupons:", error);
+      toast.error("Failed to delete coupons", { description: error.message });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleDeleteAllData = async () => {
     if (deletePassword !== ADMIN_DELETE_PASSWORD) {
       toast.error("Incorrect password!");
@@ -1592,6 +1609,15 @@ const Admin = () => {
                 <SectionLabel>Generated Coupons</SectionLabel>
                 <div className="flex items-center gap-3">
                   <button
+                    onClick={handleDeleteAllCoupons}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg 
+                      bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-sm font-semibold transition-all disabled:opacity-50"
+                  >
+                    {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    Delete All
+                  </button>
+                  <button
                     onClick={() => setShowCouponForm(true)}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg
                       bg-[#6c5ce7] hover:bg-[#7c6cf7] text-white text-sm font-semibold transition-all
@@ -1600,7 +1626,7 @@ const Admin = () => {
                     <Plus className="w-4 h-4" />
                     Create Coupon
                   </button>
-                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                  <p className="hidden md:block text-[10px] text-white/30 font-bold uppercase tracking-widest">
                     Auto-generated on product reviews
                   </p>
                 </div>

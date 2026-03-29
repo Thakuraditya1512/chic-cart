@@ -34,11 +34,15 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
     
-    // Coupons - own coupons only, and admin can read all
+    // Coupons - allow reading for validation, allow marking as used by authenticated users
     match /coupons/{document=**} {
-      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow read: if request.auth != null;
       allow create: if true; // Allowed to be created by review submission logic
-      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow update: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isUsed', 'usedAt', 'orderId']))
+      );
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
     
     // Notifications - read for all users, write for admin (and allow users to mark as read)

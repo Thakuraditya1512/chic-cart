@@ -183,9 +183,20 @@ export default function Checkout() {
       const q = query(collection(db, "coupons"), where("code", "==", couponCode.toUpperCase()), where("isUsed", "==", false));
       const snapshot = await getDocs(q);
       if (snapshot.empty) { toast.error("Invalid or used coupon"); setDiscount(0); setAppliedCouponId(null); return; }
-      const couponDoc = snapshot.docs[0]; const couponData = couponDoc.data();
+      
+      const couponDoc = snapshot.docs[0]; 
+      const couponData = couponDoc.data();
+      
+      // Ensure users cannot steal coupons assigned to other users
+      if (couponData.userId && couponData.userId !== user?.uid) {
+        toast.error("This coupon is strictly assigned to another account.");
+        setDiscount(0); setAppliedCouponId(null); return;
+      }
+      
       if (couponData.expiresAt?.toDate() < new Date()) { toast.error("Coupon expired"); return; }
-      setDiscount(couponData.discountPercent); setAppliedCouponId(couponDoc.id);
+      
+      setDiscount(couponData.discountPercent); 
+      setAppliedCouponId(couponDoc.id);
       toast.success(`${couponData.discountPercent}% discount applied!`);
     } catch (e) { toast.error("Failed to validate coupon"); }
     finally { setIsValidatingCoupon(false); }
@@ -563,7 +574,7 @@ export default function Checkout() {
                     </div>
 
                     <div className="flex gap-3">
-                      <CtaButton type="button" label={loading ? "" : "Place Order"} onClick={handlePlaceOrder} disabled={loading}
+                      <CtaButton type="button" label={loading ? "" : "Place COD Order"} onClick={handlePlaceOrder} disabled={loading}
                         icon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined} darkMode={isDarkMode} />
                       <button type="button" onClick={() => setStep("address")} className={`px-6 py-3.5 rounded-2xl border ${divider} text-sm font-semibold ${textPrimary} hover:${isDarkMode ? "bg-white/5" : "bg-black/5"} transition-all`}>Back</button>
                     </div>
@@ -639,9 +650,10 @@ export default function Checkout() {
                   </div>
                 )}
                 <div className={`flex justify-between font-bold text-base pt-2 border-t ${divider}`}>
-                  <span className={textPrimary}>Total</span>
+                  <span className={textPrimary}>Total (COD)</span>
                   <span className={textPrimary}>₹{finalTotal.toLocaleString('en-IN')}</span>
                 </div>
+                <p className={`text-[10px] ${textMuted} mt-1 text-center font-bold uppercase tracking-wider`}>Payment Method: Cash on Delivery</p>
               </div>
 
               {/* WhatsApp */}
