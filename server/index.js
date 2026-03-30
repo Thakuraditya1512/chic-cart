@@ -75,6 +75,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
+// Keep-alive ping endpoint (prevents Render free tier from sleeping)
+app.get('/ping', (req, res) => {
+  res.json({ ping: 'pong', time: Date.now() });
+});
+
 // Main API endpoint
 app.post('/api/newsletter', async (req, res) => {
   try {
