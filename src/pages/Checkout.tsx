@@ -92,7 +92,18 @@ export default function Checkout() {
       toast.error("Your cart is empty");
       navigate("/");
     }
-  }, [cartItems]);
+    
+    // Check if any items require size but don't have one
+    const itemsWithoutSize = cartItems.filter(item => 
+      item.product.sizes && item.product.sizes.length > 0 && !item.size
+    );
+    
+    if (itemsWithoutSize.length > 0) {
+      toast.error("Please select sizes for all items before checkout");
+      navigate("/");
+      return;
+    }
+  }, [cartItems, step, navigate]);
 
   useEffect(() => {
     if (user?.email) {
@@ -566,7 +577,14 @@ export default function Checkout() {
                           {item.product.image && <img src={item.product.image} alt={item.product.name} className={`w-12 h-12 rounded-xl object-cover flex-shrink-0 border ${divider}`} />}
                           <div className="flex-1 min-w-0">
                             <p className={`text-sm font-semibold ${textPrimary} truncate`}>{item.product.name}</p>
-                            <p className={`text-xs ${textMuted}`}>Qty {item.quantity}{(item as any).size ? ` · Size ${(item as any).size}` : ""}</p>
+                            <p className={`text-xs ${textMuted}`}>
+                              Qty {item.quantity}
+                              {item.size && (
+                                <span className="ml-2">
+                                  Size: <span className="font-bold">{item.size}</span>
+                                </span>
+                              )}
+                            </p>
                           </div>
                           <p className={`text-sm font-bold ${textPrimary} flex-shrink-0`}>₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</p>
                         </div>
@@ -600,7 +618,14 @@ export default function Checkout() {
                     {item.product.image && <img src={item.product.image} alt={item.product.name} className={`w-10 h-10 rounded-xl object-cover flex-shrink-0 border ${divider}`} />}
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium ${textPrimary} truncate`}>{item.product.name}</p>
-                      <p className={`text-[11px] ${textMuted}`}>× {item.quantity}</p>
+                      <p className={`text-[11px] ${textMuted}`}>
+                        × {item.quantity}
+                        {item.size && (
+                          <span className="ml-2">
+                            Size: <span className="font-bold">{item.size}</span>
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <p className={`text-sm font-semibold ${textPrimary} flex-shrink-0`}>₹{(item.product.price * item.quantity).toLocaleString('en-IN')}</p>
                   </div>

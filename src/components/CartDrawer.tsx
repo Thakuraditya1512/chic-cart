@@ -19,6 +19,9 @@ const CartDrawer = () => {
 
     items.forEach(item => {
       message += `Product: ${item.product.name}\n`;
+      if (item.size) {
+        message += `Size: *${item.size}*\n`;
+      }
       message += `Quantity: ${item.quantity}\n`;
       message += `Price: ₹${item.product.price.toLocaleString('en-IN')}\n\n`;
     });
@@ -154,6 +157,11 @@ const CartDrawer = () => {
                     </Link>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2">{item.product.name}</h3>
+                      {item.size && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Size: <span className="font-bold text-foreground">{item.size}</span>
+                        </p>
+                      )}
                       <p className="text-xs sm:text-sm font-semibold text-foreground mt-1">₹{item.product.price.toLocaleString('en-IN')}</p>
                       <div className="flex items-center gap-2 sm:gap-3 mt-2">
                         <button

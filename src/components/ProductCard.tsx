@@ -5,11 +5,13 @@ import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
+import SizeSelectionPopup from "./SizeSelectionPopup";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
   const [wishlisted, setWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showSizePopup, setShowSizePopup] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const quickAddRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,12 @@ const ProductCard = ({ product }: { product: Product }) => {
           <motion.button
             onClick={(e) => {
               e.preventDefault();
-              addToCart(product);
+              // Check if product has sizes
+              if (product.sizes && product.sizes.length > 0) {
+                setShowSizePopup(true);
+              } else {
+                addToCart(product);
+              }
             }}
             whileTap={{ scale: 0.95 }}
             className="w-full flex items-center justify-center gap-2 bg-foreground text-background py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-sans font-semibold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity shadow-lg"
@@ -127,6 +134,13 @@ const ProductCard = ({ product }: { product: Product }) => {
           )}
         </div>
       </Link>
+
+      {/* Size Selection Popup */}
+      <SizeSelectionPopup
+        product={product}
+        isOpen={showSizePopup}
+        onClose={() => setShowSizePopup(false)}
+      />
     </div>
   );
 };

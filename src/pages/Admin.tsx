@@ -1609,7 +1609,11 @@ const Admin = () => {
                                         </div>
                                         <p className="text-xs text-white/35 mt-0.5">
                                           Qty {item.quantity} × ₹{item.price.toLocaleString('en-IN')}
-                                          {item.size && ` · Size ${item.size}`}
+                                          {item.size && (
+                                            <span className="ml-2">
+                                              Size: <span className="font-bold text-white/60">{item.size}</span>
+                                            </span>
+                                          )}
                                         </p>
                                       </div>
                                     </div>

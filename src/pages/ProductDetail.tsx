@@ -196,6 +196,20 @@ const ProductDetail = () => {
 
   // Add to cart animation
   const handleAddToCart = () => {
+    // Check if size is required but not selected
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      // Show error message or highlight size selection
+      const sizeSection = document.getElementById('size-selection');
+      if (sizeSection) {
+        sizeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        sizeSection.classList.add('animate-pulse');
+        setTimeout(() => {
+          sizeSection.classList.remove('animate-pulse');
+        }, 2000);
+      }
+      return;
+    }
+
     if (addToCartBtnRef.current) {
       gsap.to(addToCartBtnRef.current, {
         scale: 0.95,
@@ -204,11 +218,11 @@ const ProductDetail = () => {
         repeat: 1,
         ease: "power2.inOut",
         onComplete: () => {
-          addToCart(product!, qty);
+          addToCart(product!, qty, selectedSize);
         }
       });
     } else {
-      addToCart(product!, qty);
+      addToCart(product!, qty, selectedSize);
     }
   };
 
@@ -357,8 +371,13 @@ const ProductDetail = () => {
 
             {/* Sizes */}
             {product.sizes && (
-              <div className="mb-4 sm:mb-6">
-                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-foreground mb-2 sm:mb-3">Size</p>
+              <div id="size-selection" className="mb-4 sm:mb-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
+                  <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-foreground">Size</p>
+                  {!selectedSize && (
+                    <p className="text-xs text-destructive font-medium animate-pulse">Please select a size</p>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map((size) => (
                     <button
