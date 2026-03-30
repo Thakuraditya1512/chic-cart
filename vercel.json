@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/newsletter",
+      "destination": "/api/newsletter/index.js"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/newsletter/index.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
