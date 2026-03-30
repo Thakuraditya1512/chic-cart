@@ -535,20 +535,25 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                       {order.lane1 ? (
                         <>
                           <p>{order.lane1}</p>
-                          {order.lane2    && <p>{order.lane2}</p>}
+                          {order.lane2 && <p>{order.lane2}</p>}
                           {order.landmark && <p className={`italic ${t.textMuted}`}>Near {order.landmark}</p>}
+                          <p>{order.city} – {order.zipCode}</p>
                         </>
-                      ) : <p>{order.address}</p>}
-                      <p>{order.city} – {order.zipCode}</p>
+                      ) : (
+                        <p>{order.address}</p>
+                      )}
+                      <div className={`mt-2 pt-2 border-t ${t.divider}`}>
+                        <p className={`text-[9px] font-semibold uppercase tracking-widest ${t.textMuted}`}>
+                          {order.createdAt?.toDate?.() ? (
+                            <>
+                              Delivery Date: {order.createdAt.toDate().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                              <br />
+                              Delivery Time: {order.createdAt.toDate().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                            </>
+                          ) : "Date: —"}
+                        </p>
+                      </div>
                     </div>
-                    {(order.location?.googleMapsLink || order.location?.latitude) && (
-                      <a href={order.location.googleMapsLink ||
-                          `https://www.google.com/maps?q=${order.location.latitude},${order.location.longitude}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="mt-2.5 inline-flex items-center gap-1 text-[10px] font-semibold text-blue-500 hover:text-blue-400">
-                        <Navigation className="w-3 h-3" /> View on Maps
-                      </a>
-                    )}
                   </div>
 
                   {/* journey */}

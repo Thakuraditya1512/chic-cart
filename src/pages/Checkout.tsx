@@ -52,6 +52,7 @@ export default function Checkout() {
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
+  const [isGiftPackaging, setIsGiftPackaging] = useState(false);
 
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
   // "saved" = showing saved list, "new" = showing blank form, "selected" = showing selected address
@@ -84,8 +85,9 @@ export default function Checkout() {
   const inputBorder = isDarkMode ? "border-zinc-700" : "border-black/20";
 
   const codCharge = totalPrice > 1000 ? 0 : 50;
+  const giftPackagingCharge = isGiftPackaging ? 100 : 0;
   const discountAmount = Math.round((totalPrice * discount) / 100);
-  const finalTotal = Math.max(0, totalPrice + codCharge - discountAmount);
+  const finalTotal = Math.max(0, totalPrice + codCharge + giftPackagingCharge - discountAmount);
 
   useEffect(() => {
     if (cartItems.length === 0 && step === "customer") {
@@ -243,7 +245,7 @@ export default function Checkout() {
         city: addressData.city, zipCode: addressData.zipCode,
         location: locationData ? { latitude: locationData.latitude, longitude: locationData.longitude, googleMapsLink: addressData.googleMapsLink || `https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}` } : addressData.googleMapsLink ? { latitude: 0, longitude: 0, googleMapsLink: addressData.googleMapsLink } : null,
         items: cartItems.map(item => ({ productId: item.product.id, productName: item.product.name, price: item.product.price, quantity: item.quantity, image: item.product.image, ...(item.product.category && { category: item.product.category }), ...((item as any).size && { size: (item as any).size }) })),
-        subtotal: totalPrice, codCharge, discountAmount, discountPercent: discount,
+        subtotal: totalPrice, codCharge, giftPackagingCharge, discountAmount, discountPercent: discount,
         couponCode: appliedCouponId ? couponCode.toUpperCase() : null,
         total: finalTotal, paymentMethod: "COD", status: "pending", createdAt: serverTimestamp(),
       };
@@ -433,10 +435,15 @@ export default function Checkout() {
                               {previousAddresses.map((addr, idx) => (
                                 <motion.button key={idx} type="button" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.06 }}
                                   onClick={() => selectSavedAddress(addr, idx)}
-                                  className={`w-full text-left p-4 rounded-2xl border transition-all group ${selectedAddressIdx === idx ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-[#0f0f0f]/[0.03]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"} hover:${isDarkMode ? "border-zinc-600" : "border-black/20"} hover:shadow-sm`}`}>
+                                  className={`w-full text-left p-4 rounded-2xl border transition-all group ${
+                                    selectedAddressIdx === idx 
+                                      ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-[#0f0f0f]/[0.03]") 
+                                      : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"} hover:${isDarkMode ? "border-zinc-600" : "border-black/20"} hover:shadow-sm`
+                                  }`}
+                                >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-0.5">
+                                      <div className="flex items-center gap-2 mb-1">
                                         <MapPin className={`w-3.5 h-3.5 ${textMuted} flex-shrink-0`} />
                                         <p className={`font-semibold text-sm ${textPrimary} truncate`}>{addr.lane1}</p>
                                       </div>
@@ -444,20 +451,26 @@ export default function Checkout() {
                                       {addr.landmark && <p className={`text-xs ${textMuted} ml-5 italic`}>Near {addr.landmark}</p>}
                                       <p className={`text-xs ${textSub} ml-5 font-medium mt-0.5`}>{addr.city}{addr.zipCode ? ` – ${addr.zipCode}` : ""}</p>
                                     </div>
-                                    <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${selectedAddressIdx === idx ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/20")}`}>
-                                      {selectedAddressIdx === idx && <Check className={`w-2.5 h-2.5 ${isDarkMode ? "text-black" : "text-white"}`} />}
+                                    <div className="flex flex-col items-center gap-1">
+                                      <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 transition-all ${
+                                        selectedAddressIdx === idx 
+                                          ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") 
+                                          : (isDarkMode ? "border-zinc-800" : "border-black/20")
+                                      }`}>
+                                        {selectedAddressIdx === idx && <Check className={`w-3 h-3 ${isDarkMode ? "text-black" : "text-white"}`} />}
+                                      </div>
+                                      {addr.location && (
+                                        <div className="flex items-center gap-1.5 mt-1 text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">
+                                          <Navigation className="w-2.5 h-2.5" /> GPS Saved
+                                        </div>
+                                      )}
+                                      {addr.isProfile && !addr.location && (
+                                        <div className="flex items-center gap-1.5 mt-1 text-[10px] font-semibold text-blue-500 uppercase tracking-wider">
+                                          <CheckCircle2 className="w-2.5 h-2.5" /> Profile
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
-                                  {addr.location && (
-                                    <div className="flex items-center gap-1.5 mt-2 ml-5 text-[10px] font-semibold text-emerald-500 uppercase tracking-wider">
-                                      <Navigation className="w-2.5 h-2.5" /> {addr.isProfile ? "Primary profile address" : "GPS location saved"}
-                                    </div>
-                                  )}
-                                  {addr.isProfile && !addr.location && (
-                                    <div className="flex items-center gap-1.5 mt-2 ml-5 text-[10px] font-semibold text-blue-500 uppercase tracking-wider">
-                                      <CheckCircle2 className="w-2.5 h-2.5" /> Primary profile address
-                                    </div>
-                                  )}
                                 </motion.button>
                               ))}
                             </motion.div>
@@ -667,6 +680,31 @@ export default function Checkout() {
                   <span className={`font-medium ${codCharge === 0 ? "text-emerald-500" : textPrimary}`}>
                     {codCharge === 0 ? "Free" : `₹${codCharge}`}
                   </span>
+                </div>
+                
+                {/* Gift Packaging */}
+                <div className={`flex justify-between ${textSub}`}>
+                  <div className="flex items-center gap-2">
+                    <Gift className="w-3.5 h-3.5" />
+                    <span>Gift Packaging</span>
+                  </div>
+                  <span className={`font-medium ${isGiftPackaging ? textPrimary : textSub}`}>
+                    {isGiftPackaging ? `₹${giftPackagingCharge}` : "₹0"}
+                  </span>
+                </div>
+                
+                <div className={`flex justify-between ${textSub}`}>
+                  <button
+                    onClick={() => setIsGiftPackaging(!isGiftPackaging)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isGiftPackaging
+                        ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                        : `${inputBorder} ${inputBg} ${textMuted} hover:${textPrimary}`
+                    }`}
+                  >
+                    <Gift className="w-3 h-3" />
+                    {isGiftPackaging ? "Remove" : "Add"} Gift Packaging (+₹100)
+                  </button>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-emerald-500 font-medium">
