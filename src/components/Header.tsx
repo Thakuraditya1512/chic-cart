@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight, Bell, Check, Info, Tag as TagIcon, BellOff, Star } from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Sun, Moon, User, ArrowRight, Bell, Check, Info, Tag as TagIcon, BellOff, Star, Heart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { useTheme } from "@/hooks/useTheme";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import gsap from "gsap";
@@ -13,6 +14,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin } = useAuth();
   const { notifications, unreadCount, markAsRead, isNotificationRead } = useNotification();
+  const { wishlistItems } = useWishlist();
   const { isDark, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -181,6 +183,24 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               aria-label="Profile"
             >
               <User size={16} />
+            </button>
+
+            {/* Wishlist Button */}
+            <button
+              onClick={() => navigate("/wishlist")}
+              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
+              aria-label="Wishlist"
+            >
+              <Heart size={16} />
+              {wishlistItems.length > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-0.5 -right-0.5 bg-sale text-white text-[9px] font-sans font-bold min-w-[16px] h-[16px] flex items-center justify-center rounded-full"
+                >
+                  {wishlistItems.length}
+                </motion.span>
+              )}
             </button>
 
             {/* Cart Button */}

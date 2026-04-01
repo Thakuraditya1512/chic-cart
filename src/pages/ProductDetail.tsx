@@ -1,7 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler } from "lucide-react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import Header from "@/components/Header";
@@ -9,10 +10,12 @@ import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, query, where, orderBy, documentId, limit } from "firebase/firestore";
 import { Product } from "@/types";
 import LoadingScreen from "@/components/LoadingScreen";
+import { Helmet } from "react-helmet-async";
 
 interface Brand {
   id: string;
@@ -39,9 +42,9 @@ const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [wishlisted, setWishlisted] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [imageZoomed, setImageZoomed] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -267,6 +270,13 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{product.name} | Flex The Kicks</title>
+        <meta name="description" content={product.description?.substring(0, 160) || "Premium sneaker at Flex The Kicks"} />
+        {product.image && <meta property="og:image" content={product.image} />}
+        <meta property="og:title" content={`${product.name} | Flex The Kicks`} />
+        <meta property="og:type" content="product" />
+      </Helmet>
       <script type="application/ld+json">
         {JSON.stringify(jsonLd)}
       </script>
@@ -397,39 +407,108 @@ const ProductDetail = () => {
             )}
 
             {/* Quantity + Add to cart */}
-            <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-              <div className="flex items-center border border-border rounded-sm">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                  <Minus size={14} className="sm:w-4 sm:h-4" />
+            <div className="flex flex-col gap-3 mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center border border-border rounded-sm">
+                  <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                    <Minus size={14} className="sm:w-4 sm:h-4" />
+                  </button>
+                  <span className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-border">{qty}</span>
+                  <button 
+                    onClick={() => setQty(Math.min(5, qty + 1))} 
+                    className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-colors ${qty >= 5 ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
+                    disabled={qty >= 5}
+                  >
+                    <Plus size={14} className="sm:w-4 sm:h-4" />
+                  </button>
+                </div>
+                <button
+                  ref={addToCartBtnRef}
+                  onClick={handleAddToCart}
+                  className="flex-1 flex items-center justify-center gap-2 h-9 sm:h-11 bg-primary text-primary-foreground font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm"
+                >
+                  <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
+                  Add to Cart
                 </button>
-                <span className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-border">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                  <Plus size={14} className="sm:w-4 sm:h-4" />
+                <button
+                  onClick={() => toggleWishlist(product.id)}
+                  className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-sale transition-colors z-10"
+                >
+                  <Heart size={16} fill={isInWishlist(product.id) ? "currentColor" : "none"} className={`${isInWishlist(product.id) ? "text-sale" : ""} sm:w-[18px] sm:h-[18px]`} />
                 </button>
               </div>
-              <button
-                ref={addToCartBtnRef}
-                onClick={handleAddToCart}
-                className="flex-1 flex items-center justify-center gap-2 h-9 sm:h-11 bg-primary text-primary-foreground font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm"
-              >
-                <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
-                Add to Cart
-              </button>
-              <button
-                onClick={() => setWishlisted(!wishlisted)}
-                className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-sale transition-colors"
-              >
-                <Heart size={16} fill={wishlisted ? "currentColor" : "none"} className={`${wishlisted ? "text-sale" : ""} sm:w-[18px] sm:h-[18px]`} />
-              </button>
+
+              {qty >= 5 && (
+                <div className="text-xs text-muted-foreground flex items-center gap-2 bg-secondary/50 p-2 rounded-md">
+                  <MessageCircle size={14} className="flex-shrink-0" />
+                  <span>Max 5 pairs per order. Need more? <Link to="/support" className="text-foreground underline decoration-primary font-medium">Contact Support for Bulk Orders</Link></span>
+                </div>
+              )}
             </div>
 
             {/* Colors */}
             {product.colors && (
-              <div>
+              <div className="mb-6">
                 <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-foreground mb-2">Available Colors</p>
                 <p className="text-xs sm:text-sm text-muted-foreground">{product.colors.join(", ")}</p>
               </div>
             )}
+
+            {/* Accordions for Size Guide & Support Chat */}
+            <div className="mb-6">
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="size-guide">
+                  <AccordionTrigger className="text-sm font-semibold uppercase tracking-wide hover:no-underline">
+                    <span className="flex items-center gap-2"><Ruler size={16} /> Size Guide</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-xs sm:text-sm text-muted-foreground text-left">
+                    <div className="grid grid-cols-4 gap-2 text-center border border-border rounded-md overflow-hidden mb-4 bg-background">
+                      <div className="bg-secondary/50 p-2 font-semibold border-b border-border">UK</div>
+                      <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">US</div>
+                      <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">EU</div>
+                      <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">CM</div>
+                      
+                      <div className="p-2 border-b border-border text-foreground">6</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">7</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">40</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">25</div>
+                      
+                      <div className="p-2 border-b border-border text-foreground">7</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">8</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">41</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">26</div>
+                      
+                      <div className="p-2 border-b border-border text-foreground">8</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">9</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">42.5</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">27</div>
+                      
+                      <div className="p-2 border-b border-border text-foreground">9</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">10</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">44</div>
+                      <div className="p-2 border-b border-l border-border text-foreground">28</div>
+                      
+                      <div className="p-2 text-foreground">10</div>
+                      <div className="p-2 border-l border-border text-foreground">11</div>
+                      <div className="p-2 border-l border-border text-foreground">45</div>
+                      <div className="p-2 border-l border-border text-foreground">29</div>
+                    </div>
+                    <p>We recommend choosing your standard size. For wider feet, consider going half a size up.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="support-chat">
+                  <AccordionTrigger className="text-sm font-semibold uppercase tracking-wide hover:no-underline">
+                    <span className="flex items-center gap-2"><MessageCircle size={16} /> Expert Advice</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-xs sm:text-sm text-muted-foreground">
+                    <p className="mb-4">Need help deciding? Have questions about this shoe? Our team is ready to help you find the perfect fit and style.</p>
+                    <a href={`https://wa.me/919398415366?text=${encodeURIComponent(`Hi, I need help with ${product.name} from Chic-Cart`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-10 w-full sm:w-auto px-6 bg-[#25D366] text-white font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm shadow-md">
+                      <MessageCircle size={16} /> Ask our Experts
+                    </a>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
           </div>
         </div>
 

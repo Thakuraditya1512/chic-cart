@@ -9,6 +9,7 @@ import { ArrowLeft, ShoppingCart, Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
 import LoadingScreen from "@/components/LoadingScreen";
+import { Helmet } from "react-helmet-async";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -125,6 +126,10 @@ const BrandDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-16 sm:pb-20">
+      <Helmet>
+        <title>{brand.name} Sneakers & Hype Shoes | Flex The Kicks</title>
+        <meta name="description" content={`Shop authentic ${brand.name} sneakers, boots, and hype shoes. ${brand.description || ''} Discover the best from ${brand.name} at Flex The Kicks.`} />
+      </Helmet>
       {/* Header with Brand Info */}
       <div className="relative h-[200px] sm:h-[280px] md:h-[360px] lg:h-[400px] overflow-hidden">
         <img

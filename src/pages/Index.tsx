@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import CinematicHero from "@/components/CinematicHero";
 import BrandMarquee from "@/components/BrandMarquee";
@@ -21,7 +22,13 @@ const Index = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground selection:bg-foreground/20 overflow-x-hidden">
+      <Helmet>
+        <title>Flex The Kicks - The Ultimate Sneaker Destination</title>
+        <meta name="description" content="Shop the latest trends in sneakers, hype shoes, premium kicks at Flex The Kicks. Find limited drops and everyday classics." />
+        <meta name="keywords" content="Sneakers, Shoes, Footwear, Fashion, Hype, Premium, Drops, Jordan, Nike" />
+      </Helmet>
+
       <Header onSearchOpen={() => setSearchOpen(true)} />
       <main>
         {/* 1. Full-screen cinematic video hero */}

@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -9,7 +10,7 @@ import SizeSelectionPopup from "./SizeSelectionPopup";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
-  const [wishlisted, setWishlisted] = useState(false);
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   const [showSizePopup, setShowSizePopup] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -101,14 +102,17 @@ const ProductCard = ({ product }: { product: Product }) => {
 
       {/* Wishlist */}
       <button
-        onClick={() => setWishlisted(!wishlisted)}
+        onClick={(e) => {
+          e.preventDefault();
+          toggleWishlist(product.id);
+        }}
         className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-sale transition-colors z-10"
         aria-label="Wishlist"
       >
         <Heart
           size={14}
-          fill={wishlisted ? "currentColor" : "none"}
-          className={wishlisted ? "text-sale" : ""}
+          fill={isInWishlist(product.id) ? "currentColor" : "none"}
+          className={isInWishlist(product.id) ? "text-sale" : ""}
         />
       </button>
 

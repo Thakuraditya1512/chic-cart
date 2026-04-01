@@ -1,4 +1,4 @@
-import { Instagram, Twitter, Facebook, ArrowUpRight } from "lucide-react";
+import { Instagram, Twitter, Facebook, ArrowUpRight, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect } from "react";
@@ -31,8 +31,8 @@ const Footer = () => {
       title: "Support",
       links: [
         { label: "FAQ", href: "/faq" },
-        { label: "Contact", href: "/support" },
-        { label: "Shipping", href: "/shipping" },
+        { label: "Contact Us", href: "/support" },
+        { label: "Shipping Policy", href: "/shipping" },
         { label: "Returns", href: "/returns" },
         { label: "Size Guide", href: "/size-guide" },
       ],
@@ -58,92 +58,100 @@ const Footer = () => {
   }, [isInView]);
 
   return (
-    <footer ref={footerRef} className="bg-background border-t border-foreground/10 text-foreground py-12 sm:py-16 md:py-24 pb-24 sm:pb-28 md:pb-24">
-      <div className="container mx-auto px-4 sm:px-6">
-        {/* Top: Logo + CTA */}
-        <div className="footer-animate flex flex-col md:flex-row justify-between items-start md:items-center mb-10 sm:mb-16 md:mb-20 pb-8 sm:pb-10 border-b border-foreground/10">
-          <div>
-            <Link
-              to="/"
-              className="font-cursive text-3xl sm:text-4xl md:text-5xl block mb-2 sm:mb-3"
-            >
-              FlexTheKicks
-            </Link>
-            <p className="text-foreground/50 text-xs sm:text-sm font-sans font-light max-w-xs leading-relaxed">
-              Your destination for premium sneakers. Every brand, every drop.
+    <footer ref={footerRef} className="relative bg-background text-foreground pt-16 sm:pt-24 pb-24 sm:pb-12 overflow-hidden border-t border-border/50">
+      {/* Background glow effects */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] translate-y-1/2 pointer-events-none" />
+
+      <div className="container relative z-10 mx-auto px-4 sm:px-6">
+        
+        {/* Top: Newsletter / CTA */}
+        <div className="footer-animate bg-card/30 backdrop-blur-sm border border-border/50 rounded-3xl p-6 sm:p-10 mb-12 sm:mb-16 md:p-14 flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="text-center lg:text-left max-w-xl">
+            <h3 className="font-display text-2xl sm:text-3xl font-bold mb-3">Join the Kicks Club</h3>
+            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+              Subscribe to get exclusive access to limited drops, early sale access, and member-only rewards.
             </p>
           </div>
-          <a
-            href="#"
-            className="mt-5 sm:mt-6 md:mt-0 inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 border border-foreground/20 rounded-full text-[10px] sm:text-xs font-sans font-semibold uppercase tracking-[0.15em] hover:bg-foreground hover:text-background transition-all duration-300 group"
-          >
-            Visit Store
-            <ArrowUpRight
-              size={14}
-              className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-            />
-          </a>
+          <div className="w-full lg:w-auto flex flex-col sm:flex-row gap-3 w-full lg:max-w-md">
+            <div className="relative flex-1">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input 
+                type="email" 
+                placeholder="Enter your email" 
+                className="w-full h-12 sm:h-14 pl-12 pr-4 bg-background border border-border rounded-xl text-sm focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <button className="h-12 sm:h-14 px-8 bg-foreground text-background font-semibold text-sm rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap">
+              Subscribe
+            </button>
+          </div>
         </div>
 
-        {/* Middle: Links */}
-        <div className="footer-animate grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 md:gap-12 mb-10 sm:mb-16 md:mb-20">
-          {footerLinks.map((group) => (
-            <div key={group.title}>
-              <h4 className="font-sans font-semibold text-[10px] sm:text-xs uppercase tracking-[0.2em] mb-4 sm:mb-5 text-foreground/60">
-                {group.title}
-              </h4>
-              <ul className="space-y-2.5 sm:space-y-3">
-                {group.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.href}
-                      className="text-xs sm:text-sm text-foreground/50 hover:text-foreground transition-colors font-sans"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          {/* Social */}
-          <div className="col-span-2 sm:col-span-1 md:col-span-1">
-            <h4 className="font-sans font-semibold text-[10px] sm:text-xs uppercase tracking-[0.2em] mb-4 sm:mb-5 text-foreground/60">
-              Social
-            </h4>
-            <div className="flex items-center gap-3">
-              {[
-                { Icon: Instagram, label: "Instagram" },
-              ].map(({ Icon, label }) => (
+        {/* Middle: Brand & Links */}
+        <div className="footer-animate grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 mb-12 sm:mb-16">
+          {/* Brand Info */}
+          <div className="md:col-span-5 lg:col-span-4">
+            <Link to="/" className="font-display text-4xl sm:text-5xl font-black tracking-tight inline-block mb-4 sm:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+              FTK
+            </Link>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6 sm:mb-8 md:max-w-sm">
+              FlexTheKicks is your ultimate destination for premium sneakers. We bring you the most exclusive drops, rare finds, and everyday classics.
+            </p>
+            <div className="flex gap-4">
+              {[ { Icon: Instagram, label: "Instagram", href: "#" },
+                 { Icon: Twitter, label: "Twitter", href: "#" },
+                 { Icon: Facebook, label: "Facebook", href: "#" }
+              ].map(({ Icon, label, href }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={href}
                   aria-label={label}
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all duration-300"
+                  className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                 </a>
               ))}
             </div>
           </div>
+
+          {/* Links Grid */}
+          <div className="md:col-span-7 lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-4 md:gap-8">
+            {footerLinks.map((group) => (
+              <div key={group.title}>
+                <h4 className="font-semibold text-sm uppercase tracking-wider mb-5 sm:mb-6 text-foreground">
+                  {group.title}
+                </h4>
+                <ul className="space-y-3 sm:space-y-4">
+                  {group.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        to={link.href}
+                        className="text-sm text-muted-foreground hover:text-foreground hover:translate-x-1 inline-block transition-all duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Bottom */}
-        <div className="footer-animate flex flex-col sm:flex-row items-center justify-between pt-6 sm:pt-8 border-t border-foreground/10 gap-3 sm:gap-0">
-          <p className="text-[10px] sm:text-[11px] text-foreground/40 font-sans text-center sm:text-left">
-            © {currentYear} WALK IN STYLE. All rights reserved.
+        {/* Bottom: Legal */}
+        <div className="footer-animate pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+          <p className="text-sm text-muted-foreground order-2 md:order-1 text-center md:text-left">
+            © {currentYear} FlexTheKicks. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 sm:gap-6 text-[10px] sm:text-[11px] text-foreground/40 font-sans">
-            <Link to="/privacy" className="hover:text-foreground/70 transition-colors">
+          <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground order-1 md:order-2">
+            <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="hover:text-foreground/70 transition-colors">
+            <span className="w-1 h-1 rounded-full bg-border" />
+            <Link to="/terms" className="hover:text-foreground transition-colors">
               Terms of Service
             </Link>
-            <span className="hidden sm:inline text-foreground/40">
-              Cookie Settings
-            </span>
           </div>
         </div>
       </div>

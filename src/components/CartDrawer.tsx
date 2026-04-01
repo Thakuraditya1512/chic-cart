@@ -174,8 +174,9 @@ const CartDrawer = () => {
                         </button>
                         <span className="text-xs sm:text-sm font-medium text-foreground w-4 sm:w-5 text-center">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => updateQuantity(item.product.id, Math.min(5, item.quantity + 1))}
+                          disabled={item.quantity >= 5}
+                          className={`w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full border border-border transition-colors ${item.quantity >= 5 ? 'text-muted-foreground/30 border-border/50 cursor-not-allowed' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

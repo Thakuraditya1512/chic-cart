@@ -7,6 +7,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import ProductCard from '@/components/ProductCard';
 import LoadingScreen from '@/components/LoadingScreen';
+import { Helmet } from 'react-helmet-async';
 
 interface Product {
   id: string;
@@ -82,6 +83,10 @@ const AllProducts = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background py-12 sm:py-16">
+      <Helmet>
+        <title>All Premium Sneakers - Flex The Kicks</title>
+        <meta name="description" content="Browse our entire collection of premium sneakers, including authentic Nike, Jordan, Yeezy, and exclusive drops on Flex The Kicks." />
+      </Helmet>
       <div className="container mx-auto px-4 sm:px-6">
         {/* Back Button */}
         <Link

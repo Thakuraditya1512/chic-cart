@@ -7,7 +7,7 @@ import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X, Search,
   ChevronRight, User, Shield, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
-  MessageSquare, LogOut, Bell, Info, Tag as TagIcon
+  MessageSquare, LogOut, Bell, Info, Tag as TagIcon, Heart
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
@@ -123,7 +123,7 @@ interface Notification {
   updatedAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats" | "wishlists";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -215,6 +215,8 @@ const Admin = () => {
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const chatSubRef = useRef<(() => void) | null>(null);
 
+  const [wishlistStats, setWishlistStats] = useState<{productId: string, name: string, image: string, count: number}[]>([]);
+
   // Set your secure password here
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
 
@@ -234,6 +236,7 @@ const Admin = () => {
     fetchCoupons();
     fetchReviews();
     fetchAdminNotifications();
+    fetchWishlistsStats();
 
     // Subscribe to support chats
     const unsubscribe = subscribeToAllChats((chats) => {
@@ -376,6 +379,46 @@ const Admin = () => {
       setAdminNotifications(list);
     }
   };
+
+  const fetchWishlistsStats = async () => {
+    try {
+      const snap = await getDocs(collection(db, "wishlists"));
+      const counts: Record<string, number> = {};
+      snap.docs.forEach(doc => {
+        const items = doc.data().items as string[];
+        if (Array.isArray(items)) {
+          items.forEach(id => {
+            counts[id] = (counts[id] || 0) + 1;
+          });
+        }
+      });
+      
+      const stats = Object.entries(counts).map(([id, count]) => {
+        return {
+          productId: id,
+          name: "Product ID: " + id,
+          image: "https://placehold.co/80x80/111/444?text=Shoe",
+          count
+        };
+      }).sort((a,b) => b.count - a.count);
+      setWishlistStats(stats);
+    } catch {
+      toast.error("Failed to fetch wishlists stats");
+    }
+  };
+
+  useEffect(() => {
+    if (products.length > 0 && wishlistStats.length > 0) {
+      setWishlistStats(prev => prev.map(s => {
+        const product = products.find(p => p.id === s.productId);
+        return {
+          ...s,
+          name: product?.name || s.name,
+          image: product?.image || s.image
+        };
+      }));
+    }
+  }, [products]);
 
   const handleSendNotification = async () => {
     if (!notifForm.title.trim() || !notifForm.message.trim()) {
@@ -815,6 +858,7 @@ const Admin = () => {
     { id: "reviews" as TabId, label: "Reviews", icon: MessageSquare, count: reviews.length },
     { id: "chats" as TabId, label: "Support", icon: MessageSquare, count: supportChats.filter(c => c.unreadCount > 0 || c.status === "pending_admin").length },
     { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
+    { id: "wishlists" as TabId, label: "Wishlists", icon: Heart, count: wishlistStats.length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -1327,6 +1371,39 @@ const Admin = () => {
                       </motion.div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {/*  WISHLISTS TAB                                                    */}
+          {/* ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === "wishlists" && (
+            <div>
+              {wishlistStats.length === 0 ? (
+                <EmptyState
+                  title="No Wishlists Yet"
+                  subtitle="When customers add products to their wishlist, they will appear here."
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  {wishlistStats.map((stat) => (
+                    <motion.div key={stat.productId}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="group relative rounded-2xl border border-white/6 bg-[#0d0d18] flex items-center gap-4 p-4"
+                    >
+                      <img src={stat.image} alt={stat.name} className="w-16 h-16 rounded-xl object-cover bg-white/5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-white truncate mb-1">{stat.name}</h4>
+                        <div className="flex items-center gap-1.5 text-xs text-rose-500">
+                          <Heart className="w-4 h-4 fill-rose-500" />
+                          <span className="font-semibold">{stat.count} {stat.count === 1 ? 'wishlist' : 'wishlists'}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               )}
             </div>

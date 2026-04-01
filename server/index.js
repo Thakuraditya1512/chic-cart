@@ -8,12 +8,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS - Allow your Vercel frontend
+// CORS - Allow your frontend
 const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:3000',
-  'https://your-vercel-app.vercel.app', // Replace with your actual Vercel URL
-  process.env.FRONTEND_URL // Add from environment variable
+  'https://www.flexthekicks.in',
+  'https://flexthekicks.in',
+  process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({

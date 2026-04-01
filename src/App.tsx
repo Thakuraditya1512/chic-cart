@@ -6,8 +6,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import ReactGA from "react-ga4";
 
 import Index from "./pages/Index";
@@ -23,6 +25,7 @@ import NewDrops from "./pages/NewDrops";
 import Brands from "./pages/Brands";
 import Sale from "./pages/Sale";
 import AllProducts from "./pages/AllProducts";
+import Wishlist from "./pages/Wishlist";
 import AboutUs from "./pages/AboutUs";
 import Careers from "./pages/Careers";
 import Blog from "./pages/Blog";
@@ -176,6 +179,7 @@ const AppRoutes = () => {
         <Route path="/brands" element={<Brands />} />
         <Route path="/sale" element={<Sale />} />
         <Route path="/products" element={<AllProducts />} />
+        <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
@@ -207,21 +211,25 @@ const AppRoutes = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <NotificationProvider>
-        <TooltipProvider>
-          <CartProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </CartProvider>
-        </TooltipProvider>
-      </NotificationProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <NotificationProvider>
+          <WishlistProvider>
+            <TooltipProvider>
+              <CartProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </CartProvider>
+            </TooltipProvider>
+          </WishlistProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;
