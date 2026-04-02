@@ -66,7 +66,10 @@ const Login = () => {
       setError("");
       await loginWithGoogle();
       navigate("/");
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === "auth/popup-closed-by-user") {
+        return;
+      }
       const errorMsg = err instanceof Error ? err.message : "Google Login failed";
       setError(errorMsg);
     } finally {

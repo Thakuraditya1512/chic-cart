@@ -101,7 +101,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserRole(userSnap.exists() ? userSnap.data().role : "user");
     } catch (error: any) {
       console.error("Google Login Error:", error);
-      setError(error.message);
+      if (error.code !== "auth/popup-closed-by-user") {
+        setError(error.message);
+      }
       throw error;
     }
   };
