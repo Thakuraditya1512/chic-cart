@@ -123,7 +123,7 @@ interface Notification {
   updatedAt?: any;
 }
 
-type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats" | "wishlists";
+type TabId = "brands" | "products" | "featured" | "customers" | "users" | "coupons" | "reviews" | "notifications" | "chats" | "wishlists" | "stockAlerts";
 
 const ORDER_STATUSES = ["pending", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"] as const;
 
@@ -215,13 +215,14 @@ const Admin = () => {
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const chatSubRef = useRef<(() => void) | null>(null);
 
-  const [wishlistStats, setWishlistStats] = useState<{ 
-    productId: string, 
-    name: string, 
-    image: string, 
+  const [wishlistStats, setWishlistStats] = useState<{
+    productId: string,
+    name: string,
+    image: string,
     count: number,
     users: { id: string, name: string, email: string }[]
   }[]>([]);
+  const [stockAlerts, setStockAlerts] = useState<any[]>([]);
 
   // Set your secure password here
   const ADMIN_DELETE_PASSWORD = "Thakur@206";
@@ -243,6 +244,7 @@ const Admin = () => {
     fetchReviews();
     fetchAdminNotifications();
     fetchWishlistsStats();
+    fetchStockAlerts();
 
     // Subscribe to support chats
     const unsubscribe = subscribeToAllChats((chats) => {
@@ -390,22 +392,22 @@ const Admin = () => {
     try {
       const snap = await getDocs(collection(db, "wishlists"));
       const productsMap: Record<string, { id: string, name: string, email: string }[]> = {};
-      
+
       snap.docs.forEach(docSnap => {
         const data = docSnap.data();
         const userId = docSnap.id;
         const items = data.items as string[];
         const userEmail = data.userEmail || "Unknown";
-        
+
         // Find user name if possible from users array
         // Note: fetchUsers must have run or we use email
         if (Array.isArray(items)) {
           items.forEach(id => {
             if (!productsMap[id]) productsMap[id] = [];
-            productsMap[id].push({ 
-              id: userId, 
+            productsMap[id].push({
+              id: userId,
               name: "Loading...", // Will be updated by useEffect
-              email: userEmail 
+              email: userEmail
             });
           });
         }
@@ -454,7 +456,31 @@ const Admin = () => {
     if (activeTab === "wishlists") {
       fetchWishlistsStats();
     }
+    if (activeTab === "stockAlerts") {
+      fetchStockAlerts();
+    }
   }, [activeTab]);
+
+  const fetchStockAlerts = async () => {
+    try {
+      const snap = await getDocs(query(collection(db, "stock_notifications"), orderBy("createdAt", "desc")));
+      setStockAlerts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      const snap = await getDocs(collection(db, "stock_notifications"));
+      setStockAlerts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }
+  };
+
+  const deleteStockAlert = async (id: string) => {
+    if (!confirm("Remove this alert?")) return;
+    try {
+      await deleteDoc(doc(db, "stock_notifications", id));
+      toast.success("Alert removed");
+      fetchStockAlerts();
+    } catch {
+      toast.error("Failed to delete alert");
+    }
+  };
 
   const handleSendNotification = async () => {
     if (!notifForm.title.trim() || !notifForm.message.trim()) {
@@ -895,6 +921,7 @@ const Admin = () => {
     { id: "chats" as TabId, label: "Support", icon: MessageSquare, count: supportChats.filter(c => c.unreadCount > 0 || c.status === "pending_admin").length },
     { id: "notifications" as TabId, label: "Notifs", icon: Bell, count: adminNotifications.length },
     { id: "wishlists" as TabId, label: "Wishlists", icon: Heart, count: wishlistStats.length },
+    { id: "stockAlerts" as TabId, label: "Stock Alerts", icon: Bell, count: stockAlerts.length },
   ];
 
   // ─── Shared form input class ────────────────────────────────────────────────
@@ -2255,8 +2282,8 @@ const Admin = () => {
                             key={chat.id}
                             onClick={() => setActiveChat(chat)}
                             className={`flex flex-col gap-2 p-3.5 rounded-2xl border transition-all text-left ${activeChat?.id === chat.id
-                                ? "bg-[#6c5ce7]/10 border-[#6c5ce7]/50 shadow-lg shadow-[#6c5ce7]/5"
-                                : "bg-[#0d0d18] border-white/6 hover:border-white/12"
+                              ? "bg-[#6c5ce7]/10 border-[#6c5ce7]/50 shadow-lg shadow-[#6c5ce7]/5"
+                              : "bg-[#0d0d18] border-white/6 hover:border-white/12"
                               }`}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -2274,8 +2301,8 @@ const Admin = () => {
                             </div>
                             <div className="flex items-center justify-between">
                               <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${chat.status === "pending_admin" ? "bg-amber-500/10 text-amber-400" :
-                                  chat.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
-                                    "bg-white/5 text-white/30"
+                                chat.status === "active" ? "bg-emerald-500/10 text-emerald-400" :
+                                  "bg-white/5 text-white/30"
                                 }`}>
                                 {chat.status.replace("_", " ")}
                               </span>
@@ -2326,8 +2353,8 @@ const Admin = () => {
                               return (
                                 <div key={msg.id || i} className={`flex ${isUser ? "justify-start" : "justify-end"}`}>
                                   <div className={`max-w-[85%] md:max-w-[80%] p-3 md:p-3.5 rounded-2xl text-xs md:text-sm ${isUser
-                                      ? "bg-white/5 text-white/80 rounded-bl-none"
-                                      : "bg-[#6c5ce7] text-white rounded-br-none shadow-lg shadow-[#6c5ce7]/20"
+                                    ? "bg-white/5 text-white/80 rounded-bl-none"
+                                    : "bg-[#6c5ce7] text-white rounded-br-none shadow-lg shadow-[#6c5ce7]/20"
                                     }`}>
                                     {msg.text}
                                     <div className={`text-[8px] md:text-[10px] mt-1 md:mt-1.5 font-medium ${isUser ? "text-white/20" : "text-white/50"}`}>
@@ -2435,8 +2462,8 @@ const Admin = () => {
                             <button
                               onClick={() => setNotifForm(prev => ({ ...prev, isActive: !prev.isActive }))}
                               className={`w-full py-2.5 rounded-lg border text-xs font-bold transition-all ${notifForm.isActive
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                                  : "bg-red-500/10 border-red-500/30 text-red-400"
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                : "bg-red-500/10 border-red-500/30 text-red-400"
                                 }`}
                             >
                               {notifForm.isActive ? "ACTIVE" : "INACTIVE"}
@@ -2530,9 +2557,9 @@ const Admin = () => {
                           adminNotifications.map(notif => (
                             <div key={notif.id} className="p-4 rounded-xl border border-white/6 bg-[#0a0a14] flex items-center gap-4">
                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notif.type === 'coupon' ? 'bg-emerald-500/10 text-emerald-500' :
-                                  notif.type === 'sale' ? 'bg-rose-500/10 text-rose-500' :
-                                    notif.type === 'new_arrival' ? 'bg-blue-500/10 text-blue-500' :
-                                      'bg-amber-500/10 text-amber-500'
+                                notif.type === 'sale' ? 'bg-rose-500/10 text-rose-500' :
+                                  notif.type === 'new_arrival' ? 'bg-blue-500/10 text-blue-500' :
+                                    'bg-amber-500/10 text-amber-500'
                                 }`}>
                                 {notif.type === 'coupon' ? <TagIcon size={18} /> :
                                   notif.type === 'sale' ? <Star size={18} /> :
@@ -2627,6 +2654,52 @@ const Admin = () => {
                                 </div>
                               </div>
                             </div>
+                          </motion.div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "stockAlerts" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <SectionLabel>Restock Requests</SectionLabel>
+                      <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                        Notify users when items return
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      {stockAlerts.length === 0 ? (
+                        <EmptyState title="No stock alerts" subtitle="Requests will appear when users tap 'Notify Me' on OOS items." />
+                      ) : (
+                        stockAlerts.map((alert) => (
+                          <motion.div
+                            key={alert.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 rounded-xl border border-white/6 bg-[#0d0d18] flex items-center justify-between gap-4 group"
+                          >
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <img src={alert.productImage} alt={alert.productName}
+                                className="w-12 h-12 rounded-lg object-cover bg-white/5"
+                                onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/80x80/111/444?text=Shoe"; }}
+                              />
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-white truncate">{alert.productName}</h4>
+                                <p className="text-xs text-white/40 truncate">{alert.userEmail}</p>
+                                <p className="text-[9px] text-[#6c5ce7] font-bold uppercase tracking-widest mt-1">
+                                  Requested on {alert.createdAt?.toDate()?.toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => deleteStockAlert(alert.id)}
+                              className="p-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </motion.div>
                         ))
                       )}

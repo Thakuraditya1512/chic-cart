@@ -1,20 +1,26 @@
-import { Heart, Plus } from "lucide-react";
+import { Heart, Plus, Bell, Loader2 } from "lucide-react";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import SizeSelectionPopup from "./SizeSelectionPopup";
 import { toast } from "sonner";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [showSizePopup, setShowSizePopup] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [notifying, setNotifying] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
   const isOutOfStock = product.inStock === false;
@@ -61,6 +67,38 @@ const ProductCard = ({ product }: { product: Product }) => {
     }
   };
 
+  const handleNotifyMe = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      toast.info("Login to set restock alerts", {
+        action: { label: "Login", onClick: () => navigate("/login") }
+      });
+      return;
+    }
+
+    try {
+      setNotifying(true);
+      await addDoc(collection(db, "stock_notifications"), {
+        userId: user.uid,
+        userEmail: user.email,
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image,
+        createdAt: serverTimestamp(),
+        status: "pending"
+      });
+      toast.success("Alert Set!", { 
+        description: `We'll email you when ${product.name} is back.`
+      });
+    } catch (err) {
+      toast.error("Failed to notify");
+    } finally {
+      setNotifying(false);
+    }
+  };
+
   return (
     <div
       className="group relative"
@@ -88,10 +126,37 @@ const ProductCard = ({ product }: { product: Product }) => {
 
         {/* Out of Stock Overlay */}
         {isOutOfStock && (
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-foreground/70 bg-background/80 px-3 py-1.5 rounded-full border border-border">
-              Out of Stock
-            </span>
+          <div className="absolute inset-0 bg-black/5 backdrop-blur-[8px] flex items-center justify-center z-10 p-2">
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/80 dark:bg-black/60 backdrop-blur-xl px-4 py-3 rounded-[2rem] border border-white/20 shadow-2xl flex flex-col items-center gap-2"
+            >
+              <div className="flex flex-col items-center gap-0.5 pointer-events-none">
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-red-500">
+                  Out of Stock
+                </span>
+                <span className="text-[8px] font-bold uppercase tracking-widest text-amber-500/80">
+                  Restocking Soon
+                </span>
+              </div>
+              
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                onClick={handleNotifyMe}
+                disabled={notifying}
+                className="flex items-center gap-2.5 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 rounded-full border border-emerald-500/20 transition-all active:scale-95 group"
+              >
+                {notifying ? (
+                   <Loader2 size={12} className="animate-spin text-emerald-500" />
+                ) : (
+                   <Bell size={12} className="text-emerald-500 group-hover:animate-bounce" />
+                )}
+                <span className="text-[9px] font-black uppercase tracking-widest">
+                  Notify Me
+                </span>
+              </motion.button>
+            </motion.div>
           </div>
         )}
 

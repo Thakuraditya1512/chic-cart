@@ -1,11 +1,12 @@
-import { useParams, Link } from "react-router-dom";
-import { useCart } from "@/contexts/CartContext";
-import { useWishlist } from "@/contexts/WishlistContext";
-import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler, Share2, Truck, Copy, Check } from "lucide-react";
+import { ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler, Share2, Heart, Plus, Minus, ArrowLeft, Check, Bell, Loader2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import gsap from "gsap";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
@@ -13,7 +14,7 @@ import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, query, where, orderBy, documentId, limit } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query, where, orderBy, documentId, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { Product } from "@/types";
 import LoadingScreen from "@/components/LoadingScreen";
 import { Helmet } from "react-helmet-async";
@@ -38,6 +39,8 @@ interface Review {
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -52,6 +55,7 @@ const ProductDetail = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [copied, setCopied] = useState(false);
+  const [notifying, setNotifying] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const addToCartBtnRef = useRef<HTMLButtonElement>(null);
@@ -62,6 +66,8 @@ const ProductDetail = () => {
       fetchReviews();
     }
   }, [id]);
+
+  const isOutOfStock = product?.inStock === false;
 
   // GSAP entrance animation
   useEffect(() => {
@@ -241,6 +247,7 @@ const ProductDetail = () => {
 
   // Add to cart animation
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     // Check if size is required but not selected
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
       const sizeSection = document.getElementById('size-selection');
@@ -270,6 +277,35 @@ const ProductDetail = () => {
     } else {
       addToCart(product!, qty, selectedSize);
       toast.success("Added to cart!", { description: `${product.name}${selectedSize ? ` · Size ${selectedSize}` : ''}` });
+    }
+  };
+
+  const handleNotifyMe = async () => {
+    if (!user) {
+      toast.info("Please login to set restock alerts", {
+        action: { label: "Login", onClick: () => navigate("/login") }
+      });
+      return;
+    }
+
+    try {
+      setNotifying(true);
+      await addDoc(collection(db, "stock_notifications"), {
+        userId: user.uid,
+        userEmail: user.email,
+        productId: product?.id,
+        productName: product?.name,
+        productImage: product?.image,
+        createdAt: serverTimestamp(),
+        status: "pending"
+      });
+      toast.success("Notification set!", { 
+        description: `We'll email ${user.email} when this restocks.`
+      });
+    } catch (err) {
+      toast.error("Failed to set notification");
+    } finally {
+      setNotifying(false);
     }
   };
 
@@ -454,50 +490,74 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Quantity + Add to cart */}
+            {/* Quantity + Add to cart / Notify Me */}
             <div className="flex flex-col gap-3 mb-4 sm:mb-6">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex items-center border border-border rounded-sm">
-                  <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-muted-foreground hover:text-foreground">
-                    <Minus size={14} className="sm:w-4 sm:h-4" />
-                  </button>
-                  <span className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-border">{qty}</span>
-                  <button 
-                    onClick={() => setQty(Math.min(5, qty + 1))} 
-                    className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-colors ${qty >= 5 ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
-                    disabled={qty >= 5}
+              {isOutOfStock ? (
+                <div className="p-4 rounded-xl border border-sale/20 bg-sale/5">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-sale/20 flex items-center justify-center shrink-0">
+                      <Bell size={16} className="text-sale" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-sale uppercase tracking-wide">Out of Stock</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1">
+                        This item is currently unavailable. We'll update when it is back in stock.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleNotifyMe}
+                    disabled={notifying}
+                    className="w-full flex items-center justify-center gap-2 h-11 bg-sale text-sale-foreground font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-all rounded-sm"
                   >
-                    <Plus size={14} className="sm:w-4 sm:h-4" />
+                    {notifying ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />}
+                    Notify Me when available
                   </button>
                 </div>
-                <button
-                  ref={addToCartBtnRef}
-                  onClick={handleAddToCart}
-                  className="flex-1 flex items-center justify-center gap-2 h-9 sm:h-11 bg-primary text-primary-foreground font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm"
-                >
-                  <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
-                  Add to Cart
-                </button>
-                <button
-                  onClick={() => {
-                    toggleWishlist(product.id);
-                    if (!isInWishlist(product.id)) toast.success("Added to wishlist");
-                  }}
-                  className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-sale transition-colors z-10"
-                >
-                  <Heart size={16} fill={isInWishlist(product.id) ? "currentColor" : "none"} className={`${isInWishlist(product.id) ? "text-sale" : ""} sm:w-[18px] sm:h-[18px]`} />
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-primary transition-colors z-10"
-                  aria-label="Share"
-                >
-                  {copied ? <Check size={16} className="text-emerald-500" /> : <Share2 size={16} />}
-                </button>
-              </div>
+              ) : (
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <div className="flex items-center border border-border rounded-sm">
+                    <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-muted-foreground hover:text-foreground">
+                      <Minus size={14} className="sm:w-4 sm:h-4" />
+                    </button>
+                    <span className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-border">{qty}</span>
+                    <button 
+                      onClick={() => setQty(Math.min(5, qty + 1))} 
+                      className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-colors ${qty >= 5 ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
+                      disabled={qty >= 5}
+                    >
+                      <Plus size={14} className="sm:w-4 sm:h-4" />
+                    </button>
+                  </div>
+                  <button
+                    ref={addToCartBtnRef}
+                    onClick={handleAddToCart}
+                    className="flex-1 flex items-center justify-center gap-2 h-9 sm:h-11 bg-primary text-primary-foreground font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm"
+                  >
+                    <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
+                    Add to Cart
+                  </button>
+                  <button
+                    onClick={() => {
+                      toggleWishlist(product.id);
+                      if (!isInWishlist(product.id)) toast.success("Added to wishlist");
+                    }}
+                    className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-sale transition-colors z-10"
+                  >
+                    <Heart size={16} fill={isInWishlist(product.id) ? "currentColor" : "none"} className={`${isInWishlist(product.id) ? "text-sale" : ""} sm:w-[18px] sm:h-[18px]`} />
+                  </button>
+                  <button
+                    onClick={handleShare}
+                    className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-primary transition-colors z-10"
+                    aria-label="Share"
+                  >
+                    {copied ? <Check size={16} className="text-emerald-500" /> : <Share2 size={16} />}
+                  </button>
+                </div>
+              )}
 
-              {qty >= 5 && (
-                <div className="text-xs text-muted-foreground flex items-center gap-2 bg-secondary/50 p-2 rounded-md">
+              {!isOutOfStock && qty >= 5 && (
+                <div className="text-xs text-muted-foreground flex items-center gap-2 bg-secondary/50 p-2 rounded-md mt-2">
                   <MessageCircle size={14} className="flex-shrink-0" />
                   <span>Max 5 pairs per order. Need more? <Link to="/support" className="text-foreground underline decoration-primary font-medium">Contact Support for Bulk Orders</Link></span>
                 </div>
