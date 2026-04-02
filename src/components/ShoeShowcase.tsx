@@ -65,7 +65,7 @@ const ShoeShowcase = () => {
     <section
       id="showcase"
       ref={sectionRef}
-      className="relative py-14 sm:py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
+      className="relative pt-24 pb-14 sm:py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
     >
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] sm:w-[600px] h-[250px] sm:h-[600px] rounded-full bg-purple-500/10 blur-[60px] sm:blur-[120px] animate-glow-pulse" />

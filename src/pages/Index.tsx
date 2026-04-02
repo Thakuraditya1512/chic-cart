@@ -11,7 +11,7 @@ import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ChatBot from "@/components/ChatBot";
-import RecentlyViewed from "@/components/RecentlyViewed";
+// import RecentlyViewed from "@/components/RecentlyViewed";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);

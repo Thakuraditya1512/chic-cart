@@ -98,11 +98,10 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Badge */}
         {product.badge && !isOutOfStock && (
           <span
-            className={`absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full z-10 ${
-              product.badge === "sale"
+            className={`absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full z-10 ${product.badge === "sale"
                 ? "bg-sale text-sale-foreground"
                 : "bg-foreground text-background"
-            }`}
+              }`}
           >
             {product.badge}
           </span>
@@ -111,9 +110,8 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Quick add - minimal '+' button */}
         {!isOutOfStock && (
           <div
-            className={`absolute bottom-2 right-2 transition-all duration-300 z-20 ${
-              isTouchDevice ? "opacity-100" : "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
-            }`}
+            className={`absolute bottom-2 right-2 transition-all duration-300 z-20 ${isTouchDevice ? "opacity-100" : "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+              }`}
           >
             <motion.button
               onClick={handleQuickAdd}
@@ -150,15 +148,15 @@ const ProductCard = ({ product }: { product: Product }) => {
       <Link to={`/product/${product.id}`} className="block px-1">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-[11px] sm:text-[13px] font-medium text-foreground/90 line-clamp-1 mb-0 tracking-tight">
+            <h3 className="text-[12px] sm:text-[14px] font-medium text-foreground/90 line-clamp-1 mb-0 tracking-tight">
               {product.name}
             </h3>
-            <p className="text-[9px] sm:text-[11px] text-muted-foreground/50 uppercase tracking-[0.08em] font-bold">
+            {/* <p className="text-[9px] sm:text-[11px] text-muted-foreground/50 uppercase tracking-[0.08em] font-bold">
               {product.brandId?.replace(/-/g, ' ') || 'Streetwear'}
-            </p>
+            </p> */}
           </div>
           <div className="text-right flex-shrink-0">
-            <p className={`text-[12px] sm:text-[14px] font-bold tracking-tight ${isOutOfStock ? "text-muted-foreground/50" : "text-foreground"}`}>
+            <p className={`text-[13px] sm:text-[15px] font-bold tracking-tight ${isOutOfStock ? "text-muted-foreground/50" : "text-foreground"}`}>
               ₹{product.price.toLocaleString('en-IN')}
             </p>
             {product.originalPrice && (
