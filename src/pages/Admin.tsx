@@ -399,14 +399,12 @@ const Admin = () => {
         const items = data.items as string[];
         const userEmail = data.userEmail || "Unknown";
 
-        // Find user name if possible from users array
-        // Note: fetchUsers must have run or we use email
         if (Array.isArray(items)) {
           items.forEach(id => {
             if (!productsMap[id]) productsMap[id] = [];
             productsMap[id].push({
               id: userId,
-              name: "Loading...", // Will be updated by useEffect
+              name: "Loading...",
               email: userEmail
             });
           });
@@ -414,14 +412,22 @@ const Admin = () => {
       });
 
       const stats = Object.entries(productsMap).map(([id, userList]) => {
+        const product = products.find(p => p.id === id);
         return {
           productId: id,
-          name: "Product ID: " + id,
-          image: "https://placehold.co/80x80/111/444?text=Shoe",
+          name: product?.name || "Product ID: " + id,
+          image: product?.image || "https://placehold.co/80x80/111/444?text=Shoe",
           count: userList.length,
-          users: userList
+          users: userList.map(u => {
+            const foundUser = users.find(user => user.id === u.id);
+            return {
+              ...u,
+              name: foundUser?.fullName || (u.email !== 'Unknown' ? u.email.split('@')[0] : "Customer")
+            };
+          })
         };
       }).sort((a, b) => b.count - a.count);
+      
       setWishlistStats(stats);
     } catch (error) {
       console.error("Error fetching wishlists:", error);
@@ -430,26 +436,22 @@ const Admin = () => {
   };
 
   useEffect(() => {
-    if (wishlistStats.length > 0 && (products.length > 0 || users.length > 0)) {
+    if (wishlistStats.length > 0 && products.length > 0) {
       setWishlistStats(prev => prev.map(s => {
-        const product = products.find(p => p.id === s.productId);
-        const updatedUsers = s.users.map(u => {
-          const foundUser = users.find(user => user.id === u.id);
-          return {
-            ...u,
-            name: foundUser?.fullName || (u.email !== 'Unknown' ? u.email.split('@')[0] : "Customer")
-          };
-        });
-
-        return {
-          ...s,
-          name: product?.name || s.name,
-          image: product?.image || s.image,
-          users: updatedUsers
-        };
+        if (s.name.startsWith("Product ID:")) {
+          const product = products.find(p => p.id === s.productId);
+          if (product) {
+            return {
+              ...s,
+              name: product.name,
+              image: product.image
+            };
+          }
+        }
+        return s;
       }));
     }
-  }, [products.length, users.length]);
+  }, [products.length, wishlistStats.length]);
 
   // Handle tab specific fetches
   useEffect(() => {
@@ -2582,46 +2584,85 @@ const Admin = () => {
                 )}
 
                 {activeTab === "wishlists" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <SectionLabel>Wishlist Identity</SectionLabel>
-                      <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                        See which users want which products
-                      </p>
+                  <div className="space-y-6 px-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                      <div>
+                        <SectionLabel>Wishlist Analytics</SectionLabel>
+                        <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">
+                          Correlating user interest with product inventory
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                        <div className="w-2 h-2 rounded-full bg-[#6c5ce7] animate-pulse" />
+                        <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
+                          {wishlistStats.length} Unique items
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-5">
                       {wishlistStats.length === 0 ? (
                         <EmptyState title="No wishlisted items" subtitle="User wishlists will appear here." />
                       ) : (
                         wishlistStats.map((item) => (
                           <motion.div
                             key={item.productId}
-                            initial={{ opacity: 0, y: 10 }}
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="p-5 rounded-2xl border border-white/6 bg-[#0d0d18] hover:border-white/12 transition-all"
+                            whileHover={{ y: -2 }}
+                            className="group relative p-6 rounded-[2rem] border border-white/6 bg-[#0d0d18]/60 backdrop-blur-md overflow-hidden transition-all duration-300"
                           >
-                            <div className="flex flex-col md:flex-row gap-6">
-                              {/* Product Info */}
-                              <div className="flex items-center gap-4 md:w-1/3">
-                                <img src={item.image} alt={item.name} className="w-16 h-16 rounded-xl object-cover bg-white/5" />
-                                <div className="min-w-0">
-                                  <h4 className="text-sm font-bold text-white truncate">{item.name}</h4>
-                                  <p className="text-[10px] text-[#6c5ce7] font-bold uppercase tracking-widest mt-1">
-                                    {item.count} Saved {item.count === 1 ? 'time' : 'times'}
-                                  </p>
+                            {/* Glass background effect */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#6c5ce7]/5 blur-3xl -mr-16 -mt-16 rounded-full" />
+                            
+                            <div className="relative flex flex-col md:flex-row gap-8 items-start">
+                              {/* Enhanced Product Preview */}
+                              <div className="relative shrink-0 mx-auto md:mx-0">
+                                <div className="absolute -inset-1.5 bg-gradient-to-tr from-[#6c5ce7] to-[#a855f7] rounded-[2rem] opacity-20 blur group-hover:opacity-40 transition-opacity duration-500" />
+                                <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-[1.75rem] overflow-hidden border border-white/10 bg-black/40 shadow-2xl">
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.name} 
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60" />
                                 </div>
                               </div>
 
-                              {/* Users who added it */}
-                              <div className="flex-1">
-                                <div className="flex flex-wrap gap-2">
-                                  {item.users.map((u, i) => (
-                                    <div key={i} className="flex flex-col p-2.5 rounded-xl bg-white/3 border border-white/5 min-w-[140px]">
-                                      <span className="text-[11px] font-bold text-white truncate">{u.name}</span>
-                                      <span className="text-[9px] text-white/30 truncate">{u.email}</span>
-                                    </div>
-                                  ))}
+                              {/* Content area */}
+                              <div className="flex-1 w-full min-w-0">
+                                <div className="flex flex-wrap items-center gap-3 mb-5">
+                                  <h4 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate max-w-[250px] sm:max-w-md">
+                                    {item.name}
+                                  </h4>
+                                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6c5ce7]/10 border border-[#6c5ce7]/20 text-[10px] font-black text-[#a855f7] uppercase tracking-wider shadow-lg shadow-purple-500/5">
+                                    <Heart className="w-3 h-3 fill-current" />
+                                    {item.count} SAVED
+                                  </div>
+                                </div>
+
+                                {/* User attribution grid */}
+                                <div className="space-y-3">
+                                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.2em]">Interrested Customers</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                                    {item.users.map((u, i) => (
+                                      <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.05 }}
+                                        className="group/u relative flex items-center gap-3 p-2.5 rounded-xl bg-white/3 border border-white/5 hover:border-[#6c5ce7]/30 transition-all"
+                                      >
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-[10px] font-bold text-white/40 group-hover/u:from-[#6c5ce7] group-hover/u:to-[#a855f7] group-hover/u:text-white transition-all">
+                                          {u.name[0].toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                          <p className="text-[11px] font-bold text-white truncate leading-none mb-1 group-hover/u:text-[#6c5ce7] transition-colors">{u.name}</p>
+                                          <p className="text-[9px] text-white/20 truncate font-mono tracking-tight">{u.email}</p>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </div>
