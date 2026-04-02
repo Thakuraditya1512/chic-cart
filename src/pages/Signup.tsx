@@ -342,7 +342,7 @@ const Signup = () => {
               </div>
             </div>
 
-            <Button
+            {/* <Button
               variant="outline"
               type="button"
               disabled={loading}
@@ -375,7 +375,7 @@ const Signup = () => {
                 />
               </svg>
               <span>Sign up with Google</span>
-            </Button>
+            </Button> */}
 
             {/* Login Link */}
             <motion.div

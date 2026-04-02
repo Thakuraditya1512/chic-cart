@@ -81,7 +81,7 @@ const ShoeShowcase = () => {
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.35em] text-foreground/80 mb-2 sm:mb-4 font-sans font-bold"
             >
-                     <span className="padding " style={{ paddingLeft: '20px' }}>Exclusive Release</span>
+              <span className="padding " style={{ paddingLeft: '20px' }}>Exclusive Release</span>
             </motion.p>
 
             <motion.h2
@@ -177,7 +177,7 @@ const ShoeShowcase = () => {
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
-              
+
               <video
                 src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/wb.mp4"
                 autoPlay
