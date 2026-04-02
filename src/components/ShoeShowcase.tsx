@@ -177,6 +177,7 @@ const ShoeShowcase = () => {
               animate={isInView ? { opacity: 1, scale: 1 } : {}}
               transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
+              
               <video
                 src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/wb.mp4"
                 autoPlay

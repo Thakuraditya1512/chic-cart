@@ -2,7 +2,8 @@ import { useParams, Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler } from "lucide-react";
+import { ArrowLeft, Heart, Minus, Plus, ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler, Share2, Truck, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import Header from "@/components/Header";
@@ -50,6 +51,7 @@ const ProductDetail = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
+  const [copied, setCopied] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const addToCartBtnRef = useRef<HTMLButtonElement>(null);
@@ -197,11 +199,50 @@ const ProductDetail = () => {
     }
   }, [product]);
 
+  // Share handler
+  const handleShare = async () => {
+    const shareData = {
+      title: product?.name || 'Check this out!',
+      text: `Check out ${product?.name} on Flex The Kicks!`,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      // Fallback: copy link
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast.success("Link copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // Estimated delivery date (3-5 business days from now)
+  const getEstimatedDelivery = () => {
+    const today = new Date();
+    const addBusinessDays = (date: Date, days: number) => {
+      const result = new Date(date);
+      let added = 0;
+      while (added < days) {
+        result.setDate(result.getDate() + 1);
+        if (result.getDay() !== 0 && result.getDay() !== 6) added++;
+      }
+      return result;
+    };
+    const from = addBusinessDays(today, 3);
+    const to = addBusinessDays(today, 5);
+    const fmt = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    return `${fmt(from)} – ${fmt(to)}`;
+  };
+
   // Add to cart animation
   const handleAddToCart = () => {
     // Check if size is required but not selected
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-      // Show error message or highlight size selection
       const sizeSection = document.getElementById('size-selection');
       if (sizeSection) {
         sizeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -210,6 +251,7 @@ const ProductDetail = () => {
           sizeSection.classList.remove('animate-pulse');
         }, 2000);
       }
+      toast.error("Please select a size");
       return;
     }
 
@@ -222,10 +264,12 @@ const ProductDetail = () => {
         ease: "power2.inOut",
         onComplete: () => {
           addToCart(product!, qty, selectedSize);
+          toast.success("Added to cart!", { description: `${product.name}${selectedSize ? ` · Size ${selectedSize}` : ''}` });
         }
       });
     } else {
       addToCart(product!, qty, selectedSize);
+      toast.success("Added to cart!", { description: `${product.name}${selectedSize ? ` · Size ${selectedSize}` : ''}` });
     }
   };
 
@@ -373,6 +417,10 @@ const ProductDetail = () => {
                 <CheckCircle2 size={12} />
                 Cash on Delivery Available
               </div>
+              <div className="flex items-center gap-2 text-foreground/60 font-medium text-[10px] uppercase tracking-widest bg-foreground/5 px-3 py-1.5 rounded-lg w-fit border border-border">
+                <Truck size={12} />
+                Est. Delivery: {getEstimatedDelivery()}
+              </div>
             </div>
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
@@ -431,10 +479,20 @@ const ProductDetail = () => {
                   Add to Cart
                 </button>
                 <button
-                  onClick={() => toggleWishlist(product.id)}
+                  onClick={() => {
+                    toggleWishlist(product.id);
+                    if (!isInWishlist(product.id)) toast.success("Added to wishlist");
+                  }}
                   className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-sale transition-colors z-10"
                 >
                   <Heart size={16} fill={isInWishlist(product.id) ? "currentColor" : "none"} className={`${isInWishlist(product.id) ? "text-sale" : ""} sm:w-[18px] sm:h-[18px]`} />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center border border-border rounded-sm text-foreground hover:text-primary transition-colors z-10"
+                  aria-label="Share"
+                >
+                  {copied ? <Check size={16} className="text-emerald-500" /> : <Share2 size={16} />}
                 </button>
               </div>
 

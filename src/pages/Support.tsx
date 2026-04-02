@@ -122,8 +122,9 @@ const Support = () => {
                         rel="noopener noreferrer"
                         className="text-muted-foreground text-sm hover:text-foreground transition-colors"
                       >
-                        +91 99999 99999
+                        +91 93984 15366
                       </a>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-sans">Fastest for Legit Checks & Order Updates</p>
                     </div>
                   </div>
 
@@ -161,9 +162,22 @@ const Support = () => {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-foreground/10">
-                  <p className="text-xs text-muted-foreground font-sans leading-relaxed">
-                    Response time: Usually within 2-4 hours during business hours. For urgent queries, WhatsApp is recommended.
+                <div className="space-y-4 mt-8 pt-6 border-t border-foreground/10">
+                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/40">Quick Links</p>
+                  <Link 
+                    to="/orders" 
+                    className="flex items-center justify-between p-3 rounded-xl bg-background border border-foreground/5 hover:border-foreground/20 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <CheckCircle size={16} />
+                      </div>
+                      <span className="text-xs font-semibold">Track My Order</span>
+                    </div>
+                    <ArrowLeft size={14} className="rotate-180 opacity-0 group-hover:opacity-100 transition-all" />
+                  </Link>
+                  <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
+                    Response time: Usually within 2-4 hours. Our sneaker experts are ready to assist with sizing, authenticity, or shipping queries.
                   </p>
                 </div>
               </div>
@@ -192,7 +206,7 @@ const Support = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      placeholder="John Doe"
+                      placeholder="e.g. Travis Scott"
                       className="w-full px-4 py-3 bg-background border border-foreground/10 rounded-lg text-sm font-sans focus:outline-none focus:border-foreground/30 transition-colors"
                     />
                   </div>
@@ -206,7 +220,7 @@ const Support = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      placeholder="john@example.com"
+                      placeholder="kicks.lover@example.com"
                       className="w-full px-4 py-3 bg-background border border-foreground/10 rounded-lg text-sm font-sans focus:outline-none focus:border-foreground/30 transition-colors"
                     />
                   </div>
@@ -224,7 +238,7 @@ const Support = () => {
                       value={formData.orderId}
                       onChange={handleChange}
                       required
-                      placeholder="e.g., ORD-123456"
+                      placeholder="e.g., FTK-ORDER-502"
                       className="w-full px-4 py-3 bg-background border border-foreground/10 rounded-lg text-sm font-sans focus:outline-none focus:border-foreground/30 transition-colors uppercase"
                     />
                   </div>
@@ -237,7 +251,7 @@ const Support = () => {
                       name="shoeId"
                       value={formData.shoeId}
                       onChange={handleChange}
-                      placeholder="e.g., SHOE-789"
+                      placeholder="e.g., AJ1-CHICAGO-01"
                       className="w-full px-4 py-3 bg-background border border-foreground/10 rounded-lg text-sm font-sans focus:outline-none focus:border-foreground/30 transition-colors uppercase"
                     />
                   </div>
@@ -254,7 +268,7 @@ const Support = () => {
                     onChange={handleChange}
                     required
                     rows={4}
-                    placeholder="Please describe your issue in detail..."
+                    placeholder="Tell us about sizing issues, shipping delays, or sneaker condition..."
                     className="w-full px-4 py-3 bg-background border border-foreground/10 rounded-lg text-sm font-sans focus:outline-none focus:border-foreground/30 transition-colors resize-none"
                   />
                 </div>

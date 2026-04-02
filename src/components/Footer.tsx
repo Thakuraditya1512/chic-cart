@@ -46,12 +46,12 @@ const Footer = () => {
       gsap.fromTo(
         elements,
         { opacity: 0, y: 30 },
-        { 
-          opacity: 1, 
-          y: 0, 
-          duration: 0.6, 
-          stagger: 0.1, 
-          ease: "power3.out" 
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          stagger: 0.1,
+          ease: "power3.out"
         }
       );
     }
@@ -64,9 +64,9 @@ const Footer = () => {
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] translate-y-1/2 pointer-events-none" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6">
-        
+
         {/* Top: Newsletter / CTA */}
-        <div className="footer-animate bg-card/30 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-4 sm:p-10 mb-8 sm:mb-16 md:p-14 flex flex-col lg:flex-row items-center justify-between gap-6">
+        {/* <div className="footer-animate bg-card/30 backdrop-blur-sm border border-border/50 rounded-2xl sm:rounded-3xl p-4 sm:p-10 mb-8 sm:mb-16 md:p-14 flex flex-col lg:flex-row items-center justify-between gap-6">
           <div className="text-center lg:text-left max-w-xl">
             <h3 className="font-display text-xl sm:text-3xl font-bold mb-2">Join the Kicks Club</h3>
             <p className="text-muted-foreground text-xs sm:text-base leading-relaxed">
@@ -86,7 +86,7 @@ const Footer = () => {
               Subscribe
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Middle: Brand & Links */}
         <div className="footer-animate grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-16 mb-8 sm:mb-16">
@@ -99,9 +99,9 @@ const Footer = () => {
               FlexTheKicks is your ultimate destination for premium sneakers. We bring you the most exclusive drops, rare finds, and everyday classics.
             </p>
             <div className="flex gap-4">
-              {[ { Icon: Instagram, label: "Instagram", href: "#" },
-                 { Icon: Twitter, label: "Twitter", href: "#" },
-                 { Icon: Facebook, label: "Facebook", href: "#" }
+              {[{ Icon: Instagram, label: "Instagram", href: "#" },
+              { Icon: Twitter, label: "Twitter", href: "#" },
+              { Icon: Facebook, label: "Facebook", href: "#" }
               ].map(({ Icon, label, href }) => (
                 <a
                   key={label}

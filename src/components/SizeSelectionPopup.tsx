@@ -4,6 +4,7 @@ import { X, ShoppingBag } from "lucide-react";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import gsap from "gsap";
+import { toast } from "sonner";
 
 interface SizeSelectionPopupProps {
   product: Product;
@@ -42,6 +43,7 @@ const SizeSelectionPopup = ({ product, isOpen, onClose }: SizeSelectionPopupProp
         ease: "power2.inOut",
         onComplete: () => {
           addToCart(product, quantity, selectedSize || undefined);
+          toast.success("Added to cart!", { description: `${product.name} · Size ${selectedSize}`, duration: 2000 });
           setIsAdding(false);
           onClose();
           // Reset state
@@ -51,6 +53,7 @@ const SizeSelectionPopup = ({ product, isOpen, onClose }: SizeSelectionPopupProp
       });
     } else {
       addToCart(product, quantity, selectedSize || undefined);
+      toast.success("Added to cart!", { description: `${product.name}${selectedSize ? ` · Size ${selectedSize}` : ''}`, duration: 2000 });
       setIsAdding(false);
       onClose();
       setSelectedSize(null);

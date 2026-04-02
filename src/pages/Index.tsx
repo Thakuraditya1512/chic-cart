@@ -1,14 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import Header from "@/components/Header";
 import CinematicHero from "@/components/CinematicHero";
-import BrandMarquee from "@/components/BrandMarquee";
 import ShoeShowcase from "@/components/ShoeShowcase";
-import EditorialLookbook from "@/components/EditorialLookbook";
-import StatsBar from "@/components/StatsBar";
-import FeaturedProducts from "@/components/FeaturedProducts";
-import PremiumCTA from "@/components/PremiumCTA";
 import NewPopularSection from "@/components/NewPopularSection";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
@@ -16,6 +11,7 @@ import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ChatBot from "@/components/ChatBot";
+import RecentlyViewed from "@/components/RecentlyViewed";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -34,29 +30,16 @@ const Index = () => {
         {/* 1. Full-screen cinematic video hero */}
         <CinematicHero />
 
-        {/* 3. 3D Shoe showcase — Apple-style dark section */}
+        {/* 2. 3D Shoe showcase — Apple-style dark section */}
         <ShoeShowcase />
 
-
-        {/* 6. Featured products + horizontal scroll */}
-        {/* <FeaturedProducts /> */}
-
-        {/* 4. Editorial lookbook grid */}
-        {/* <EditorialLookbook /> */}
-
-        {/* 5. Social proof stats */}
-        <StatsBar />
-
-        {/* 6. Featured products + horizontal scroll
-        <FeaturedProducts /> */}
-
-        {/* 7. Premium CTA / Sale banner */}
-        <PremiumCTA />
-
-        {/* 8. New & Popular with brand filter tabs */}
+        {/* 3. New & Popular with brand filter tabs */}
         <NewPopularSection />
 
-        {/* 9. Newsletter */}
+        {/* 4. Recently Viewed products */}
+        {/* <RecentlyViewed /> */}
+
+        {/* 5. Newsletter */}
         <Newsletter />
       </main>
       <Footer />
