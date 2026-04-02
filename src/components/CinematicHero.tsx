@@ -103,7 +103,7 @@ const CinematicHero = () => {
     <section
       ref={containerRef}
       className="relative w-full overflow-hidden bg-black"
-      style={{ height: "100dvh" }}
+      style={{ height: "85dvh" }}
     >
       <motion.div
         style={{ scale: videoScale }}
@@ -148,7 +148,7 @@ const CinematicHero = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.9 }}
-        className="relative z-20 flex flex-col items-center justify-end h-full text-center px-4 pb-24"
+        className="relative z-20 flex flex-col items-center justify-end h-full text-center px-4 pb-16"
       >
         {!showIntro && (
           <motion.div
@@ -160,7 +160,7 @@ const CinematicHero = () => {
               className="text-white leading-none font-normal drop-shadow-2xl mb-3"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(2.6rem, 11vw, 4.5rem)",
+                fontSize: "clamp(2.2rem, 10vw, 4rem)",
                 letterSpacing: "-0.01em",
                 textShadow: "0 4px 24px rgba(0,0,0,0.45)",
               }}

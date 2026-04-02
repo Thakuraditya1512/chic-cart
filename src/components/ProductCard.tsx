@@ -1,4 +1,4 @@
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, Star, Plus } from "lucide-react";
 import { Product } from "@/types";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -13,24 +13,22 @@ const ProductCard = ({ product }: { product: Product }) => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [isHovered, setIsHovered] = useState(false);
   const [showSizePopup, setShowSizePopup] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const quickAddRef = useRef<HTMLDivElement>(null);
 
-  // GSAP hover animation
+  // GSAP hover animation for subtle smooth zoom
   useEffect(() => {
     if (imageRef.current) {
       if (isHovered) {
         gsap.to(imageRef.current, {
-          scale: 1.1,
-          duration: 0.7,
-          ease: "power3.out"
+          scale: 1.05,
+          duration: 0.6,
+          ease: "power2.out"
         });
       } else {
         gsap.to(imageRef.current, {
           scale: 1,
-          duration: 0.5,
-          ease: "power3.out"
+          duration: 0.4,
+          ease: "power2.out"
         });
       }
     }
@@ -38,22 +36,20 @@ const ProductCard = ({ product }: { product: Product }) => {
 
   // Touch device detection
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-
   useEffect(() => {
     setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
   return (
     <div
-      ref={cardRef}
       className="group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container */}
+      {/* Image Container - SQUARE */}
       <Link
         to={`/product/${product.id}`}
-        className="block relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden bg-secondary mb-3"
+        className="block relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden bg-[#F5F5F7] dark:bg-[#1C1C1E] mb-2"
       >
         <img
           ref={imageRef}
@@ -66,76 +62,77 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Badge */}
         {product.badge && (
           <span
-            className={`absolute top-2 sm:top-3 left-2 sm:left-3 text-[8px] sm:text-[9px] font-sans font-bold uppercase tracking-[0.1em] px-2 sm:px-3 py-1 rounded-full ${product.badge === "sale"
+            className={`absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full z-10 ${
+              product.badge === "sale"
                 ? "bg-sale text-sale-foreground"
                 : "bg-foreground text-background"
-              }`}
+            }`}
           >
             {product.badge}
           </span>
         )}
 
-        {/* Quick add overlay - visible on hover for desktop, always visible on touch */}
+        {/* Quick add - minimal '+' button */}
         <div
-          ref={quickAddRef}
-          className={`absolute bottom-0 left-0 right-0 p-2 sm:p-3 transition-transform duration-300 ease-out ${isTouchDevice ? "translate-y-0" : "translate-y-full group-hover:translate-y-0"
-            }`}
+          className={`absolute bottom-2 right-2 transition-all duration-300 z-20 ${
+            isTouchDevice ? "opacity-100" : "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"
+          }`}
         >
           <motion.button
             onClick={(e) => {
               e.preventDefault();
-              // Check if product has sizes
               if (product.sizes && product.sizes.length > 0) {
                 setShowSizePopup(true);
               } else {
                 addToCart(product);
               }
             }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full flex items-center justify-center gap-2 bg-foreground text-background py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-sans font-semibold uppercase tracking-[0.15em] hover:opacity-90 transition-opacity shadow-lg"
+            whileTap={{ scale: 0.9 }}
+            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-foreground text-background rounded-full shadow-lg hover:scale-110 mb-1 transition-transform"
+            aria-label="Quick Add"
           >
-            <ShoppingBag size={12} />
-            Add to Cart
+            <Plus size={16} strokeWidth={2.5} />
           </motion.button>
         </div>
       </Link>
 
-      {/* Wishlist */}
+      {/* Wishlist Button */}
       <button
         onClick={(e) => {
           e.preventDefault();
           toggleWishlist(product.id);
         }}
-        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-background/80 backdrop-blur-sm rounded-full text-foreground hover:text-sale transition-colors z-10"
+        className="absolute top-2 right-2 p-1 bg-white/80 dark:bg-black/40 backdrop-blur-md rounded-full text-foreground hover:text-sale transition-all z-20"
         aria-label="Wishlist"
       >
         <Heart
-          size={14}
+          size={12}
           fill={isInWishlist(product.id) ? "currentColor" : "none"}
           className={isInWishlist(product.id) ? "text-sale" : ""}
         />
       </button>
 
-      {/* Info */}
-      <Link to={`/product/${product.id}`} className="block">
-        <h3 className="text-xs sm:text-sm font-sans font-medium text-foreground line-clamp-2 mb-1">
-          {product.name}
-        </h3>
-        <div className="flex items-center gap-1 mb-1">
-          <Star size={11} className="fill-foreground text-foreground" />
-          <span className="text-[10px] sm:text-[11px] text-muted-foreground font-sans">
-            {product.rating || 0}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm sm:text-base font-sans font-semibold text-foreground">
-            ₹{product.price.toLocaleString('en-IN')}
-          </span>
-          {product.originalPrice && (
-            <span className="text-xs sm:text-sm text-muted-foreground/60 line-through font-sans">
-              ₹{product.originalPrice.toLocaleString('en-IN')}
-            </span>
-          )}
+      {/* Product Info - Minimalist Editorial Style */}
+      <Link to={`/product/${product.id}`} className="block px-1">
+        <div className="flex justify-between items-start gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[11px] sm:text-[13px] font-medium text-foreground/90 line-clamp-1 mb-0 tracking-tight">
+              {product.name}
+            </h3>
+            <p className="text-[9px] sm:text-[11px] text-muted-foreground/50 uppercase tracking-[0.08em] font-bold">
+              {product.brandId?.replace(/-/g, ' ') || 'Streetwear'}
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-[12px] sm:text-[14px] font-bold text-foreground tracking-tight">
+              ₹{product.price.toLocaleString('en-IN')}
+            </p>
+            {product.originalPrice && (
+              <p className="text-[9px] text-muted-foreground/40 line-through tracking-tighter">
+                ₹{product.originalPrice.toLocaleString('en-IN')}
+              </p>
+            )}
+          </div>
         </div>
       </Link>
 

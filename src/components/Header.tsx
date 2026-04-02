@@ -95,7 +95,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
           isDark ? "bg-black/90 border-white/5" : "bg-white/90 border-black/[0.06]"
         } backdrop-blur-xl border-b shadow-sm`}
       >
-        <div className="container mx-auto flex items-center justify-between h-16 md:h-[72px] px-4 lg:px-6">
+        <div className="container mx-auto flex items-center justify-between h-12 md:h-[72px] px-3 lg:px-6">
           {/* Left: Menu + Logo */}
           <div className="flex items-center gap-3">
             <button
@@ -129,7 +129,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             </button>
             <Link
               to="/"
-              className="font-cursive text-[1.35rem] leading-[2.5rem] md:text-[1.75rem] text-foreground transition-opacity hover:opacity-80"
+              className="font-cursive text-[1.15rem] leading-[2rem] md:text-[1.75rem] text-foreground transition-opacity hover:opacity-80"
             >
               FlexTheKicks
             </Link>
@@ -158,16 +158,16 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
           </nav>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-0.5 md:gap-1">
+          <div className="flex items-center gap-0 md:gap-1">
 
 
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun size={16} /> : <Moon size={16} />}
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
             {/* Profile / Orders button */}
@@ -179,19 +179,19 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                   navigate("/login");
                 }
               }}
-              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-300"
               aria-label="Profile"
             >
-              <User size={16} />
+              <User size={15} />
             </button>
 
             {/* Wishlist Button */}
             <button
               onClick={() => navigate("/wishlist")}
-              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
               aria-label="Wishlist"
             >
-              <Heart size={16} />
+              <Heart size={15} />
               {wishlistItems.length > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -206,10 +206,10 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
               aria-label="Cart"
             >
-              <ShoppingBag size={16} />
+              <ShoppingBag size={15} />
               {totalItems > 0 && (
                 <motion.span
                   initial={{ scale: 0 }}
@@ -226,7 +226,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="p-2.5 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors duration-300 relative"
                   aria-label="Notifications"
                 >
                   <Bell size={16} className={notifOpen ? "text-foreground" : ""} />
@@ -346,7 +346,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
             className={`fixed inset-0 z-40 ${isDark ? "bg-black/98" : "bg-white/98"} backdrop-blur-xl md:hidden`}
           >
             {/* Header inside menu */}
-            <div className="flex items-center justify-between h-16 px-4 border-b border-border/50">
+            <div className="flex items-center justify-between h-12 px-4 border-b border-border/50">
               <span className="font-cursive text-[1.35rem] text-foreground">FlexTheKicks</span>
               <button
                 onClick={() => setMenuOpen(false)}

@@ -502,7 +502,7 @@ const ProductDetail = () => {
                   </AccordionTrigger>
                   <AccordionContent className="text-xs sm:text-sm text-muted-foreground">
                     <p className="mb-4">Need help deciding? Have questions about this shoe? Our team is ready to help you find the perfect fit and style.</p>
-                    <a href={`https://wa.me/919398415366?text=${encodeURIComponent(`Hi, I need help with ${product.name} from Chic-Cart`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-10 w-full sm:w-auto px-6 bg-[#25D366] text-white font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm shadow-md">
+                    <a href={`https://wa.me/919398415366?text=${encodeURIComponent(`Hi, I need help with ${product.name} for shoe Size`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-10 w-full sm:w-auto px-6 bg-[#25D366] text-white font-medium text-xs sm:text-sm uppercase tracking-wider hover:opacity-90 transition-opacity rounded-sm shadow-md">
                       <MessageCircle size={16} /> Ask our Experts
                     </a>
                   </AccordionContent>

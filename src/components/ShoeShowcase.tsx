@@ -65,21 +65,21 @@ const ShoeShowcase = () => {
     <section
       id="showcase"
       ref={sectionRef}
-      className="relative py-20 sm:py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
+      className="relative py-14 sm:py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
     >
       {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] rounded-full bg-purple-500/10 blur-[80px] sm:blur-[120px] animate-glow-pulse" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] sm:w-[600px] h-[250px] sm:h-[600px] rounded-full bg-purple-500/10 blur-[60px] sm:blur-[120px] animate-glow-pulse" />
       <div className="absolute top-1/3 right-1/4 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] rounded-full bg-cyan-500/8 blur-[60px] sm:blur-[100px] animate-glow-pulse hidden sm:block" style={{ animationDelay: '1.5s' }} />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="grid md:grid-cols-2 gap-8 sm:gap-12 md:gap-20 items-center">
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-12 md:gap-20 items-center">
           {/* Left: Text */}
           <div ref={textRef}>
             <motion.p
               initial={{ opacity: 0, x: -30 }}
               animate={isInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[11px] sm:text-xs md:text-sm uppercase tracking-[0.35em] text-foreground/80 mb-3 sm:mb-4 font-sans font-bold"
+              className="text-[10px] sm:text-xs md:text-sm uppercase tracking-[0.35em] text-foreground/80 mb-2 sm:mb-4 font-sans font-bold"
             >
                      <span className="padding " style={{ paddingLeft: '20px' }}>Exclusive Release</span>
             </motion.p>
@@ -88,7 +88,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-[0.95] sm:leading-[0.95] mb-4 sm:mb-6"
+              className="font-display text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-[0.95] sm:leading-[0.95] mb-3 sm:mb-6"
             >
               Crafted for
               <br />
@@ -101,7 +101,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-foreground/60 text-sm md:text-base max-w-md mb-6 sm:mb-8 leading-relaxed font-sans font-light"
+              className="text-foreground/60 text-xs md:text-base max-w-md mb-4 sm:mb-8 leading-relaxed font-sans font-light"
             >
               Every stitch tells a story. Premium materials meet cutting-edge
               design in our most anticipated drop of the season.
@@ -115,7 +115,7 @@ const ShoeShowcase = () => {
             >
               <a
                 href="#new"
-                className="btn-glow inline-flex items-center px-6 sm:px-8 py-3 sm:py-3.5 bg-foreground text-background font-sans font-semibold text-[10px] sm:text-xs uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors rounded-full"
+                className="btn-glow inline-flex items-center px-5 sm:px-8 py-2.5 sm:py-3.5 bg-foreground text-background font-sans font-semibold text-[10px] sm:text-xs uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors rounded-full"
               >
                 Shop Now
               </a>
@@ -141,7 +141,7 @@ const ShoeShowcase = () => {
               initial={{ opacity: 0 }}
               animate={isInView ? { opacity: 1 } : {}}
               transition={{ delay: 0.6, duration: 0.8 }}
-              className="mt-8 sm:mt-12 flex gap-4 sm:gap-6 md:gap-10"
+              className="mt-6 sm:mt-12 flex gap-4 sm:gap-6 md:gap-10"
             >
               {[
                 { label: "Premium\nMaterials", value: "100%" },
@@ -149,7 +149,7 @@ const ShoeShowcase = () => {
                 { label: "Hand\nCrafted", value: "✓" },
               ].map((item, i) => (
                 <div key={i} className="text-center">
-                  <p className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-foreground mb-1">
+                  <p className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-foreground mb-0.5">
                     {item.value}
                   </p>
                   <p className="text-[9px] sm:text-[10px] text-foreground/50 uppercase tracking-wider font-sans whitespace-pre-line leading-tight">

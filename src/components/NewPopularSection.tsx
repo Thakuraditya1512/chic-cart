@@ -80,9 +80,9 @@ const NewPopularSection = () => {
   }, [activeTab]);
 
   return (
-    <section id="categories" ref={ref} className="py-16 sm:py-20 md:py-36 bg-background">
+    <section id="categories" ref={ref} className="py-10 sm:py-20 md:py-36 bg-background">
       <div className="container mx-auto px-4 sm:px-6">
-        <div className="text-center mb-8 sm:mb-12">
+        <div className="text-center mb-6 sm:mb-12">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -99,26 +99,26 @@ const NewPopularSection = () => {
               delay: 0.1,
               ease: [0.16, 1, 0.3, 1],
             }}
-            className="font-display text-3xl sm:text-4xl md:text-6xl font-bold leading-[0.95]"
+            className="font-display text-2xl sm:text-4xl md:text-6xl font-bold leading-[0.95]"
           >
             New & <span className="italic font-normal">Popular</span>
           </motion.h2>
         </div>
 
         {/* Filter Tabs & Search */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 sm:mb-12">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6 sm:mb-12">
           <motion.div
             ref={tabsRef}
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex w-full sm:w-auto overflow-x-auto pb-3 scrollbar-hide px-2 -mx-2"
+            className="flex w-full sm:w-auto overflow-x-auto pb-2 scrollbar-hide px-1 -mx-1"
           >
             {brandNames.map((brand) => (
               <button
                 key={brand}
                 onClick={() => setActiveTab(brand)}
-                className={`px-4 sm:px-6 py-2 sm:py-2.5 text-[9px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] rounded-full transition-all duration-300 whitespace-nowrap flex-shrink-0 mr-2 ${
+                className={`px-3 sm:px-6 py-1.5 sm:py-2.5 text-[8px] sm:text-[10px] font-sans font-medium uppercase tracking-[0.15em] rounded-full transition-all duration-300 whitespace-nowrap flex-shrink-0 mr-1.5 ${
                   activeTab === brand
                     ? "bg-foreground text-background"
                     : "bg-transparent border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
@@ -156,7 +156,7 @@ const NewPopularSection = () => {
 
         {/* Products Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
@@ -173,7 +173,7 @@ const NewPopularSection = () => {
         ) : (
           <motion.div
             layout
-            className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6"
           >
             <AnimatePresence mode="popLayout">
               {filtered.map((product, i) => (

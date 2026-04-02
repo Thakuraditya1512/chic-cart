@@ -163,7 +163,7 @@ const sendOTP = async () => {
   };
 
   return (
-    <section ref={ref} className="py-16 sm:py-20 md:py-32 bg-secondary/50 relative overflow-hidden">
+    <section ref={ref} className="py-10 sm:py-20 md:py-32 bg-secondary/50 relative overflow-hidden">
       {/* Subtle ambient circle */}
       <div className="absolute -top-32 -right-32 w-64 h-64 rounded-full bg-foreground/[0.02] blur-3xl" />
       <div className="absolute -bottom-32 -left-32 w-64 h-64 rounded-full bg-foreground/[0.02] blur-3xl" />
@@ -183,7 +183,7 @@ const sendOTP = async () => {
             initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-[1] mb-3 sm:mb-4"
+            className="font-display text-xl sm:text-3xl md:text-5xl font-bold leading-[1] mb-2 sm:mb-4"
           >
             Never Miss a <span className="italic font-normal">Drop</span>
           </motion.h2>
@@ -192,7 +192,7 @@ const sendOTP = async () => {
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-muted-foreground text-xs sm:text-sm md:text-base mb-6 sm:mb-8 md:mb-10 font-sans font-light max-w-md mx-auto px-2 sm:px-0"
+            className="text-muted-foreground text-[11px] sm:text-sm md:text-base mb-5 sm:mb-8 md:mb-10 font-sans font-light max-w-md mx-auto px-2 sm:px-0"
           >
             {step === 'success' 
               ? "You're all set! Get ready for exclusive drops and special offers."
@@ -217,14 +217,14 @@ const sendOTP = async () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     required
-                    className="flex-1 px-4 sm:px-6 py-3 sm:py-4 bg-background border border-border rounded-full text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-shadow font-sans"
+                    className="flex-1 px-4 sm:px-6 py-2.5 sm:py-4 bg-background border border-border rounded-full text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-shadow font-sans"
                   />
                   <motion.button
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={loading}
-                    className="btn-glow px-6 sm:px-8 py-3 sm:py-4 bg-foreground text-background text-xs font-sans font-semibold uppercase tracking-[0.15em] rounded-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap disabled:opacity-50"
+                    className="btn-glow px-5 sm:px-8 py-2.5 sm:py-4 bg-foreground text-background text-[10px] font-sans font-semibold uppercase tracking-[0.15em] rounded-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity whitespace-nowrap disabled:opacity-50"
                   >
                     {loading ? (
                       <RefreshCw size={14} className="animate-spin" />

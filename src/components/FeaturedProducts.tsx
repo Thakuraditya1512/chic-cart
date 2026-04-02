@@ -106,7 +106,7 @@ const FeaturedProducts = () => {
   };
 
   const SkeletonGrid = ({ count }: { count: number }) => (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
       {[...Array(count)].map((_, i) => (
         <div
           key={i}
@@ -119,9 +119,9 @@ const FeaturedProducts = () => {
   return (
     <>
       {/* Featured Kicks Section */}
-      <section ref={sectionRef} className="py-16 sm:py-20 md:py-32 bg-secondary/30">
+      <section ref={sectionRef} className="py-10 sm:py-20 md:py-32 bg-secondary/30">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-12 md:mb-16">
+          <div className="text-center mb-6 sm:mb-12 md:mb-16">
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -134,7 +134,7 @@ const FeaturedProducts = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="font-display text-3xl sm:text-4xl md:text-6xl font-bold leading-[0.95]"
+              className="font-display text-2xl sm:text-4xl md:text-6xl font-bold leading-[0.95]"
             >
               Featured <span className="italic font-normal">Kicks</span>
             </motion.h2>
@@ -149,7 +149,7 @@ const FeaturedProducts = () => {
               </p>
             </div>
           ) : (
-            <div ref={featuredGridRef} className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div ref={featuredGridRef} className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
               {featured.map((product) => (
                 <div
                   key={product.id}
@@ -164,14 +164,14 @@ const FeaturedProducts = () => {
       </section>
 
       {/* All Products - Horizontal Scroll */}
-      <section ref={exploreSectionRef} id="new" className="py-16 sm:py-20 md:py-32 bg-background">
+      <section ref={exploreSectionRef} id="new" className="py-10 sm:py-20 md:py-32 bg-background">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="flex items-end justify-between mb-8 sm:mb-12">
+          <div className="flex items-end justify-between mb-6 sm:mb-12">
             <div>
               <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-2 sm:mb-3 font-sans">
                 All Products
               </p>
-              <h2 className="font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-[0.95]">
+              <h2 className="font-display text-xl sm:text-3xl md:text-5xl font-bold leading-[0.95]">
                 Explore <span className="italic font-normal">More</span>
               </h2>
             </div>
@@ -199,14 +199,14 @@ const FeaturedProducts = () => {
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
+              className="flex gap-2 sm:gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 snap-x snap-mandatory"
               style={{ WebkitOverflowScrolling: "touch" }}
             >
               {loading
                 ? [...Array(6)].map((_, i) => (
                     <div
                       key={i}
-                      className="flex-shrink-0 w-60 sm:w-64 md:w-72 aspect-[3/4] rounded-lg sm:rounded-xl bg-secondary/50 animate-pulse snap-start"
+                      className="flex-shrink-0 w-48 sm:w-64 md:w-72 aspect-[3/4] rounded-lg sm:rounded-xl bg-secondary/50 animate-pulse snap-start"
                     />
                   ))
                 : products.map((product, i) => (
@@ -216,7 +216,7 @@ const FeaturedProducts = () => {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: i * 0.04 }}
-                      className="flex-shrink-0 w-60 sm:w-64 md:w-72 snap-start"
+                      className="flex-shrink-0 w-48 sm:w-64 md:w-72 snap-start"
                     >
                       <ProductCard product={product} />
                     </motion.div>
