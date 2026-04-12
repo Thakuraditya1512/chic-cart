@@ -7,13 +7,13 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBl5YpzUJF960hA5kGCN6oeiDP2--EbRSQ",
-  authDomain: "shoppingshoes-b4f67.firebaseapp.com",
-  projectId: "shoppingshoes-b4f67",
-  storageBucket: "shoppingshoes-b4f67.firebasestorage.app",
-  messagingSenderId: "932957475226",
-  appId: "1:932957475226:web:30dfc8343465a7b9e26a23",
-  measurementId: "G-VC3TWF3CMN",
+  apiKey: "AIzaSyDXz73CP7KeGBT1jV4vPpjP6PJLFR1LoO8",
+  authDomain: "flexthekicks.firebaseapp.com",
+  projectId: "flexthekicks",
+  storageBucket: "flexthekicks.firebasestorage.app",
+  messagingSenderId: "907076959725",
+  appId: "1:907076959725:web:66608ee8cf325438f4bbe4",
+  measurementId: "G-4T5RDCKCGB"
 };
 
 // Initialize Firebase
