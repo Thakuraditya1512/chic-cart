@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
-/* ─────────────────────────────────�interface Order {
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€âinterface Order {
   id: string;
   customerName: string;
   email: string;
@@ -38,9 +38,9 @@ import { Textarea } from "@/components/ui/textarea";
   createdAt: any;
 }
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Constants
- ───────────────────────────────────────── */
+ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const STATUS_STEPS = [
   { key: "pending",          label: "Placed",           Icon: ClipboardCheck },
   { key: "confirmed",        label: "Confirmed",        Icon: CheckCircle     },
@@ -60,13 +60,10 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string; do
   out_for_delivery: { label: "Out for delivery", color: "text-amber-700  dark:text-amber-400",   bg: "bg-amber-50   dark:bg-amber-400/10   border-amber-200   dark:border-amber-400/20",   dot: "bg-amber-500"   },
   delivered:        { label: "Delivered",        color: "text-green-700  dark:text-green-400",   bg: "bg-green-50   dark:bg-green-400/10   border-green-200   dark:border-green-400/20",   dot: "bg-green-500"   },
 };
-bg-amber-50   dark:bg-amber-400/10   border-amber-200   dark:border-amber-400/20",   dot: "bg-amber-500"   },
-  delivered:        { label: "Delivered",        color: "text-green-700  dark:text-green-400",   bg: "bg-green-50   dark:bg-green-400/10   border-green-200   dark:border-green-400/20",   dot: "bg-green-500"   },
-};
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Tracking Map SVG (decorative)
-───────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const TrackingMap = ({ dark }: { dark: boolean }) => (
   <div className={`relative rounded-xl overflow-hidden border ${dark ? "border-zinc-800 bg-zinc-900" : "border-gray-100 bg-gray-50"}`} style={{ height: 140 }}>
     {/* grid */}
@@ -101,29 +98,29 @@ const TrackingMap = ({ dark }: { dark: boolean }) => (
     {/* warehouse label */}
     <div className="absolute" style={{ left: "10%", top: "52%" }}>
       <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${dark ? "bg-zinc-800 text-zinc-300 border border-zinc-700" : "bg-white text-gray-700 border border-gray-200"} shadow-sm`}>
-        📦 Warehouse
+        ðŸ“¦ Warehouse
       </div>
     </div>
 
     {/* home label */}
     <div className="absolute" style={{ right: "8%", top: "22%" }}>
       <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${dark ? "bg-zinc-800 text-zinc-300 border border-zinc-700" : "bg-white text-gray-700 border border-gray-200"} shadow-sm`}>
-        🏠 Your address
+        ðŸ  Your address
       </div>
     </div>
 
     {/* ETA banner */}
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
       <div className={`text-[11px] font-semibold px-3 py-1.5 rounded-full ${dark ? "bg-zinc-900 text-green-400 border border-green-500/30" : "bg-white text-green-700 border border-green-200"} shadow whitespace-nowrap`}>
-        🚴 ETA: Today by 7:00 PM · ~3.2 km away
+        ðŸš´ ETA: Today by 7:00 PM Â· ~3.2 km away
       </div>
     </div>
   </div>
 );
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Status Timeline
-───────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const StatusTimeline = ({ status, dark }: { status: string; dark: boolean }) => {
   const currentIdx = STATUS_STEPS.findIndex(s => s.key === status);
 
@@ -170,9 +167,9 @@ const StatusTimeline = ({ status, dark }: { status: string; dark: boolean }) => 
   );
 };
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Order Card
-───────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, dark }: any) => {
   const meta = STATUS_META[order.status] || STATUS_META.pending;
 
@@ -183,7 +180,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
       transition={{ delay: index * 0.06 }}
       className={`rounded-2xl border overflow-hidden ${dark ? "bg-zinc-900/70 border-zinc-800/80" : "bg-white border-gray-100 shadow-sm"}`}
     >
-      {/* ── Collapsed header ── */}
+      {/* â”€â”€ Collapsed header â”€â”€ */}
       <button onClick={onToggle} className="w-full text-left">
         <div className={`px-4 py-4 flex items-center gap-3 transition-colors ${dark ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/60"}`}>
 
@@ -203,14 +200,14 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
               {order.items.map((i: any) => i.productName).join(", ")}
             </p>
             <p className={`text-[11px] mt-0.5 ${dark ? "text-zinc-500" : "text-gray-400"}`}>
-              {order.createdAt?.toDate?.()?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) || "—"}
-              {" · "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
+              {order.createdAt?.toDate?.()?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) || "â€”"}
+              {" Â· "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
             </p>
           </div>
 
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <span className={`text-[15px] font-bold ${dark ? "text-white" : "text-gray-900"}`}>
-              ₹{order.total.toLocaleString("en-IN")}
+              â‚¹{order.total.toLocaleString("en-IN")}
             </span>
             <span className={`text-xs ${dark ? "text-zinc-500" : "text-gray-400"}`}>
               {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -219,7 +216,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
         </div>
       </button>
 
-      {/* ── Expanded body ── */}
+      {/* â”€â”€ Expanded body â”€â”€ */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -233,7 +230,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
               {/* Timeline */}
               <StatusTimeline status={order.status} dark={dark} />
 
-              {/* Map — only for out_for_delivery */}
+              {/* Map â€” only for out_for_delivery */}
               {order.status === "out_for_delivery" && (
                 <div className={`px-4 pb-4 border-t ${dark ? "border-zinc-800/60" : "border-gray-100"}`}>
                   <p className={`text-[10px] font-bold uppercase tracking-widest mt-4 mb-2 ${dark ? "text-zinc-500" : "text-gray-400"}`}>
@@ -258,10 +255,10 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between gap-2 items-start">
                           <p className={`font-semibold text-[13px] leading-tight ${dark ? "text-white" : "text-gray-900"}`}>{item.productName}</p>
-                          <p className="text-[13px] font-bold text-blue-500 shrink-0">₹{(item.price * item.quantity).toLocaleString("en-IN")}</p>
+                          <p className="text-[13px] font-bold text-blue-500 shrink-0">â‚¹{(item.price * item.quantity).toLocaleString("en-IN")}</p>
                         </div>
                         <div className="flex gap-1.5 flex-wrap mt-1.5 mb-2">
-                          {[`Qty ${item.quantity}`, item.size && `Size ${item.size}`, `₹${item.price.toLocaleString("en-IN")} each`]
+                          {[`Qty ${item.quantity}`, item.size && `Size ${item.size}`, `â‚¹${item.price.toLocaleString("en-IN")} each`]
                             .filter(Boolean)
                             .map((tag, ti) => (
                               <span key={ti} className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${dark ? "bg-zinc-700 text-zinc-400" : "bg-gray-100 text-gray-500"}`}>
@@ -278,7 +275,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                                 onClick={e => { e.stopPropagation(); onReview(order, item); }}
                                 className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all active:scale-95"
                               >
-                                <Star className="w-3 h-3" /> Write a review · Earn 10% off
+                                <Star className="w-3 h-3" /> Write a review Â· Earn 10% off
                               </button>
                         )}
                       </div>
@@ -299,7 +296,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                         <p>{order.lane1}</p>
                         {order.lane2 && <p>{order.lane2}</p>}
                         {order.landmark && <p className="italic">Near {order.landmark}</p>}
-                        <p>{order.city} – {order.zipCode}</p>
+                        <p>{order.city} â€“ {order.zipCode}</p>
                       </>
                     ) : (
                       <p>{order.address}</p>
@@ -322,8 +319,8 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                   <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? "text-zinc-500" : "text-gray-400"}`}>Payment summary</p>
                   <div className="space-y-1.5">
                     {[
-                      { label: "Subtotal", val: `₹${order.subtotal.toLocaleString("en-IN")}` },
-                      { label: "Shipping / COD", val: order.codCharge > 0 ? `₹${order.codCharge}` : "Free" },
+                      { label: "Subtotal", val: `â‚¹${order.subtotal.toLocaleString("en-IN")}` },
+                      { label: "Shipping / COD", val: order.codCharge > 0 ? `â‚¹${order.codCharge}` : "Free" },
                     ].map(({ label, val }) => (
                       <div key={label} className="flex justify-between text-[12px]">
                         <span className={dark ? "text-zinc-500" : "text-gray-400"}>{label}</span>
@@ -332,7 +329,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                     ))}
                     <div className={`flex justify-between pt-2 mt-1 border-t text-[13px] font-bold ${dark ? "border-zinc-700/50" : "border-gray-100"}`}>
                       <span className={dark ? "text-zinc-300" : "text-gray-700"}>Total</span>
-                      <span className="text-blue-500">₹{order.total.toLocaleString("en-IN")}</span>
+                      <span className="text-blue-500">â‚¹{order.total.toLocaleString("en-IN")}</span>
                     </div>
                   </div>
                 </div>
@@ -346,9 +343,9 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
   );
 };
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Empty State
-───────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const EmptyState = ({ icon: Icon, title, subtitle, dark, cta }: any) => (
   <div className={`rounded-2xl border p-12 text-center ${dark ? "bg-zinc-900/50 border-zinc-800/60" : "bg-white border-gray-100"}`}>
     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${dark ? "bg-zinc-800" : "bg-gray-50"}`}>
@@ -367,9 +364,9 @@ const EmptyState = ({ icon: Icon, title, subtitle, dark, cta }: any) => (
   </div>
 );
 
-/* ─────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Main Orders Page
-───────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const Orders = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -469,7 +466,7 @@ const Orders = () => {
       setCouponCode(code);
       setReviewModalOpen(false);
       setShowCouponModal(true);
-      toast.success("Review submitted! 🎉");
+      toast.success("Review submitted! ðŸŽ‰");
     } catch { toast.error("Failed to submit review"); }
     finally { setSubmittingReview(false); }
   };
@@ -495,7 +492,7 @@ const Orders = () => {
           </div>
         </div>
         <p className={`text-xs font-bold tracking-[0.2em] uppercase ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
-          Loading your orders…
+          Loading your ordersâ€¦
         </p>
       </div>
     </div>
@@ -507,7 +504,7 @@ const Orders = () => {
     <div className={`min-h-screen transition-colors duration-300 ${dk ? "bg-[#0a0a0a]" : "bg-gray-50"}`}>
       <div className="max-w-2xl mx-auto px-4 pt-6 pb-24">
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6 gap-2">
           <div className="flex items-center gap-2.5">
             <button
@@ -542,7 +539,7 @@ const Orders = () => {
           </div>
         </motion.div>
 
-        {/* ── Stats ── */}
+        {/* â”€â”€ Stats â”€â”€ */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="grid grid-cols-3 gap-2.5 mb-5">
           {[
@@ -558,7 +555,7 @@ const Orders = () => {
           ))}
         </motion.div>
 
-        {/* ── Tabs ── */}
+        {/* â”€â”€ Tabs â”€â”€ */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
           className={`flex gap-1 p-1 rounded-xl border mb-5 ${dk ? "bg-zinc-900/60 border-zinc-800/60" : "bg-white border-gray-100 shadow-sm"}`}>
           {(["orders", "addresses"] as const).map(tab => (
@@ -576,7 +573,7 @@ const Orders = () => {
           ))}
         </motion.div>
 
-        {/* ── Content ── */}
+        {/* â”€â”€ Content â”€â”€ */}
         <AnimatePresence mode="wait">
           {activeTab === "addresses" ? (
             <motion.div key="addresses" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
@@ -596,7 +593,7 @@ const Orders = () => {
                         <p className={`font-semibold text-sm ${dk ? "text-white" : "text-gray-900"}`}>{addr.lane1}</p>
                         {addr.lane2    && <p className={`text-xs mt-0.5 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.lane2}</p>}
                         {addr.landmark && <p className={`text-xs italic mt-0.5 ${dk ? "text-zinc-500" : "text-gray-400"}`}>Near {addr.landmark}</p>}
-                        <p className={`text-xs font-medium mt-1 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.city} – {addr.zipCode}</p>
+                        <p className={`text-xs font-medium mt-1 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.city} â€“ {addr.zipCode}</p>
                         {addr.location?.googleMapsLink && (
                           <a href={addr.location.googleMapsLink} target="_blank" rel="noopener noreferrer"
                             className="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold tracking-wide uppercase transition-all">
@@ -631,7 +628,7 @@ const Orders = () => {
           )}
         </AnimatePresence>
 
-        {/* ── Footer CTA ── */}
+        {/* â”€â”€ Footer CTA â”€â”€ */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 text-center">
           <button onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all active:scale-95">
@@ -640,7 +637,7 @@ const Orders = () => {
         </motion.div>
       </div>
 
-      {/* ══ Review Modal ══ */}
+      {/* â•â• Review Modal â•â• */}
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
         <DialogContent className={`max-w-sm mx-4 rounded-2xl border p-0 overflow-hidden shadow-2xl
           ${dk ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
@@ -667,7 +664,7 @@ const Orders = () => {
               <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 ${dk ? "text-white/40" : "text-gray-400"}`}>Your review</p>
               <Textarea
                 value={comment} onChange={e => setComment(e.target.value)}
-                placeholder="Tell others what you think…"
+                placeholder="Tell others what you thinkâ€¦"
                 className={`rounded-xl min-h-[90px] text-sm border resize-none focus-visible:ring-1 focus-visible:ring-blue-500
                   ${dk ? "bg-white/[0.03] border-white/10 text-white placeholder:text-white/20" : "bg-gray-50 border-gray-200 placeholder:text-gray-300"}`}
               />
@@ -687,7 +684,7 @@ const Orders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ══ Coupon Modal ══ */}
+      {/* â•â• Coupon Modal â•â• */}
       <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
         <DialogContent className={`max-w-xs mx-4 rounded-2xl border p-0 overflow-hidden shadow-2xl
           ${dk ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
@@ -704,7 +701,7 @@ const Orders = () => {
               <div className={`relative rounded-xl border-2 border-dashed p-4
                 ${dk ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
                 <p className="text-xl font-bold tracking-widest text-blue-500 mb-1">{couponCode}</p>
-                <p className={`text-[11px] ${dk ? "text-white/30" : "text-gray-400"}`}>10% off · Valid 10 days</p>
+                <p className={`text-[11px] ${dk ? "text-white/30" : "text-gray-400"}`}>10% off Â· Valid 10 days</p>
                 <button onClick={copyCoupon}
                   className={`absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center transition-colors
                     ${dk ? "bg-white/5 hover:bg-white/10" : "bg-gray-100 hover:bg-gray-200"}`}>
