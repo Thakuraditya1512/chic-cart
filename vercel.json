@@ -9,6 +9,10 @@
       "destination": "/api/newsletter/index.js"
     },
     {
+      "source": "/api/phonepe/:path*",
+      "destination": "/api/phonepe/index.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

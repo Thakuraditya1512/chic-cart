@@ -16,10 +16,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
-/* ─────────────────────────────────────────
-   Types
-───────────────────────────────────────── */
-interface Order {
+/* ─────────────────────────────────�interface Order {
   id: string;
   customerName: string;
   email: string;
@@ -36,12 +33,14 @@ interface Order {
   codCharge: number;
   total: number;
   status: string;
+  paymentMethod?: string;
+  paymentStatus?: string;
   createdAt: any;
 }
 
 /* ─────────────────────────────────────────
    Constants
-───────────────────────────────────────── */
+ ───────────────────────────────────────── */
 const STATUS_STEPS = [
   { key: "pending",          label: "Placed",           Icon: ClipboardCheck },
   { key: "confirmed",        label: "Confirmed",        Icon: CheckCircle     },
@@ -53,10 +52,15 @@ const STATUS_STEPS = [
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
   pending:          { label: "Pending",          color: "text-orange-600 dark:text-orange-400",  bg: "bg-orange-50  dark:bg-orange-400/10  border-orange-200  dark:border-orange-400/20",  dot: "bg-orange-500"  },
+  awaiting_payment: { label: "Awaiting Pay",     color: "text-yellow-600 dark:text-yellow-400",  bg: "bg-yellow-50  dark:bg-yellow-400/10  border-yellow-200  dark:border-yellow-400/20",  dot: "bg-yellow-500"  },
+  paid:             { label: "Paid",             color: "text-emerald-600 dark:text-emerald-400",bg: "bg-emerald-50 dark:bg-emerald-400/10 border-emerald-200 dark:border-emerald-400/20", dot: "bg-emerald-500" },
   confirmed:        { label: "Confirmed",        color: "text-blue-600   dark:text-blue-400",    bg: "bg-blue-50    dark:bg-blue-400/10    border-blue-200    dark:border-blue-400/20",    dot: "bg-blue-500"    },
   packed:           { label: "Packed",           color: "text-indigo-600 dark:text-indigo-400",  bg: "bg-indigo-50  dark:bg-indigo-400/10  border-indigo-200  dark:border-indigo-400/20",  dot: "bg-indigo-500"  },
   shipped:          { label: "Shipped",          color: "text-violet-600 dark:text-violet-400",  bg: "bg-violet-50  dark:bg-violet-400/10  border-violet-200  dark:border-violet-400/20",  dot: "bg-violet-500"  },
   out_for_delivery: { label: "Out for delivery", color: "text-amber-700  dark:text-amber-400",   bg: "bg-amber-50   dark:bg-amber-400/10   border-amber-200   dark:border-amber-400/20",   dot: "bg-amber-500"   },
+  delivered:        { label: "Delivered",        color: "text-green-700  dark:text-green-400",   bg: "bg-green-50   dark:bg-green-400/10   border-green-200   dark:border-green-400/20",   dot: "bg-green-500"   },
+};
+bg-amber-50   dark:bg-amber-400/10   border-amber-200   dark:border-amber-400/20",   dot: "bg-amber-500"   },
   delivered:        { label: "Delivered",        color: "text-green-700  dark:text-green-400",   bg: "bg-green-50   dark:bg-green-400/10   border-green-200   dark:border-green-400/20",   dot: "bg-green-500"   },
 };
 

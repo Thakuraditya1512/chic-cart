@@ -46,6 +46,7 @@ const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
 const ShippingPolicy = lazy(() => import("./pages/ShippingPolicy"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 
 // ── Initialize GA4 once ──────────────────────────────────────────────────────
 ReactGA.initialize("G-PG4JCWXQ3M");
@@ -178,6 +179,14 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-success"
+            element={
+              <ProtectedRoute>
+                <PaymentSuccess />
               </ProtectedRoute>
             }
           />

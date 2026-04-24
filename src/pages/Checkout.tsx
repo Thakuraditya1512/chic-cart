@@ -53,6 +53,7 @@ export default function Checkout() {
   const [discount, setDiscount] = useState(0);
   const [appliedCouponId, setAppliedCouponId] = useState<string | null>(null);
   const [isGiftPackaging, setIsGiftPackaging] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "PHONEPE">("COD");
 
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
   // "saved" = showing saved list, "new" = showing blank form, "selected" = showing selected address
@@ -84,7 +85,7 @@ export default function Checkout() {
   const inputBg = isDarkMode ? "bg-zinc-950/50" : "bg-white";
   const inputBorder = isDarkMode ? "border-zinc-700" : "border-black/20";
 
-  const codCharge = totalPrice > 1000 ? 0 : 50;
+  const codCharge = paymentMethod === "COD" ? (totalPrice > 1000 ? 0 : 50) : 0;
   const giftPackagingCharge = isGiftPackaging ? 100 : 0;
   const discountAmount = Math.round((totalPrice * discount) / 100);
   const finalTotal = Math.max(0, totalPrice + codCharge + giftPackagingCharge - discountAmount);
@@ -238,6 +239,7 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     try {
       setLoading(true); setError("");
+      const transactionId = `T${Date.now()}`;
       const orderData = {
         userId: user?.uid || "guest",
         customerName: customerData.fullName, email: customerData.email, phone: customerData.phone,
@@ -247,8 +249,48 @@ export default function Checkout() {
         items: cartItems.map(item => ({ productId: item.product.id, productName: item.product.name, price: item.product.price, quantity: item.quantity, image: item.product.image, ...(item.product.category && { category: item.product.category }), ...((item as any).size && { size: (item as any).size }) })),
         subtotal: totalPrice, codCharge, giftPackagingCharge, discountAmount, discountPercent: discount,
         couponCode: appliedCouponId ? couponCode.toUpperCase() : null,
-        total: finalTotal, paymentMethod: "COD", status: "pending", createdAt: serverTimestamp(),
+        total: finalTotal, paymentMethod, status: paymentMethod === "COD" ? "pending" : "awaiting_payment", 
+        transactionId: paymentMethod === "PHONEPE" ? transactionId : null,
+        createdAt: serverTimestamp(),
       };
+
+      // If PhonePe, call backend first
+      if (paymentMethod === "PHONEPE") {
+        const response = await fetch('/api/phonepe/pay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: finalTotal,
+            transactionId: transactionId,
+            userId: user?.uid || "guest",
+            mobileNumber: customerData.phone
+          })
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          let errorMsg = 'Failed to initiate payment';
+          try { const errData = JSON.parse(text); errorMsg = errData.error || errorMsg; } catch {}
+          throw new Error(errorMsg);
+        }
+
+        const text = await response.text();
+        if (!text) throw new Error('Empty response from payment server');
+        const data = JSON.parse(text);
+
+        if (data.success && data.url) {
+          // Save order data to local storage to recover if needed
+          localStorage.setItem('pending_order', JSON.stringify({ ...orderData, transactionId }));
+          // Also save to Firebase as "awaiting_payment"
+          await addDoc(collection(db, "orders"), orderData);
+          window.location.href = data.url;
+          return;
+        } else {
+          throw new Error(data.error || "Failed to initiate payment");
+        }
+      }
+
+      // For COD
       const docRef = await addDoc(collection(db, "orders"), orderData);
 
       // Save/Update address and contact info in user's permanent profile
@@ -270,7 +312,6 @@ export default function Checkout() {
           });
         } catch (profileErr) {
           console.error("Failed to update user profile address:", profileErr);
-          // Don't fail the whole order if profile update fails
         }
       }
 
@@ -580,6 +621,44 @@ export default function Checkout() {
                       </ReviewBlock>
                     </div>
 
+                    {/* Payment Method Selection */}
+                    <div className="mb-6 space-y-3">
+                      <p className={`text-[11px] font-bold uppercase tracking-widest ${textMuted} mb-2`}>Select Payment Method</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button 
+                          onClick={() => setPaymentMethod("COD")}
+                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${paymentMethod === "COD" ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-black/[0.02]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"}`}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Truck className={`w-5 h-5 ${paymentMethod === "COD" ? (isDarkMode ? "text-white" : "text-black") : textMuted}`} />
+                            <div className="text-left">
+                              <p className={`text-sm font-bold ${paymentMethod === "COD" ? textPrimary : textSub}`}>Cash on Delivery</p>
+                              <p className={`text-[10px] ${textMuted}`}>Pay when you receive</p>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "COD" ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
+                            {paymentMethod === "COD" && <Check className={`w-3 h-3 ${isDarkMode ? "text-black" : "text-white"}`} />}
+                          </div>
+                        </button>
+                        
+                        <button 
+                          onClick={() => setPaymentMethod("PHONEPE")}
+                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${paymentMethod === "PHONEPE" ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-black/[0.02]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"}`}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Shield className={`w-5 h-5 ${paymentMethod === "PHONEPE" ? "text-purple-500" : textMuted}`} />
+                            <div className="text-left">
+                              <p className={`text-sm font-bold ${paymentMethod === "PHONEPE" ? textPrimary : textSub}`}>PhonePe / UPI</p>
+                              <p className={`text-[10px] ${textMuted}`}>Secure online payment</p>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "PHONEPE" ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
+                            {paymentMethod === "PHONEPE" && <Check className={`w-3 h-3 ${isDarkMode ? "text-black" : "text-white"}`} />}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Items */}
                     <div className={`rounded-2xl border ${divider} overflow-hidden mb-6`}>
                       <div className={`${isDarkMode ? "bg-white/5" : "bg-black/[0.02]"} px-4 py-3 border-b ${divider}`}>
@@ -605,8 +684,14 @@ export default function Checkout() {
                     </div>
 
                     <div className="flex gap-3">
-                      <CtaButton type="button" label={loading ? "" : "Place COD Order"} onClick={handlePlaceOrder} disabled={loading}
-                        icon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined} darkMode={isDarkMode} />
+                      <CtaButton 
+                        type="button" 
+                        label={loading ? "" : (paymentMethod === "COD" ? "Place COD Order" : "Pay & Place Order")} 
+                        onClick={handlePlaceOrder} 
+                        disabled={loading}
+                        icon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (paymentMethod === "PHONEPE" ? <Shield className="w-4 h-4" /> : undefined)} 
+                        darkMode={isDarkMode} 
+                      />
                       <button type="button" onClick={() => setStep("address")} className={`px-6 py-3.5 rounded-2xl border ${divider} text-sm font-semibold ${textPrimary} hover:${isDarkMode ? "bg-white/5" : "bg-black/5"} transition-all`}>Back</button>
                     </div>
                   </SectionCard>
@@ -713,10 +798,10 @@ export default function Checkout() {
                   </div>
                 )}
                 <div className={`flex justify-between font-bold text-base pt-2 border-t ${divider}`}>
-                  <span className={textPrimary}>Total (COD)</span>
+                  <span className={textPrimary}>Total ({paymentMethod})</span>
                   <span className={textPrimary}>₹{finalTotal.toLocaleString('en-IN')}</span>
                 </div>
-                <p className={`text-[10px] ${textMuted} mt-1 text-center font-bold uppercase tracking-wider`}>Payment Method: Cash on Delivery</p>
+                <p className={`text-[10px] ${textMuted} mt-1 text-center font-bold uppercase tracking-wider`}>Payment Method: {paymentMethod === "COD" ? "Cash on Delivery" : "PhonePe / UPI"}</p>
               </div>
 
               {/* WhatsApp */}
@@ -730,7 +815,7 @@ export default function Checkout() {
               {/* Trust signals */}
               <div className="px-6 py-4 space-y-2.5">
                 {[
-                  { icon: Shield, text: "Cash on Delivery — pay when delivered" },
+                  { icon: Shield, text: paymentMethod === "COD" ? "Cash on Delivery — pay when delivered" : "Secure Payment via PhonePe" },
                   { icon: Truck, text: "Free shipping on orders above ₹1,000" },
                   { icon: Clock, text: "Real-time order tracking in My Orders" },
                 ].map(({ icon: Icon, text }) => (

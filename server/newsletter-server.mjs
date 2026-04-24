@@ -2,27 +2,37 @@ import express from 'express';
 import nodemailer from 'nodemailer';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 
+// PhonePe Config
+const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || 'M221YFW15DBYN_2604241807';
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || 'OGRiMGFhNzUtMTM3OC00NDViLTk0YTQtNmEyMjIxYWM4MzJl';
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const PHONEPE_ENV = process.env.PHONEPE_ENV || 'UAT'; // UAT or PROD
+const PHONEPE_BASE_URL = PHONEPE_ENV === 'UAT' 
+  ? 'https://api-preprod.phonepe.com/apis/pg-sandbox' 
+  : 'https://api.phonepe.com/apis/hermes';
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Store OTPs in memory (in production, use Redis or database)
+// Store OTPs in memory
 const otpStore = new Map();
 
-// Configure nodemailer transporter for GoDaddy
+// Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
-  host: 'smtpout.secureserver.net',  // GoDaddy SMTP server
-  port: 465,  // SSL port for GoDaddy
-  secure: true,  // Use SSL
+  host: 'smtpout.secureserver.net',
+  port: 465,
+  secure: true,
   auth: {
     user: 'otp@flexthekicks.in',
-    pass: 'Thakur@1476',  // Hardcoded password as requested
+    pass: 'Thakur@1476',
   },
 });
 
@@ -32,6 +42,127 @@ transporter.verify((error, success) => {
     console.error('❌ SMTP Connection Error:', error);
   } else {
     console.log('✅ SMTP Server is ready to send emails');
+  }
+});
+
+// PhonePe Payment Endpoint
+app.post('/api/phonepe/pay', async (req, res) => {
+  try {
+    const { amount, transactionId, userId, mobileNumber } = req.body;
+
+    if (!amount || !transactionId || !userId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Determine the frontend origin for redirect
+    const origin = req.headers.origin || req.headers.referer?.replace(/\/+$/, '') || 'http://localhost:8080';
+
+    const payload = {
+      merchantId: PHONEPE_MERCHANT_ID,
+      merchantTransactionId: transactionId,
+      merchantUserId: userId,
+      amount: amount * 100, // PhonePe takes amount in paise
+      redirectUrl: `${origin}/payment-success?id=${transactionId}`,
+      redirectMode: 'REDIRECT',
+      callbackUrl: `${origin}/api/phonepe/callback`,
+      mobileNumber: mobileNumber || '9999999999',
+      paymentInstrument: {
+        type: 'PAY_PAGE'
+      }
+    };
+
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const stringToHash = base64Payload + '/pg/v1/pay' + PHONEPE_SALT_KEY;
+    const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
+    const checksum = sha256 + '###' + PHONEPE_SALT_INDEX;
+
+    console.log('📤 PhonePe pay request to:', `${PHONEPE_BASE_URL}/pg/v1/pay`);
+
+    const response = await fetch(`${PHONEPE_BASE_URL}/pg/v1/pay`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-VERIFY': checksum,
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({ request: base64Payload })
+    });
+
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('❌ PhonePe returned non-JSON:', responseText.substring(0, 500));
+      return res.status(502).json({ error: 'Invalid response from payment gateway' });
+    }
+
+    if (data.success && data.data?.instrumentResponse?.redirectInfo?.url) {
+      console.log('✅ PhonePe redirect URL obtained');
+      return res.json({
+        success: true,
+        url: data.data.instrumentResponse.redirectInfo.url
+      });
+    } else {
+      console.error('❌ PhonePe Error:', JSON.stringify(data));
+      return res.status(500).json({ error: data.message || 'Failed to initiate payment', details: data });
+    }
+  } catch (error) {
+    console.error('❌ Payment initialization error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PhonePe Status Check Endpoint
+app.get('/api/phonepe/status/:transactionId', async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const stringToHash = `/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transactionId}${PHONEPE_SALT_KEY}`;
+    const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
+    const checksum = sha256 + '###' + PHONEPE_SALT_INDEX;
+
+    console.log('📤 PhonePe status check for:', transactionId);
+
+    const response = await fetch(`${PHONEPE_BASE_URL}/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transactionId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-VERIFY': checksum,
+        'X-MERCHANT-ID': PHONEPE_MERCHANT_ID,
+        'accept': 'application/json'
+      }
+    });
+
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('❌ PhonePe status returned non-JSON:', responseText.substring(0, 500));
+      return res.status(502).json({ error: 'Invalid response from payment gateway' });
+    }
+
+    if (data.success && data.code === 'PAYMENT_SUCCESS') {
+      return res.json({ success: true, status: 'COMPLETED', data: data.data });
+    } else if (data.code === 'PAYMENT_PENDING') {
+      return res.json({ success: true, status: 'PENDING', data: data.data });
+    } else {
+      return res.json({ success: false, status: 'FAILED', data: data.data });
+    }
+  } catch (error) {
+    console.error('❌ Status check error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PhonePe Callback (server-to-server)
+app.post('/api/phonepe/callback', async (req, res) => {
+  try {
+    console.log('📥 PhonePe callback received:', JSON.stringify(req.body));
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Callback error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -399,8 +530,10 @@ setInterval(() => {
 }, 5 * 60 * 1000); // Clean every 5 minutes
 
 app.listen(PORT, () => {
-  console.log(`🚀 Newsletter API server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📧 SMTP configured for: ${process.env.SMTP_USER || 'ot@flexthekicks.in'}`);
+  console.log(`💳 PhonePe integrated (${PHONEPE_ENV} mode)`);
 });
 
 export default app;
+
