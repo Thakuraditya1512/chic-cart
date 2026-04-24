@@ -26,7 +26,7 @@ const PrivacyPolicy = () => {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-background py-12 sm:py-16">
-      <div className="container mx-auto px-4 sm:px-6 max-w-3xl">
+      <div className="container mx-auto px-4 sm:px-6 max-w-3xl bg-white rounded-lg shadow-md p-8">
         {/* Back Button */}
         <Link
           to="/"
@@ -48,7 +48,7 @@ const PrivacyPolicy = () => {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground font-sans text-sm">
-            Last updated: March 2025
+            Last updated: April 2026
           </p>
         </div>
 

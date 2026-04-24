@@ -7,8 +7,9 @@ import {
   Plus, Pencil, Trash2, Image as ImageIcon, AlertCircle, X, Search,
   ChevronRight, User, Shield, Package, Star, LayoutDashboard, Ticket,
   Upload, ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, Navigation,
-  MessageSquare, LogOut, Bell, Info, Tag as TagIcon, Heart
+  MessageSquare, LogOut, Bell, Info, Tag as TagIcon, Heart, Sun, Moon
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, serverTimestamp } from "firebase/firestore";
@@ -137,12 +138,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "text-amber-400  bg-amber-400/10  border-amber-400/30",
-  confirmed: "text-blue-400   bg-blue-400/10   border-blue-400/30",
-  packed: "text-indigo-400 bg-indigo-400/10 border-indigo-400/30",
-  shipped: "text-violet-400 bg-violet-400/10 border-violet-400/30",
-  out_for_delivery: "text-orange-400 bg-orange-400/10 border-orange-400/30",
-  delivered: "text-emerald-400 bg-emerald-400/10 border-emerald-400/30",
+  pending: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-400/10 border-amber-200 dark:border-amber-400/30",
+  confirmed: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-400/10 border-blue-200 dark:border-blue-400/30",
+  packed: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-400/10 border-indigo-200 dark:border-indigo-400/30",
+  shipped: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-400/10 border-violet-200 dark:border-violet-400/30",
+  out_for_delivery: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-400/10 border-orange-200 dark:border-orange-400/30",
+  delivered: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-400/10 border-emerald-200 dark:border-emerald-400/30",
 };
 
 // ─── Admin Component ──────────────────────────────────────────────────────────
@@ -161,6 +162,7 @@ interface Coupon {
 const Admin = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabId>("brands");
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -928,16 +930,16 @@ const Admin = () => {
 
   // ─── Shared form input class ────────────────────────────────────────────────
 
-  const inputCls = `w-full px-4 py-2.5 rounded-lg bg-[#0d0d14] border border-white/8
-    text-sm text-white placeholder:text-white/25
-    focus:outline-none focus:border-[#6c5ce7]/60 transition-colors`;
+  const inputCls = `w-full px-4 py-2.5 rounded-lg bg-muted border border-border
+    text-sm text-foreground placeholder:text-muted-foreground
+    focus:outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/10 transition-colors`;
 
-  const labelCls = "block text-[11px] font-semibold tracking-widest text-white/40 uppercase mb-1.5";
+  const labelCls = "block text-[11px] font-semibold tracking-widest text-muted-foreground uppercase mb-1.5";
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-[100dvh] bg-[#08080f] text-white flex flex-col md:flex-row font-sans relative overflow-hidden overscroll-none fixed inset-0 w-full">
+    <div className="h-[100dvh] bg-background text-foreground flex flex-col md:flex-row font-sans relative overflow-hidden overscroll-none fixed inset-0 w-full">
 
       {/* ── Background Mesh Gradient ── */}
       <div className="fixed inset-0 pointer-events-none z-0">
@@ -953,12 +955,12 @@ const Admin = () => {
         {/* Logo */}
         <div className="px-7 py-8 hidden md:block">
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#6c5ce7] to-[#a855f7] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
               <Package className="w-4 h-4 text-white" />
             </div>
-            <span className="text-base font-bold tracking-tight text-white">KickAdmin</span>
+            <span className="text-base font-bold tracking-tight text-foreground">KickAdmin</span>
           </div>
-          <p className="text-[11px] text-white/30 tracking-widest uppercase pl-9">Control Panel</p>
+          <p className="text-[11px] text-muted-foreground tracking-widest uppercase pl-9">Control Panel</p>
         </div>
 
         <nav className="flex-1 px-3 md:px-4 pb-4 md:pb-6 overflow-x-auto md:overflow-y-auto
@@ -973,21 +975,21 @@ const Admin = () => {
                 onClick={() => { setActiveTab(tab.id); setShowForm(false); }}
                 className={`relative group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300
                   ${active
-                    ? "text-white"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/5"}`}
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}
               >
                 {/* Active Indicator Background */}
                 {active && (
                   <motion.div
                     layoutId="activeTabBg"
-                    className="absolute inset-0 bg-gradient-to-r from-[#6c5ce7]/20 to-[#a855f7]/20 border border-white/10 rounded-xl"
+                    className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-xl"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
 
                 <div className="relative flex items-center gap-3">
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-500
-                    ${active ? "bg-[#6c5ce7] text-white shadow-lg shadow-[#6c5ce7]/25" : "bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white/60"}`}>
+                    ${active ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25" : "bg-accent text-muted-foreground group-hover:text-foreground"}`}>
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <span className="text-xs font-semibold tracking-tight">{tab.label}</span>
@@ -995,7 +997,7 @@ const Admin = () => {
 
                 {tab.count > 0 && (
                   <span className={`relative text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all duration-500
-                    ${active ? "bg-white text-[#6c5ce7] border-white/20" : "bg-white/5 text-white/30 border-white/5 group-hover:border-white/10"}`}>
+                    ${active ? "bg-primary text-primary-foreground border-primary/20" : "bg-accent text-muted-foreground border-border group-hover:border-border"}`}>
                     {tab.count}
                   </span>
                 )}
@@ -1007,7 +1009,7 @@ const Admin = () => {
           <button
             onClick={() => { logout(); navigate("/"); }}
             className="md:hidden flex-shrink-0 flex items-center gap-2.5 px-4 py-3 rounded-xl ml-2
-              text-[10px] font-bold uppercase tracking-widest text-[#ff5e00] bg-[#ff5e00]/10 border border-[#ff5e00]/20"
+              text-[10px] font-bold uppercase tracking-widest text-destructive bg-destructive/10 border border-destructive/20"
           >
             <LogOut className="w-3 h-3" />
             Sign Out
@@ -1015,24 +1017,35 @@ const Admin = () => {
         </nav>
 
         {/* Bottom badge */}
-        <div className="hidden md:block px-5 py-5 border-t border-white/6 space-y-4 relative mt-auto">
+        <div className="hidden md:block px-5 py-5 border-t border-border space-y-4 relative mt-auto">
           <div className="flex items-center justify-between group">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#6c5ce7] to-[#a855f7]
-                flex items-center justify-center text-[11px] font-bold">A</div>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-purple-500
+                flex items-center justify-center text-[11px] font-bold text-white">A</div>
               <div>
-                <p className="text-[11px] font-semibold text-white/80">Administrator</p>
-                <p className="text-[9px] text-white/30 uppercase tracking-widest">Full access</p>
+                <p className="text-[11px] font-semibold text-foreground">Administrator</p>
+                <p className="text-[9px] text-muted-foreground uppercase tracking-widest">Full access</p>
               </div>
             </div>
 
-            {/* Single Desktop Sign Out Button */}
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-accent border border-border text-muted-foreground hover:text-foreground transition-all"
+              title={isDark ? "Switch to Light" : "Switch to Dark"}
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+
+          {/* Sign Out */}
+          <div className="flex gap-2">
             <button
               onClick={() => { logout(); navigate("/"); }}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-[#ff5e00] hover:border-[#ff5e00]/30 hover:bg-[#ff5e00]/10 transition-all"
+              className="flex-1 p-2 rounded-lg bg-accent border border-border text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 transition-all text-center"
               title="Sign Out"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 mx-auto" />
             </button>
           </div>
 

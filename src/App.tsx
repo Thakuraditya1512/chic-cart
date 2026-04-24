@@ -42,6 +42,10 @@ const Returns = lazy(() => import("./pages/Returns"));
 const SizeGuide = lazy(() => import("./pages/SizeGuide"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
+const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
+const ShippingPolicy = lazy(() => import("./pages/ShippingPolicy"));
 
 // ── Initialize GA4 once ──────────────────────────────────────────────────────
 ReactGA.initialize("G-PG4JCWXQ3M");
@@ -178,7 +182,15 @@ const AppRoutes = () => {
             }
           />
 
-          {/* Footer Pages */}
+
+          {/* Policy Pages for Payment Gateway */}
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+
+          {/* Existing Footer/Policy Pages */}
           <Route path="/support" element={<Support />} />
           <Route path="/new-drops" element={<NewDrops />} />
           <Route path="/brands" element={<Brands />} />
