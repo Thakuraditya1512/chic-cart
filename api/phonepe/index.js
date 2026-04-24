@@ -8,8 +8,8 @@ app.use(cors());
 app.use(express.json());
 
 // PhonePe Config
-const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || 'M221YFW15DBYN_2604241807';
-const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || 'OGRiMGFhNzUtMTM3OC00NDViLTk0YTQtNmEyMjIxYWM4MzJl';
+const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY;
 const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
 const PHONEPE_ENV = process.env.PHONEPE_ENV || 'UAT';
 const PHONEPE_BASE_URL = PHONEPE_ENV === 'UAT'
