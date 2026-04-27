@@ -1,6 +1,5 @@
 import React from "react";
 
-
 const RefundPolicy = () => (
   <div className="min-h-screen bg-background py-12 sm:py-16">
     <div className="container mx-auto px-4 sm:px-6 max-w-3xl bg-white rounded-lg shadow-md p-8">
@@ -21,13 +20,21 @@ const RefundPolicy = () => (
         <ul className="list-disc pl-6 text-sm text-muted-foreground space-y-2">
           <li>Contact our support team at <a href="mailto:thakuradityasingh1512@gmail.com" className="text-blue-600 hover:underline">thakuradityasingh1512@gmail.com</a> with your order details and reason for refund.</li>
           <li>Once your return is received at our warehouse and inspected, we will initiate the refund process within 7 days.</li>
-          <li>The refund will be processed to your original payment method within 5 days after initiation.</li>
+          <li>Refunds are processed and credited within 5-7 business days after we receive the returned item.</li>
+          <li>The amount is credited back to your original payment method.</li>
           <li>The entire refund process (from warehouse receipt to payment) will be completed within 15 days.</li>
         </ul>
       </section>
 
       <section className="mb-8">
-        <h2 className="font-semibold text-lg mb-2">3. Non-Refundable Items</h2>
+        <h2 className="font-semibold text-lg mb-2">3. Exchange Policy</h2>
+        <ul className="list-disc pl-6 text-sm text-muted-foreground space-y-2">
+          <li>Exchanged products will be delivered within 3-7 days.</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="font-semibold text-lg mb-2">4. Non-Refundable Items</h2>
         <ul className="list-disc pl-6 text-sm text-muted-foreground space-y-2">
           <li>Gift cards and downloadable products are non-refundable.</li>
           <li>Items marked as final sale cannot be refunded.</li>
@@ -35,7 +42,7 @@ const RefundPolicy = () => (
       </section>
 
       <section>
-        <h2 className="font-semibold text-lg mb-2">4. Late or Missing Refunds</h2>
+        <h2 className="font-semibold text-lg mb-2">5. Late or Missing Refunds</h2>
         <ul className="list-disc pl-6 text-sm text-muted-foreground space-y-2">
           <li>If you haven’t received a refund yet, first check your bank account again.</li>
           <li>Then contact your credit card company or bank; it may take some time before your refund is officially posted.</li>
