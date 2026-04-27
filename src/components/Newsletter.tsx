@@ -306,6 +306,7 @@ const sendOTP = async () => {
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
               >
                 Subscribe another email
+                THAKUR ADITYA SINGH 
               </button>
             </motion.div>
           )}
