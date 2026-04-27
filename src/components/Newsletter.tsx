@@ -177,6 +177,7 @@ const sendOTP = async () => {
             className="text-[9px] sm:text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-3 sm:mb-4 font-sans"
           >
             Stay in the Loop
+            THAKUR ADITYA SINGH
           </motion.p>
 
           <motion.h2
