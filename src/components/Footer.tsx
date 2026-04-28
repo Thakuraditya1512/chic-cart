@@ -10,15 +10,7 @@ const Footer = () => {
   const isInView = useInView(footerRef, { once: true, margin: "-100px" });
 
   const footerLinks = [
-    {
-      title: "Shop",
-      links: [
-        { label: "New Drops", href: "/new-drops" },
-        { label: "Brands", href: "/brands" },
-        { label: "Sale", href: "/sale" },
-        { label: "All Products", href: "/products" },
-      ],
-    },
+  
     {
       title: "Company",
       links: [
@@ -30,7 +22,7 @@ const Footer = () => {
     {
       title: "Support",
       links: [
-        { label: "FAQ", href: "/faq" },
+ 
         { label: "Contact Us", href: "/support" },
         { label: "Shipping Policy", href: "/shipping" },
         { label: "Returns", href: "/returns" },
