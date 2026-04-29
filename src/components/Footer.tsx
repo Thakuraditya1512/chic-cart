@@ -16,7 +16,7 @@ const Footer = () => {
       links: [
         { label: "About Us", href: "/about" },
         { label: "Careers", href: "/careers" },
-        { label: "Blog", href: "/blog" },
+        // { label: "Blog", href: "/blog" },
       ],
     },
     {
@@ -90,7 +90,7 @@ const Footer = () => {
             <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mb-4 sm:mb-8 md:max-w-sm">
               FlexTheKicks is your ultimate destination for premium sneakers. We bring you the most exclusive drops, rare finds, and everyday classics.
             </p>
-            <div className="flex gap-4">
+            {/* <div className="flex gap-4">
               {[{ Icon: Instagram, label: "Instagram", href: "#" },
               { Icon: Twitter, label: "Twitter", href: "#" },
               { Icon: Facebook, label: "Facebook", href: "#" }
@@ -104,7 +104,7 @@ const Footer = () => {
                   <Icon size={18} />
                 </a>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Links Grid */}
@@ -134,7 +134,8 @@ const Footer = () => {
         {/* Bottom: Legal */}
         <div className="footer-animate pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
           <p className="text-sm text-muted-foreground order-2 md:order-1 text-center md:text-left">
-            © {currentYear} FlexTheKicks. All rights reserved.
+            © {currentYear} FlexTheKicks. All rights reserved. <br />
+            <span className="text-xs text-muted-foreground/80">Page owner: <a href="https://www.adityasingh.space" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Thakur Aditya Singh</a></span>
           </p>
           <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground order-1 md:order-2">
             <Link to="/privacy" className="hover:text-foreground transition-colors">

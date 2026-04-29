@@ -78,12 +78,12 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
     }
   }, [menuOpen]);
 
-  const navLinks = [
-    { label: "New In", to: "/#new" },
-    { label: "Brands", to: "/#categories" },
-    { label: "Trending", to: "/#new" },
-    { label: "Sale", to: "/#sale" },
-  ];
+  // const navLinks = [
+  //   { label: "New In", to: "/#new" },
+  //   { label: "Brands", to: "/#categories" },
+  //   { label: "Trending", to: "/#new" },
+  //   { label: "Sale", to: "/#sale" },
+  // ];
 
   return (
     <>
@@ -136,7 +136,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
           </div>
 
           {/* Center: Nav - Desktop */}
-          <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+          {/* <nav className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) => (
               <a
                 key={link.label}
@@ -155,7 +155,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                 Admin Panel
               </Link>
             )}
-          </nav>
+          </nav> */}
 
           {/* Right: Actions */}
           <div className="flex items-center gap-0 md:gap-1">
@@ -357,7 +357,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
               </button>
             </div>
 
-            <nav className="flex flex-col items-start p-6 pt-8 gap-1">
+            {/* <nav className="flex flex-col items-start p-6 pt-8 gap-1">
               {navLinks.map((link, i) => (
                 <a
                   key={link.label}
@@ -380,7 +380,7 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
                   <ArrowRight size={16} className="opacity-100 -rotate-45" />
                 </Link>
               )}
-            </nav>
+            </nav> */}
 
           </motion.div>
         )}

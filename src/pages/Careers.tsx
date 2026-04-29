@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db } from '@/firebase/config'; // Adjust this path to your firebase config
+import { db } from "@/lib/firebase";// Adjust this path to your firebase config
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import gsap from 'gsap';
 import { ArrowLeft, Send, MessageCircle, Phone, Mail, CheckCircle, Bot, ShieldCheck, Clock } from 'lucide-react';

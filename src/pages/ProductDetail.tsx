@@ -12,6 +12,7 @@ import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
+import Footer from "@/components/Footer";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, query, where, orderBy, documentId, limit, addDoc, serverTimestamp } from "firebase/firestore";
@@ -689,10 +690,10 @@ const ProductDetail = () => {
         )}
 
         {/* Disclaimer & Affordability Paragraph */}
-        <section className="mt-12 sm:mt-16 md:mt-24">
+        {/* <section className="mt-12 sm:mt-16 md:mt-24">
           <div className="max-w-4xl mx-auto">
             <div className="p-6 sm:p-8 md:p-12 rounded-3xl border border-border bg-card/20 backdrop-blur-sm relative overflow-hidden group">
-              {/* Decorative accent */}
+              
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-700" />
               
               <div className="relative z-10">
@@ -722,7 +723,7 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Reviews Section */}
         <section className="mt-12 sm:mt-16 md:mt-24 p-4 sm:p-6 md:p-10 rounded-2xl sm:rounded-3xl border border-border bg-card/10">
@@ -791,6 +792,7 @@ const ProductDetail = () => {
       <BottomNav onSearchOpen={() => setSearchOpen(true)} />
       <CartDrawer />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <Footer />
     </div>
   );
 };
