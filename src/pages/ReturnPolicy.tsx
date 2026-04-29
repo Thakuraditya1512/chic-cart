@@ -87,7 +87,7 @@ const ReturnPolicy = () => {
               3. Non-Returnable Items
             </h2>
             <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
-              <li>Gift cards and downloadable items are non-returnable.</li>
+              {/* <li>Gift cards and downloadable items are non-returnable.</li> */}
               <li>Final sale items cannot be returned.</li>
             </ul>
           </section>

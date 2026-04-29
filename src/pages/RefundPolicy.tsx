@@ -99,7 +99,7 @@ const RefundPolicy = () => {
               5. Non-Refundable Items
             </h2>
             <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
-              <li>Gift cards and digital/downloadable products.</li>
+              {/* <li>Gift cards and digital/downloadable products.</li> */}
               <li>Items marked as final sale.</li>
               <li>Used or damaged items not due to our fault.</li>
             </ul>

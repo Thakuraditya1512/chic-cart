@@ -148,7 +148,7 @@ const Returns = () => {
           <div className="returns-animate bg-foreground/5 rounded-2xl p-6 mb-8 border border-border">
             <h2 className="text-lg font-bold mb-3">Non-Refundable Items</h2>
             <ul className="text-sm text-muted-foreground space-y-2">
-              <li>• Gift cards and digital/downloadable products</li>
+              {/* <li>• Gift cards and digital/downloadable products</li> */}
               <li>• Final sale or clearance items</li>
               <li>• Used or damaged items not caused by us</li>
             </ul>
