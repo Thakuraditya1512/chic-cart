@@ -57,6 +57,12 @@ export default function Checkout() {
   const [isGiftPackaging, setIsGiftPackaging] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "PHONEPE">("COD");
 
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifyingOTP, setVerifyingOTP] = useState(false);
+
   const [previousAddresses, setPreviousAddresses] = useState<any[]>([]);
   // "saved" = showing saved list, "new" = showing blank form, "selected" = showing selected address
   const [addressMode, setAddressMode] = useState<"saved" | "new" | "selected">("saved");
@@ -115,6 +121,7 @@ export default function Checkout() {
   useEffect(() => {
     if (user?.email) {
       setCustomerData(prev => ({ ...prev, email: user.email || "", fullName: user.displayName || prev.fullName }));
+      setIsEmailVerified(true);
       fetchPreviousAddresses();
     }
   }, [user]);
@@ -304,6 +311,9 @@ export default function Checkout() {
       // For COD
       const docRef = await addDoc(collection(db, "orders"), orderData);
 
+      // Send confirmation email
+      await sendOrderEmail(orderData);
+
       // Save/Update address and contact info in user's permanent profile
       if (user?.uid) {
         try {
@@ -335,6 +345,22 @@ export default function Checkout() {
     } finally { if (paymentMethod !== ("PHONEPE_QR" as any)) setLoading(false); }
   };
 
+  const sendOrderEmail = async (orderDetails: any) => {
+    try {
+      await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: orderDetails.email,
+          action: "send-order-confirmation",
+          orderDetails
+        })
+      });
+    } catch (err) {
+      console.error("Failed to send order confirmation email", err);
+    }
+  };
+
   const handleQRSuccess = async (data: any) => {
     try {
       setLoading(true);
@@ -354,6 +380,9 @@ export default function Checkout() {
       const docRef = await addDoc(collection(db, "orders"), orderData);
       if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
       
+      // Send confirmation email
+      await sendOrderEmail(orderData);
+
       clearCart();
       setShowQR(false);
       toast.success("Payment Received! Order placed.");
@@ -362,6 +391,53 @@ export default function Checkout() {
       toast.error("Failed to finalize order after payment");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendOTP = async () => {
+    if (!customerData.email) return toast.error("Please enter email first");
+    try {
+      setIsSendingOTP(true);
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: customerData.email, action: "send-otp" })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOtpSent(true);
+        toast.success("Verification code sent to email");
+      } else {
+        toast.error(data.error || "Failed to send OTP");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    if (!otpCode || otpCode.length !== 6) return toast.error("Enter valid 6-digit code");
+    try {
+      setVerifyingOTP(true);
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: customerData.email, action: "verify-otp", otp: otpCode })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsEmailVerified(true);
+        setOtpSent(false);
+        toast.success("Email verified successfully");
+      } else {
+        toast.error(data.error || "Invalid code");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setVerifyingOTP(false);
     }
   };
 
@@ -490,18 +566,72 @@ export default function Checkout() {
                           onChange={e => setCustomerData({ ...customerData, fullName: e.target.value })}
                           className={`checkout-input ${inputBg} ${inputBorder} ${textPrimary}`} />
                       </FormField>
-                      <FormField icon={<Mail className="w-4 h-4" />} label="Email Address" darkMode={isDarkMode}>
-                        <Input type="email" placeholder="" value={customerData.email}
-                          onChange={e => setCustomerData({ ...customerData, email: e.target.value })}
-                          className={`checkout-input ${inputBg} ${inputBorder} ${textPrimary}`} disabled />
-                        <p className={`text-[11px] ${textMuted} mt-1 ml-1`}>Linked to your account</p>
-                      </FormField>
+                      <div className="space-y-4">
+                        <FormField icon={<Mail className="w-4 h-4" />} label="Email Address" darkMode={isDarkMode}>
+                          <div className="relative group">
+                            <Input 
+                              type="email" 
+                              placeholder="" 
+                              value={customerData.email}
+                              disabled={isEmailVerified}
+                              onChange={e => setCustomerData({ ...customerData, email: e.target.value })}
+                              className={`checkout-input ${inputBg} ${inputBorder} ${textPrimary} ${isEmailVerified ? "pr-24" : ""}`} 
+                            />
+                            {customerData.email && !isEmailVerified && !otpSent && (
+                              <button 
+                                type="button"
+                                onClick={sendOTP}
+                                disabled={isSendingOTP}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-purple-500 text-white text-[10px] font-bold uppercase rounded-lg hover:bg-purple-600 transition-all disabled:opacity-50"
+                              >
+                                {isSendingOTP ? "Sending..." : "Verify"}
+                              </button>
+                            )}
+                            {isEmailVerified && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span className="text-[9px] font-bold uppercase">Verified</span>
+                              </div>
+                            )}
+                          </div>
+                          {!isEmailVerified && <p className={`text-[11px] ${textMuted} mt-1 ml-1`}>Verify your email to continue</p>}
+                        </FormField>
+
+                        {otpSent && !isEmailVerified && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-3 pt-2">
+                            <div className="relative">
+                              <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 ${textMuted}`} />
+                              <input
+                                type="text"
+                                placeholder="6-digit code"
+                                maxLength={6}
+                                value={otpCode}
+                                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                                className={`w-full pl-11 pr-4 py-3 rounded-xl border ${inputBorder} ${inputBg} ${textPrimary} text-lg font-mono tracking-widest outline-none focus:ring-2 focus:ring-purple-500/20`}
+                              />
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={verifyOTP}
+                              disabled={verifyingOTP || otpCode.length !== 6}
+                              className="w-full py-3 bg-purple-500 text-white text-xs font-bold uppercase rounded-xl hover:bg-purple-600 transition-all disabled:opacity-50"
+                            >
+                              {verifyingOTP ? "Verifying..." : "Confirm Verification Code"}
+                            </button>
+                          </motion.div>
+                        )}
+                      </div>
                       <FormField icon={<Phone className="w-4 h-4" />} label="Phone Number" darkMode={isDarkMode}>
                         <Input placeholder="" value={customerData.phone}
                           onChange={e => setCustomerData({ ...customerData, phone: e.target.value })}
                           className={`checkout-input ${inputBg} ${inputBorder} ${textPrimary}`} />
                       </FormField>
-                      <CtaButton type="submit" label="Continue to Delivery" darkMode={isDarkMode} />
+                      <CtaButton 
+                        type="submit" 
+                        label={isEmailVerified ? "Continue to Delivery" : "Verify Email to Continue"} 
+                        disabled={!isEmailVerified}
+                        darkMode={isDarkMode} 
+                      />
                     </form>
                   </SectionCard>
                 </motion.div>

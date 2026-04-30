@@ -43,14 +43,18 @@ app.use(express.json());
 const otpStore = new Map();
 
 // GoDaddy SMTP Configuration
+// Optimized GoDaddy SMTP Configuration
 const transporter = nodemailer.createTransport({
   host: 'smtpout.secureserver.net',
   port: 465,
-  secure: true,
+  secure: true, // Use SSL
   auth: {
     user: process.env.SMTP_USER || 'otp@flexthekicks.in',
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false // Helps with some GoDaddy relay issues
+  }
 });
 
 // Verify SMTP on startup
@@ -105,14 +109,23 @@ app.post('/api/newsletter', async (req, res) => {
       otpStore.set(email, { otp: generatedOtp, expires });
 
       const mailOptions = {
-        from: `"Flex The Kicks" <${process.env.SMTP_USER}>`,
+        from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
         to: email,
         subject: 'Verify Your Newsletter Subscription',
         html: createOTPemail(generatedOtp),
       };
 
-      await transporter.sendMail(mailOptions);
-      console.log(`✅ OTP sent to ${email}`);
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ OTP sent to ${email}`);
+      } catch (mailError) {
+        console.error('❌ Failed to send OTP email:', mailError);
+        return res.status(500).json({ 
+          error: 'Email delivery failed', 
+          message: 'We could not send the verification code. Please check server logs.',
+          details: mailError.message 
+        });
+      }
 
       return res.json({
         success: true,
@@ -137,25 +150,46 @@ app.post('/api/newsletter', async (req, res) => {
 
       otpStore.delete(email);
 
-      // Send welcome email
-      const welcomeMail = {
-        from: `"Flex The Kicks" <${process.env.SMTP_USER}>`,
-        to: email,
-        subject: 'Welcome to Flex The Kicks! 🎉',
-        html: createWelcomeEmail(),
-      };
-
-      await transporter.sendMail(welcomeMail);
-      console.log(`✅ User ${email} verified and welcomed`);
+      // Send welcome email - wrap in try/catch to prevent 500 error if SMTP fails
+      try {
+        const welcomeMail = {
+          from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
+          to: email,
+          subject: 'Welcome to Flex The Kicks! 🎉',
+          html: createWelcomeEmail(email),
+        };
+        await transporter.sendMail(welcomeMail);
+        console.log(`✅ Welcome email sent to ${email}`);
+      } catch (mailError) {
+        console.error('⚠️ Welcome email failed but user verified:', mailError.message);
+      }
 
       return res.json({ success: true, message: 'Verified!' });
+    } else if (action === 'send-order-confirmation') {
+      const { orderDetails } = req.body;
+      const displayId = orderDetails.transactionId ? orderDetails.transactionId.slice(-6).toUpperCase() : 'NEW';
+      const mailOptions = {
+        from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
+        to: email,
+        subject: `Order Confirmed: #${displayId} 👟`,
+        html: createOrderConfirmationEmail(orderDetails),
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log(`✅ Order confirmation sent to ${email}`);
+      return res.json({ success: true, message: 'Order confirmation sent' });
     }
 
     return res.status(400).json({ error: 'Invalid action' });
 
   } catch (error) {
-    console.error('❌ Error:', error);
-    return res.status(500).json({ error: 'Server error' });
+    console.error('❌ Server Error Details:', error);
+    return res.status(500).json({ 
+      error: 'Server error', 
+      message: error.message,
+      stack: error.stack, // This will help us find the exact line of failure
+      action: req.body.action 
+    });
   }
 });
 
@@ -195,7 +229,7 @@ function createOTPemail(otp) {
 </html>`;
 }
 
-function createWelcomeEmail() {
+function createWelcomeEmail(email) {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -223,6 +257,74 @@ function createWelcomeEmail() {
         <div>💎 <strong>Exclusive Deals</strong> - Subscriber specials</div>
       </div>
       <a href="https://flexthekicks.in" class="cta">Shop Now</a>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function createOrderConfirmationEmail(order) {
+  const itemsHtml = order.items.map(item => `
+    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <img src="${item.image}" alt="${item.productName}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />
+      <div>
+        <h4 style="margin: 0; font-size: 14px;">${item.productName}</h4>
+        <p style="margin: 5px 0; font-size: 12px; color: #666;">Size: ${item.size} | Qty: ${item.quantity}</p>
+        <p style="margin: 0; font-weight: 700;">₹${item.price.toLocaleString()}</p>
+      </div>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f9f9f9; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
+    .header { background: #000; color: white; padding: 40px 20px; text-align: center; }
+    .content { padding: 40px 30px; }
+    .order-id { font-family: monospace; background: #f0f0f0; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+    .summary { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-top: 30px; }
+    .footer { padding: 30px; text-align: center; font-size: 12px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 24px; letter-spacing: 2px;">FLEX THE KICKS</h1>
+      <p style="margin-top: 10px; opacity: 0.8;">Your order is confirmed!</p>
+    </div>
+    <div class="content">
+      <h2>Hi ${order.customerName},</h2>
+      <p>Thanks for shopping with us! We've received your order and are getting it ready for shipment.</p>
+      
+      <div style="margin: 30px 0;">
+        <p style="margin-bottom: 5px; font-size: 12px; text-transform: uppercase; color: #999;">Order ID</p>
+        <span class="order-id">${order.transactionId}</span>
+      </div>
+
+      <h3 style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">Order Summary</h3>
+      ${itemsHtml}
+
+      <div class="summary">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span>Subtotal</span>
+          <span>₹${order.subtotal.toLocaleString()}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 700; font-size: 18px; border-top: 1px solid #ddd; pt: 10px;">
+          <span>Total</span>
+          <span>₹${order.total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; text-align: center;">
+        <p style="color: #666; font-size: 14px;">Shipping to:</p>
+        <p style="font-weight: 500;">${order.lane1}, ${order.city} - ${order.zipCode}</p>
+      </div>
+    </div>
+    <div class="footer">
+      <p>© 2024 Flex The Kicks. All rights reserved.</p>
+      <p>Questions? Contact us at support@flexthekicks.in</p>
     </div>
   </div>
 </body>
@@ -304,13 +406,27 @@ app.post('/api/phonepe/qr', async (req, res) => {
     });
 
     const text = await resp.text();
-    let data;
-    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
-    console.log('PhonePe qr response:', JSON.stringify(data));
+    let responseData;
+    try { 
+      responseData = JSON.parse(text); 
+    } catch { 
+      console.error('❌ Failed to parse PhonePe response:', text);
+      return res.status(502).json({ error: 'Invalid response from PhonePe' }); 
+    }
 
-    if (data.qrString) return res.json({ success: true, qrString: data.qrString, orderId: data.orderId });
+    console.log('🔍 PhonePe /qr raw response:', JSON.stringify(responseData, null, 2));
 
-    return res.status(500).json({ error: data.message || 'Failed to generate QR', details: data });
+    const qrString = responseData.qrString || (responseData.data && responseData.data.qrString);
+    const orderId  = responseData.orderId  || (responseData.data && responseData.data.merchantOrderId);
+
+    if (qrString) {
+      console.log('✅ QR String generated successfully');
+      return res.json({ success: true, qrString, orderId });
+    }
+
+    const errorMsg = responseData.message || (responseData.data && responseData.data.message) || 'Failed to generate QR';
+    console.error('❌ PhonePe QR Generation Error:', errorMsg);
+    return res.status(500).json({ error: errorMsg, details: responseData });
   } catch (err) {
     console.error('PhonePe /qr error:', err.message);
     return res.status(500).json({ error: err.message });

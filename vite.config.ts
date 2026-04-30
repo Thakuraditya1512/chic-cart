@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     proxy: {
-      '/api/phonepe': {
+      '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
       },

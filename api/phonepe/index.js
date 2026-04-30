@@ -99,22 +99,32 @@ app.post('/api/phonepe/qr', async (req, res) => {
     });
 
     const text = await resp.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+    let responseData;
+    try { 
+      responseData = JSON.parse(text); 
+    } catch { 
+      console.error('❌ Failed to parse PhonePe response:', text);
+      return res.status(502).json({ error: 'Invalid response from PhonePe' }); 
+    }
 
-    console.log('PhonePe /qr response:', JSON.stringify(data));
+    console.log('🔍 PhonePe /qr raw response:', JSON.stringify(responseData, null, 2));
 
-    // For QR_GEN, it returns a qrString
-    if (data.qrString) {
+    // In PhonePe v2, the result is usually in data.data or data.qrString depending on exact flow
+    const qrString = responseData.qrString || (responseData.data && responseData.data.qrString);
+    const orderId  = responseData.orderId  || (responseData.data && responseData.data.merchantOrderId);
+
+    if (qrString) {
+      console.log('✅ QR String generated successfully');
       return res.json({ 
         success: true, 
-        qrString: data.qrString,
-        orderId: data.orderId 
+        qrString,
+        orderId 
       });
     }
 
-    return res.status(500).json({ error: data.message || 'Failed to generate QR', details: data });
+    const errorMsg = responseData.message || (responseData.data && responseData.data.message) || 'Failed to generate QR';
+    console.error('❌ PhonePe QR Generation Error:', errorMsg);
+    return res.status(500).json({ error: errorMsg, details: responseData });
   } catch (err) {
     console.error('PhonePe /qr error:', err);
     return res.status(500).json({ error: err.message });

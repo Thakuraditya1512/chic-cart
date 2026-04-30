@@ -15,6 +15,25 @@ export default function PaymentSuccess() {
 
   const [status, setStatus] = useState<"loading" | "success" | "failed">("loading");
   const [orderDetails, setOrderDetails] = useState<any>(null);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const sendOrderEmail = async (order: any) => {
+    if (emailSent) return;
+    try {
+      await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: order.email,
+          action: "send-order-confirmation",
+          orderDetails: order
+        })
+      });
+      setEmailSent(true);
+    } catch (err) {
+      console.error("Failed to send order email", err);
+    }
+  };
 
   useEffect(() => {
     if (!transactionId) {
@@ -49,7 +68,10 @@ export default function PaymentSuccess() {
             phonePeOrderId: data.data?.orderId || null,
             updatedAt: serverTimestamp(),
           });
-          setOrderDetails({ id: orderDoc.id, ...orderDoc.data() });
+          const orderData = { id: orderDoc.id, ...orderDoc.data() };
+          setOrderDetails(orderData);
+          // Send confirmation email
+          await sendOrderEmail(orderData);
         }
 
         setStatus("success");

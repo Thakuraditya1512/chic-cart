@@ -36,7 +36,7 @@ const Newsletter = () => {
     }
   }, [resendTimer]);
 
-  const API_URL = 'https://flexthekicks-newsletter.onrender.com/api/newsletter';
+  const API_URL = '/api/newsletter';
 
 const sendOTP = async () => {
     if (!email) {
