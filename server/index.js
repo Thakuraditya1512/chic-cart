@@ -3,7 +3,14 @@ import nodemailer from 'nodemailer';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -222,6 +229,171 @@ function createWelcomeEmail() {
 </html>`;
 }
 
+// ─── PhonePe v2 OAuth Payment Endpoints ──────────────────────────────────────
+
+const PHONEPE_CLIENT_ID      = process.env.PHONEPE_CLIENT_ID;
+const PHONEPE_CLIENT_SECRET  = process.env.PHONEPE_CLIENT_SECRET;
+const PHONEPE_CLIENT_VERSION = parseInt(process.env.PHONEPE_CLIENT_VERSION || '1', 10);
+const PHONEPE_ENV            = process.env.PHONEPE_ENV || 'UAT';
+
+const PHONEPE_AUTH_URL = PHONEPE_ENV === 'PROD'
+  ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
+  : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+
+const PHONEPE_PG_BASE = PHONEPE_ENV === 'PROD'
+  ? 'https://api.phonepe.com/apis/pg'
+  : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+
+let _phonePeToken    = null;
+let _tokenExpiresAt  = 0;
+
+async function getPhonePeToken() {
+  const now = Date.now();
+  if (_phonePeToken && now < _tokenExpiresAt - 30_000) return _phonePeToken;
+
+  if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+    throw new Error('PhonePe credentials not configured');
+  }
+
+  const params = new URLSearchParams({
+    client_id:      PHONEPE_CLIENT_ID,
+    client_version: String(PHONEPE_CLIENT_VERSION),
+    client_secret:  PHONEPE_CLIENT_SECRET,
+    grant_type:     'client_credentials',
+  });
+
+  const resp = await fetch(PHONEPE_AUTH_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    params.toString(),
+  });
+
+  const text = await resp.text();
+  if (!resp.ok) throw new Error(`PhonePe auth failed: ${text}`);
+
+  const json = JSON.parse(text);
+  _phonePeToken   = json.access_token;
+  _tokenExpiresAt = json.expires_at ? json.expires_at * 1000 : now + 10 * 60 * 1000;
+  console.log('✅ PhonePe token obtained');
+  return _phonePeToken;
+}
+
+// Generate QR code
+app.post('/api/phonepe/qr', async (req, res) => {
+  try {
+    const { amount, transactionId, userId } = req.body;
+    if (!amount || !transactionId || !userId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const token = await getPhonePeToken();
+    const payload = {
+      merchantOrderId: transactionId,
+      amount: Math.round(amount * 100),
+      expireAfter: 1800,
+      paymentFlow: {
+        type: 'PG_QR_GEN',
+        message: 'Scan to pay for your sneakers'
+      },
+    };
+
+    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+    console.log('PhonePe qr response:', JSON.stringify(data));
+
+    if (data.qrString) return res.json({ success: true, qrString: data.qrString, orderId: data.orderId });
+
+    return res.status(500).json({ error: data.message || 'Failed to generate QR', details: data });
+  } catch (err) {
+    console.error('PhonePe /qr error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Initiate payment
+app.post('/api/phonepe/pay', async (req, res) => {
+  try {
+    const { amount, transactionId, userId, mobileNumber } = req.body;
+    if (!amount || !transactionId || !userId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const token  = await getPhonePeToken();
+    const origin = req.headers.origin
+      || (req.headers.referer ? new URL(req.headers.referer).origin : 'https://flexthekicks.in');
+
+    const payload = {
+      merchantOrderId: transactionId,
+      amount:          Math.round(amount * 100),
+      expireAfter:     1800,
+      metaInfo: { udf1: userId, udf2: mobileNumber || '' },
+      paymentFlow: {
+        type:    'PG_CHECKOUT',
+        message: 'Flex The Kicks — Secure Payment',
+        merchantUrls: { redirectUrl: `${origin}/payment-success?id=${transactionId}` },
+      },
+    };
+
+    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
+      body:    JSON.stringify(payload),
+    });
+
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+    console.log('PhonePe pay response:', JSON.stringify(data));
+
+    const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
+    if (redirectUrl) return res.json({ success: true, url: redirectUrl, orderId: data.orderId });
+
+    return res.status(500).json({ error: data.message || 'Failed to initiate payment', details: data });
+  } catch (err) {
+    console.error('PhonePe /pay error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Check order status
+app.get('/api/phonepe/status/:transactionId', async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    const token = await getPhonePeToken();
+
+    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/order/${transactionId}/status`, {
+      headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
+    });
+
+    const text = await resp.text();
+    let data;
+    try { data = JSON.parse(text); } catch { return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+    console.log('PhonePe status response:', JSON.stringify(data));
+
+    const state = (data.state || '').toUpperCase();
+    if (state === 'COMPLETED') return res.json({ success: true, status: 'COMPLETED', data });
+    if (state === 'PENDING')   return res.json({ success: true, status: 'PENDING', data });
+    return res.json({ success: false, status: state || 'FAILED', data });
+  } catch (err) {
+    console.error('PhonePe status error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Webhook callback
+app.post('/api/phonepe/callback', (req, res) => {
+  console.log('PhonePe callback received:', JSON.stringify(req.body));
+  return res.json({ success: true });
+});
+
+// ─── Cleanup expired OTPs every 5 minutes ─────────────────────────────────────
 // Cleanup expired OTPs every 5 minutes
 setInterval(() => {
   const now = Date.now();

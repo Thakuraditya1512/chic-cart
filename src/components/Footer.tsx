@@ -90,21 +90,22 @@ const Footer = () => {
             <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mb-4 sm:mb-8 md:max-w-sm">
               FlexTheKicks is your ultimate destination for premium sneakers. We bring you the most exclusive drops, rare finds, and everyday classics.
             </p>
-            {/* <div className="flex gap-4">
-              {[{ Icon: Instagram, label: "Instagram", href: "#" },
-              { Icon: Twitter, label: "Twitter", href: "#" },
-              { Icon: Facebook, label: "Facebook", href: "#" }
-              ].map(({ Icon, label, href }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div> */}
+            
+            {/* Payment Partners */}
+            <div className="mt-8">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">Official Payment Partner</p>
+              <div className="flex items-center gap-4">
+                <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 group hover:border-purple-500/50 transition-colors">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-purple-500" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+                  </svg>
+                  <span className="text-xs font-bold text-foreground">PhonePe</span>
+                </div>
+                <div className="flex items-center gap-2 opacity-50 grayscale hover:grayscale-0 transition-all">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" className="h-4" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Links Grid */}
@@ -133,10 +134,14 @@ const Footer = () => {
 
         {/* Bottom: Legal */}
         <div className="footer-animate pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
-          <p className="text-sm text-muted-foreground order-2 md:order-1 text-center md:text-left">
-            © {currentYear} FlexTheKicks. All rights reserved. <br />
-            <span className="text-xs text-muted-foreground/80">Page owner: <a href="https://www.adityasingh.space" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Thakur Aditya Singh</a></span>
-          </p>
+          <div className="order-2 md:order-1 text-center md:text-left">
+            <p className="text-sm text-muted-foreground">
+              © {currentYear} FlexTheKicks. All rights reserved.
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase tracking-tighter">
+              Secured by <span className="font-bold text-purple-500">PhonePe</span> Payment Gateway
+            </p>
+          </div>
           <div className="flex items-center gap-4 sm:gap-6 text-sm text-muted-foreground order-1 md:order-2">
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy Policy

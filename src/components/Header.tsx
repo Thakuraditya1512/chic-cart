@@ -159,6 +159,11 @@ const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-0 md:gap-1">
+            {/* PhonePe Integrated Badge */}
+            <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 bg-purple-500/5 border border-purple-500/20 rounded-full mr-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-purple-500">PhonePe Secured</span>
+            </div>
 
 
             {/* Theme Toggle */}

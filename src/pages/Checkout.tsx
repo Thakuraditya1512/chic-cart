@@ -17,6 +17,8 @@ import {
 } from "firebase/firestore";
 import { toast } from "sonner";
 
+import PhonePeQR from "@/components/PhonePeQR";
+
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
@@ -59,6 +61,8 @@ export default function Checkout() {
   // "saved" = showing saved list, "new" = showing blank form, "selected" = showing selected address
   const [addressMode, setAddressMode] = useState<"saved" | "new" | "selected">("saved");
   const [selectedAddressIdx, setSelectedAddressIdx] = useState<number | null>(null);
+  const [showQR, setShowQR] = useState(false);
+  const [activeTransactionId, setActiveTransactionId] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -250,9 +254,16 @@ export default function Checkout() {
         subtotal: totalPrice, codCharge, giftPackagingCharge, discountAmount, discountPercent: discount,
         couponCode: appliedCouponId ? couponCode.toUpperCase() : null,
         total: finalTotal, paymentMethod, status: paymentMethod === "COD" ? "pending" : "awaiting_payment", 
-        transactionId: paymentMethod === "PHONEPE" ? transactionId : null,
+        transactionId: (paymentMethod === "PHONEPE" || paymentMethod === ("PHONEPE_QR" as any)) ? transactionId : null,
         createdAt: serverTimestamp(),
       };
+
+      if (paymentMethod === ("PHONEPE_QR" as any)) {
+        setActiveTransactionId(transactionId);
+        setShowQR(true);
+        setLoading(false);
+        return;
+      }
 
       // If PhonePe, call backend first
       if (paymentMethod === "PHONEPE") {
@@ -321,7 +332,37 @@ export default function Checkout() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       setError(msg); toast.error(msg);
-    } finally { setLoading(false); }
+    } finally { if (paymentMethod !== ("PHONEPE_QR" as any)) setLoading(false); }
+  };
+
+  const handleQRSuccess = async (data: any) => {
+    try {
+      setLoading(true);
+      const transactionId = activeTransactionId;
+      const orderData = {
+        userId: user?.uid || "guest",
+        customerName: customerData.fullName, email: customerData.email, phone: customerData.phone,
+        lane1: addressData.lane1, lane2: addressData.lane2, landmark: addressData.landmark,
+        city: addressData.city, zipCode: addressData.zipCode,
+        location: locationData ? { latitude: locationData.latitude, longitude: locationData.longitude, googleMapsLink: addressData.googleMapsLink || `https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}` } : addressData.googleMapsLink ? { latitude: 0, longitude: 0, googleMapsLink: addressData.googleMapsLink } : null,
+        items: cartItems.map(item => ({ productId: item.product.id, productName: item.product.name, price: item.product.price, quantity: item.quantity, image: item.product.image, size: (item as any).size })),
+        subtotal: totalPrice, codCharge: 0, giftPackagingCharge, discountAmount, discountPercent: discount,
+        total: finalTotal, paymentMethod: "PHONEPE_QR", status: "paid", transactionId,
+        createdAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, "orders"), orderData);
+      if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
+      
+      clearCart();
+      setShowQR(false);
+      toast.success("Payment Received! Order placed.");
+      navigate("/orders");
+    } catch (err) {
+      toast.error("Failed to finalize order after payment");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleWhatsAppCheckout = () => {
@@ -404,6 +445,23 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showQR && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+              <PhonePeQR 
+                amount={finalTotal} 
+                transactionId={activeTransactionId} 
+                userId={user.uid} 
+                isDarkMode={isDarkMode}
+                onSuccess={handleQRSuccess}
+                onCancel={() => setShowQR(false)}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 lg:gap-8 items-start">
@@ -648,12 +706,28 @@ export default function Checkout() {
                           <div className="flex items-center gap-3">
                             <Shield className={`w-5 h-5 ${paymentMethod === "PHONEPE" ? "text-purple-500" : textMuted}`} />
                             <div className="text-left">
-                              <p className={`text-sm font-bold ${paymentMethod === "PHONEPE" ? textPrimary : textSub}`}>PhonePe / UPI</p>
-                              <p className={`text-[10px] ${textMuted}`}>Secure online payment</p>
+                              <p className={`text-sm font-bold ${paymentMethod === "PHONEPE" ? textPrimary : textSub}`}>PhonePe Redirect</p>
+                              <p className={`text-[10px] ${textMuted}`}>Pay on PhonePe App/Web</p>
                             </div>
                           </div>
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "PHONEPE" ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
                             {paymentMethod === "PHONEPE" && <Check className={`w-3 h-3 ${isDarkMode ? "text-black" : "text-white"}`} />}
+                          </div>
+                        </button>
+
+                        <button 
+                          onClick={() => setPaymentMethod("PHONEPE_QR" as any)}
+                          className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${paymentMethod === ("PHONEPE_QR" as any) ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-black/[0.02]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"}`}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Plus className={`w-5 h-5 ${paymentMethod === ("PHONEPE_QR" as any) ? "text-purple-500" : textMuted}`} />
+                            <div className="text-left">
+                              <p className={`text-sm font-bold ${paymentMethod === ("PHONEPE_QR" as any) ? textPrimary : textSub}`}>Dynamic QR Scan</p>
+                              <p className={`text-[10px] ${textMuted}`}>Scan & Pay directly</p>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === ("PHONEPE_QR" as any) ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
+                            {paymentMethod === ("PHONEPE_QR" as any) && <Check className={`w-3 h-3 ${isDarkMode ? "text-black" : "text-white"}`} />}
                           </div>
                         </button>
                       </div>

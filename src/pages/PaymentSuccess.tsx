@@ -24,11 +24,10 @@ export default function PaymentSuccess() {
     verifyPayment();
   }, [transactionId]);
 
-  const verifyPayment = async () => {
+  const verifyPayment = async (attempt = 0) => {
     try {
-      // Check status from backend
       const response = await fetch(`/api/phonepe/status/${transactionId}`);
-      
+
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
       }
@@ -38,7 +37,7 @@ export default function PaymentSuccess() {
       const data = JSON.parse(text);
 
       if (data.success && data.status === 'COMPLETED') {
-        // Update order in Firebase
+        // Update order status in Firebase
         const q = query(collection(db, "orders"), where("transactionId", "==", transactionId));
         const snapshot = await getDocs(q);
 
@@ -47,22 +46,30 @@ export default function PaymentSuccess() {
           await updateDoc(doc(db, "orders", orderDoc.id), {
             status: "paid",
             paymentStatus: "completed",
-            updatedAt: serverTimestamp()
+            phonePeOrderId: data.data?.orderId || null,
+            updatedAt: serverTimestamp(),
           });
           setOrderDetails({ id: orderDoc.id, ...orderDoc.data() });
         }
-        
+
         setStatus("success");
         clearCart();
         localStorage.removeItem('pending_order');
-        toast.success("Payment successful!");
+        toast.success("Payment successful! 🎉");
+
+      } else if (data.status === 'PENDING' && attempt < 3) {
+        // Poll up to 3 times with a 3-second delay for pending transactions
+        setTimeout(() => verifyPayment(attempt + 1), 3000);
       } else {
         setStatus("failed");
-        toast.error("Payment failed or is pending.");
+        toast.error(data.status === 'PENDING'
+          ? "Payment is still pending. Check My Orders for updates."
+          : "Payment failed. Please try again.");
       }
     } catch (error) {
       console.error("Verification error:", error);
       setStatus("failed");
+      toast.error("Could not verify payment. Check My Orders.");
     }
   };
 

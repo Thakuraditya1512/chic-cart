@@ -117,22 +117,16 @@ const ShoeShowcase = () => {
                 href="#new"
                 className="btn-glow inline-flex items-center px-5 sm:px-8 py-2.5 sm:py-3.5 bg-foreground text-background font-sans font-semibold text-[10px] sm:text-xs uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors rounded-full"
               >
-                
+                Shop Now
               </a>
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-background border-2 border-border flex items-center justify-center text-[9px] sm:text-[10px] text-foreground/60 font-sans"
-                    >
-                      {["A", "K", "J"][i - 1]}
-                    </div>
-                  ))}
+              <div className="flex items-center gap-3 px-4 py-2 bg-purple-500/5 border border-purple-500/20 rounded-2xl group hover:bg-purple-500/10 transition-all cursor-default">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-purple-500 group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+                </svg>
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-bold text-foreground leading-none">PhonePe</p>
+                  <p className="text-[8px] text-muted-foreground uppercase tracking-widest mt-0.5">Fast Checkout</p>
                 </div>
-                <p className="text-foreground/60 text-xs sm:text-sm font-sans">
-                  2.4k+ Reviews
-                </p>
               </div>
             </motion.div>
 
