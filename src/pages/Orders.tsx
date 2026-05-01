@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -98,7 +98,7 @@ const TrackingMap = ({ dark }: { dark: boolean }) => (
     {/* warehouse label */}
     <div className="absolute" style={{ left: "10%", top: "52%" }}>
       <div className={`text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1 ${dark ? "bg-zinc-800 text-zinc-300 border border-zinc-700" : "bg-white text-gray-700 border border-gray-200"} shadow-sm`}>
-        ðŸ“¦ Warehouse
+        📦 Warehouse
       </div>
     </div>
 
@@ -112,7 +112,7 @@ const TrackingMap = ({ dark }: { dark: boolean }) => (
     {/* ETA banner */}
     <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
       <div className={`text-[11px] font-semibold px-3 py-1.5 rounded-full ${dark ? "bg-zinc-900 text-green-400 border border-green-500/30" : "bg-white text-green-700 border border-green-200"} shadow whitespace-nowrap`}>
-        ðŸš´ ETA: Today by 7:00 PM Â· ~3.2 km away
+        🚴 ETA: Today by 7:00 PM · ~3.2 km away
       </div>
     </div>
   </div>
@@ -200,14 +200,14 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
               {order.items.map((i: any) => i.productName).join(", ")}
             </p>
             <p className={`text-[11px] mt-0.5 ${dark ? "text-zinc-500" : "text-gray-400"}`}>
-              {order.createdAt?.toDate?.()?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) || "â€”"}
-              {" Â· "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
+              {order.createdAt?.toDate?.()?.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) || "—"}
+              {" · "}{order.items.length} {order.items.length === 1 ? "item" : "items"}
             </p>
           </div>
 
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <span className={`text-[15px] font-bold ${dark ? "text-white" : "text-gray-900"}`}>
-              â‚¹{order.total.toLocaleString("en-IN")}
+              ₹{order.total.toLocaleString("en-IN")}
             </span>
             <span className={`text-xs ${dark ? "text-zinc-500" : "text-gray-400"}`}>
               {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -253,12 +253,8 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                           </div>
                       }
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between gap-2 items-start">
-                          <p className={`font-semibold text-[13px] leading-tight ${dark ? "text-white" : "text-gray-900"}`}>{item.productName}</p>
-                          <p className="text-[13px] font-bold text-blue-500 shrink-0">â‚¹{(item.price * item.quantity).toLocaleString("en-IN")}</p>
-                        </div>
                         <div className="flex gap-1.5 flex-wrap mt-1.5 mb-2">
-                          {[`Qty ${item.quantity}`, item.size && `Size ${item.size}`, `â‚¹${item.price.toLocaleString("en-IN")} each`]
+                          {[`Qty ${item.quantity}`, item.size && `Size ${item.size}`, `₹${item.price.toLocaleString("en-IN")} each`]
                             .filter(Boolean)
                             .map((tag, ti) => (
                               <span key={ti} className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${dark ? "bg-zinc-700 text-zinc-400" : "bg-gray-100 text-gray-500"}`}>
@@ -275,7 +271,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                                 onClick={e => { e.stopPropagation(); onReview(order, item); }}
                                 className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all active:scale-95"
                               >
-                                <Star className="w-3 h-3" /> Write a review Â· Earn 10% off
+                                <Star className="w-3 h-3" /> Write a review · Earn 10% off
                               </button>
                         )}
                       </div>
@@ -296,7 +292,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                         <p>{order.lane1}</p>
                         {order.lane2 && <p>{order.lane2}</p>}
                         {order.landmark && <p className="italic">Near {order.landmark}</p>}
-                        <p>{order.city} â€“ {order.zipCode}</p>
+                        <p>{order.city} – {order.zipCode}</p>
                       </>
                     ) : (
                       <p>{order.address}</p>
@@ -319,8 +315,8 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                   <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${dark ? "text-zinc-500" : "text-gray-400"}`}>Payment summary</p>
                   <div className="space-y-1.5">
                     {[
-                      { label: "Subtotal", val: `â‚¹${order.subtotal.toLocaleString("en-IN")}` },
-                      { label: "Shipping / COD", val: order.codCharge > 0 ? `â‚¹${order.codCharge}` : "Free" },
+                      { label: "Subtotal", val: `₹${order.subtotal.toLocaleString("en-IN")}` },
+                      { label: "Shipping / COD", val: order.codCharge > 0 ? `₹${order.codCharge}` : "Free" },
                     ].map(({ label, val }) => (
                       <div key={label} className="flex justify-between text-[12px]">
                         <span className={dark ? "text-zinc-500" : "text-gray-400"}>{label}</span>
@@ -329,7 +325,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
                     ))}
                     <div className={`flex justify-between pt-2 mt-1 border-t text-[13px] font-bold ${dark ? "border-zinc-700/50" : "border-gray-100"}`}>
                       <span className={dark ? "text-zinc-300" : "text-gray-700"}>Total</span>
-                      <span className="text-blue-500">â‚¹{order.total.toLocaleString("en-IN")}</span>
+                      <span className="text-blue-500">₹{order.total.toLocaleString("en-IN")}</span>
                     </div>
                   </div>
                 </div>
@@ -466,7 +462,7 @@ const Orders = () => {
       setCouponCode(code);
       setReviewModalOpen(false);
       setShowCouponModal(true);
-      toast.success("Review submitted! ðŸŽ‰");
+      toast.success("Review submitted! 🎉");
     } catch { toast.error("Failed to submit review"); }
     finally { setSubmittingReview(false); }
   };
@@ -492,7 +488,7 @@ const Orders = () => {
           </div>
         </div>
         <p className={`text-xs font-bold tracking-[0.2em] uppercase ${isDark ? "text-zinc-500" : "text-gray-400"}`}>
-          Loading your ordersâ€¦
+          Loading your orders…
         </p>
       </div>
     </div>
@@ -593,7 +589,7 @@ const Orders = () => {
                         <p className={`font-semibold text-sm ${dk ? "text-white" : "text-gray-900"}`}>{addr.lane1}</p>
                         {addr.lane2    && <p className={`text-xs mt-0.5 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.lane2}</p>}
                         {addr.landmark && <p className={`text-xs italic mt-0.5 ${dk ? "text-zinc-500" : "text-gray-400"}`}>Near {addr.landmark}</p>}
-                        <p className={`text-xs font-medium mt-1 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.city} â€“ {addr.zipCode}</p>
+                        <p className={`text-xs font-medium mt-1 ${dk ? "text-zinc-400" : "text-gray-500"}`}>{addr.city} – {addr.zipCode}</p>
                         {addr.location?.googleMapsLink && (
                           <a href={addr.location.googleMapsLink} target="_blank" rel="noopener noreferrer"
                             className="mt-3 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold tracking-wide uppercase transition-all">
@@ -664,7 +660,7 @@ const Orders = () => {
               <p className={`text-[9px] font-bold uppercase tracking-widest mb-2 ${dk ? "text-white/40" : "text-gray-400"}`}>Your review</p>
               <Textarea
                 value={comment} onChange={e => setComment(e.target.value)}
-                placeholder="Tell others what you thinkâ€¦"
+                placeholder="Tell others what you think…"
                 className={`rounded-xl min-h-[90px] text-sm border resize-none focus-visible:ring-1 focus-visible:ring-blue-500
                   ${dk ? "bg-white/[0.03] border-white/10 text-white placeholder:text-white/20" : "bg-gray-50 border-gray-200 placeholder:text-gray-300"}`}
               />
@@ -701,7 +697,7 @@ const Orders = () => {
               <div className={`relative rounded-xl border-2 border-dashed p-4
                 ${dk ? "border-white/10 bg-white/[0.02]" : "border-gray-200 bg-gray-50"}`}>
                 <p className="text-xl font-bold tracking-widest text-blue-500 mb-1">{couponCode}</p>
-                <p className={`text-[11px] ${dk ? "text-white/30" : "text-gray-400"}`}>10% off Â· Valid 10 days</p>
+                <p className={`text-[11px] ${dk ? "text-white/30" : "text-gray-400"}`}>10% off · Valid 10 days</p>
                 <button onClick={copyCoupon}
                   className={`absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center transition-colors
                     ${dk ? "bg-white/5 hover:bg-white/10" : "bg-gray-100 hover:bg-gray-200"}`}>

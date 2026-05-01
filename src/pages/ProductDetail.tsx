@@ -108,7 +108,7 @@ const ProductDetail = () => {
       } as Product;
       setProduct(productData);
 
-      // Fetch brand details if brandId exists
+      // Fetch related products (same brand) using a query instead of fetching all products
       if (productData.brandId) {
         const brandRef = doc(db, "brands", productData.brandId);
         const brandSnap = await getDoc(brandRef);
@@ -119,14 +119,15 @@ const ProductDetail = () => {
           } as Brand);
         }
 
-        // Fetch all products from same brand
         const productsRef = collection(db, "products");
-        const allProducts = await getDocs(productsRef);
-        const sameBrandProducts = allProducts.docs
-          .filter(
-            (doc) =>
-              doc.data().brandId === productData.brandId && doc.id !== id
-          )
+        const q = query(
+          productsRef, 
+          where("brandId", "==", productData.brandId),
+          limit(9) // Fetch 9 to account for current product
+        );
+        const querySnapshot = await getDocs(q);
+        const sameBrandProducts = querySnapshot.docs
+          .filter(doc => doc.id !== id)
           .map((doc) => ({
             id: doc.id,
             ...doc.data(),

@@ -131,15 +131,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ variant = 'default' }) =>
       {/* Background gradient orb */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-foreground/5 rounded-full blur-3xl" />
 
-      {/* Floating Particles */}
+      {/* Floating Particles - Reduced count for performance */}
       <div ref={particlesRef} className="absolute inset-0 pointer-events-none">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="particle absolute w-2 h-2 bg-foreground/30 rounded-full"
+            className="particle absolute w-1.5 h-1.5 bg-foreground/20 rounded-full"
             style={{
-              left: `${45 + (i % 3) * 5}%`,
-              top: `${40 + Math.floor(i / 3) * 10}%`,
+              left: `${48 + (i % 2) * 4}%`,
+              top: `${45 + i * 5}%`,
             }}
           />
         ))}

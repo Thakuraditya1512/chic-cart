@@ -105,16 +105,15 @@ const AppRoutes = () => {
 
   return (
     <>
-      {/* Sunny Effect in Light Mode */}
+      {/* Sunny Effect in Light Mode - Optimized for Performance */}
       {!isDark && (
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          {/* Main Sun Glow */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
+          {/* Main Sun Glow - Reduced blur for better performance */}
           <div
-            className="absolute -top-24 -right-24 w-96 h-96 bg-orange-200/20 blur-[120px] rounded-full animate-pulse"
-            style={{ animationDuration: "8s" }}
+            className="absolute -top-12 -right-12 w-64 h-64 bg-orange-200/30 blur-[60px] rounded-full"
           />
           {/* Secondary Warmth */}
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-100/5 via-transparent to-transparent" />
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-100/10 via-transparent to-transparent" />
         </div>
       )}
 

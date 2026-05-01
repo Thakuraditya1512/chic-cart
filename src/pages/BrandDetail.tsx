@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { ArrowLeft, ShoppingCart, Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types";
@@ -74,15 +74,14 @@ const BrandDetail = () => {
     try {
       setLoading(true);
 
-      // Fetch brand details
-      const brandsRef = collection(db, "brands");
-      const brandSnapshot = await getDocs(brandsRef);
-      const brandDoc = brandSnapshot.docs.find((doc) => doc.id === brandId);
+      // Fetch brand details directly by ID
+      const brandRef = doc(db, "brands", brandId!);
+      const brandSnap = await getDoc(brandRef);
 
-      if (brandDoc) {
+      if (brandSnap.exists()) {
         setBrand({
-          id: brandDoc.id,
-          ...brandDoc.data(),
+          id: brandSnap.id,
+          ...brandSnap.data(),
         } as Brand);
       }
 
