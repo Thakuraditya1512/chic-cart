@@ -1,4 +1,4 @@
-import { Home, ShoppingBag, User, LayoutDashboard } from "lucide-react";
+import { Home, ShoppingBag, User, LayoutDashboard, Search } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";

@@ -54,12 +54,11 @@ const CinematicHero = () => {
     return () => vid.removeEventListener("canplaythrough", tryPlay);
   }, [isMobile]);
 
-  // Intro timer — only on mobile
+  // Intro timer — all devices
   useEffect(() => {
-    if (!isMobile) return;
     const timer = setTimeout(() => setShowIntro(false), 2200);
     return () => clearTimeout(timer);
-  }, [isMobile]);
+  }, []);
 
   // GSAP text reveal — mobile only
   useEffect(() => {
@@ -108,29 +107,39 @@ const CinematicHero = () => {
         style={{ scale: videoScale }}
         className="absolute inset-0 will-change-transform"
       >
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{
-            opacity: videoLoaded ? 1 : 0,
-            transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          onLoadedData={() => setVideoLoaded(true)}
-        >
-          <source
-            src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/bn.mp4"
-            type="video/mp4"
+        {isMobile ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              opacity: videoLoaded ? 1 : 0,
+              transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            onLoadedData={() => setVideoLoaded(true)}
+          >
+            <source
+              src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/bn.mp4"
+              type="video/mp4"
+            />
+          </video>
+        ) : (
+          <div 
+            className="absolute inset-0 w-full h-full bg-cover bg-center"
+            style={{ 
+              backgroundImage: 'url("https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070&auto=format&fit=crop")',
+              filter: 'brightness(0.6)'
+            }}
           />
-        </video>
+        )}
 
         {/* Cinematic Overlays */}
         <div className="absolute inset-0 z-10 bg-black/20" />
-        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
       </motion.div>
 
       <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4">
