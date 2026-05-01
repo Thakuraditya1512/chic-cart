@@ -4,7 +4,7 @@ import { Product } from "@/types";
 import { db } from "@/lib/firebase";
 import { collection, query, where, documentId, getDocs } from "firebase/firestore";
 import Header from "@/components/Header";
-import BottomNav from "@/components/BottomNav";
+
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
 import LoadingScreen from "@/components/LoadingScreen";
@@ -18,7 +18,7 @@ const Wishlist = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
-  
+
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -65,12 +65,12 @@ const Wishlist = () => {
         <title>Curated Wishlist | FTK - Flex The Kicks</title>
         <meta name="description" content="Your personal curation of premium sneakers and high-end streetwear." />
       </Helmet>
-      
+
       <Header onSearchOpen={() => setSearchOpen(true)} />
-      
+
       <main ref={sectionRef} className="pt-24 pb-32 md:pt-40 md:pb-48">
         <div className="container mx-auto px-4 md:px-8">
-          
+
           {/* ── Editorial Header ── */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-16 md:mb-24">
             <div className="relative">
@@ -122,8 +122,8 @@ const Wishlist = () => {
                   key={product.id}
                   initial={{ opacity: 0, y: 40 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ 
-                    duration: 0.8, 
+                  transition={{
+                    duration: 0.8,
                     delay: 0.1 + (i % 4) * 0.1,
                     ease: [0.16, 1, 0.3, 1]
                   }}
@@ -141,7 +141,7 @@ const Wishlist = () => {
             </div>
           ) : (
             /* ── Empty State ── */
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center py-32 md:py-48 text-center border border-dashed border-border/40 rounded-[2.5rem] bg-muted/5 backdrop-blur-sm"
@@ -194,7 +194,7 @@ const Wishlist = () => {
         </div>
       </main>
 
-      <BottomNav onSearchOpen={() => setSearchOpen(true)} />
+
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );

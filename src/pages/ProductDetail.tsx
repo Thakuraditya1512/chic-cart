@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import Header from "@/components/Header";
-import BottomNav from "@/components/BottomNav";
+
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ProductCard from "@/components/ProductCard";
@@ -121,7 +121,7 @@ const ProductDetail = () => {
 
         const productsRef = collection(db, "products");
         const q = query(
-          productsRef, 
+          productsRef,
           where("brandId", "==", productData.brandId),
           limit(9) // Fetch 9 to account for current product
         );
@@ -174,13 +174,13 @@ const ProductDetail = () => {
   useEffect(() => {
     if (product) {
       document.title = `${product.name} | FTK - Flex The Kicks`;
-      
+
       // Update recently viewed in localStorage
       const stored = localStorage.getItem("recentlyViewed");
       let ids: string[] = stored ? JSON.parse(stored) : [];
       ids = [product.id, ...ids.filter(id => id !== product.id)].slice(0, 8);
       localStorage.setItem("recentlyViewed", JSON.stringify(ids));
-      
+
       // Fetch recently viewed items (excluding current)
       const fetchRecentItems = async () => {
         const otherIds = ids.filter(id => id !== product.id).slice(0, 4);
@@ -204,7 +204,7 @@ const ProductDetail = () => {
           console.error("Error fetching recently viewed products:", err);
         }
       };
-      
+
       fetchRecentItems();
     }
   }, [product]);
@@ -303,7 +303,7 @@ const ProductDetail = () => {
         createdAt: serverTimestamp(),
         status: "pending"
       });
-      toast.success("Notification set!", { 
+      toast.success("Notification set!", {
         description: `We'll email ${user.email} when this restocks.`
       });
     } catch (err) {
@@ -389,9 +389,8 @@ const ProductDetail = () => {
                 className={`w-full h-full object-cover transition-transform duration-500 ${imageZoomed ? "scale-150" : "scale-100"}`}
               />
               {product.badge && (
-                <span className={`absolute top-3 left-3 sm:top-4 sm:left-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 sm:px-3 py-1 sm:py-1.5 rounded-sm ${
-                  product.badge === "sale" ? "bg-sale text-sale-foreground" : "bg-badge text-badge-foreground"
-                }`}>
+                <span className={`absolute top-3 left-3 sm:top-4 sm:left-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 sm:px-3 py-1 sm:py-1.5 rounded-sm ${product.badge === "sale" ? "bg-sale text-sale-foreground" : "bg-badge text-badge-foreground"
+                  }`}>
                   {product.badge}
                 </span>
               )}
@@ -411,9 +410,8 @@ const ProductDetail = () => {
                   <button
                     key={idx}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`w-10 h-14 sm:w-12 sm:h-16 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${
-                      activeImageIndex === idx ? "border-foreground" : "border-border opacity-50"
-                    }`}
+                    className={`w-10 h-14 sm:w-12 sm:h-16 rounded-md overflow-hidden border-2 transition-all flex-shrink-0 ${activeImageIndex === idx ? "border-foreground" : "border-border opacity-50"
+                      }`}
                   >
                     <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                   </button>
@@ -434,9 +432,9 @@ const ProductDetail = () => {
                 ))}
               </div>
               <span className="text-xs sm:text-sm text-muted-foreground">
-                {reviews.length > 0 
-                  ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
-                  : (product.rating || 0)} 
+                {reviews.length > 0
+                  ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+                  : (product.rating || 0)}
                 ({reviews.length} reviews)
               </span>
             </div>
@@ -453,7 +451,7 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest bg-emerald-500/5 px-3 py-2 rounded-xl border border-emerald-500/10 shadow-sm">
                   <CheckCircle2 size={12} />
@@ -495,11 +493,10 @@ const ProductDetail = () => {
                     <button
                       key={size}
                       onClick={() => setSelectedSize(size)}
-                      className={`min-w-[40px] sm:min-w-[44px] h-9 sm:h-11 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-sm border transition-colors ${
-                        selectedSize === size
+                      className={`min-w-[40px] sm:min-w-[44px] h-9 sm:h-11 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-sm border transition-colors ${selectedSize === size
                           ? "bg-primary text-primary-foreground border-primary"
                           : "border-border text-foreground hover:border-foreground"
-                      }`}
+                        }`}
                     >
                       {size}
                     </button>
@@ -539,8 +536,8 @@ const ProductDetail = () => {
                       <Minus size={14} className="sm:w-4 sm:h-4" />
                     </button>
                     <span className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-xs sm:text-sm font-medium text-foreground border-x border-border">{qty}</span>
-                    <button 
-                      onClick={() => setQty(Math.min(5, qty + 1))} 
+                    <button
+                      onClick={() => setQty(Math.min(5, qty + 1))}
                       className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center transition-colors ${qty >= 5 ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground hover:text-foreground"}`}
                       disabled={qty >= 5}
                     >
@@ -603,27 +600,27 @@ const ProductDetail = () => {
                       <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">US</div>
                       <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">EU</div>
                       <div className="bg-secondary/50 p-2 font-semibold border-b border-l border-border">CM</div>
-                      
+
                       <div className="p-2 border-b border-border text-foreground">6</div>
                       <div className="p-2 border-b border-l border-border text-foreground">7</div>
                       <div className="p-2 border-b border-l border-border text-foreground">40</div>
                       <div className="p-2 border-b border-l border-border text-foreground">25</div>
-                      
+
                       <div className="p-2 border-b border-border text-foreground">7</div>
                       <div className="p-2 border-b border-l border-border text-foreground">8</div>
                       <div className="p-2 border-b border-l border-border text-foreground">41</div>
                       <div className="p-2 border-b border-l border-border text-foreground">26</div>
-                      
+
                       <div className="p-2 border-b border-border text-foreground">8</div>
                       <div className="p-2 border-b border-l border-border text-foreground">9</div>
                       <div className="p-2 border-b border-l border-border text-foreground">42.5</div>
                       <div className="p-2 border-b border-l border-border text-foreground">27</div>
-                      
+
                       <div className="p-2 border-b border-border text-foreground">9</div>
                       <div className="p-2 border-b border-l border-border text-foreground">10</div>
                       <div className="p-2 border-b border-l border-border text-foreground">44</div>
                       <div className="p-2 border-b border-l border-border text-foreground">28</div>
-                      
+
                       <div className="p-2 text-foreground">10</div>
                       <div className="p-2 border-l border-border text-foreground">11</div>
                       <div className="p-2 border-l border-border text-foreground">45</div>
@@ -657,7 +654,7 @@ const ProductDetail = () => {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Secure Checkout</p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold uppercase text-muted-foreground">Payments</p>
@@ -684,32 +681,32 @@ const ProductDetail = () => {
                   </svg>
                   <span className="text-[10px] font-bold">UPI</span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                   <svg viewBox="0 0 24 24" className="h-3 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15.82 8.76l-1.46 8.75h2.33l1.46-8.75h-2.33zM22.84 8.76c-.53-.22-1.37-.46-2.4-.46-2.37 0-4.04 1.26-4.05 3.07-.01 1.33 1.19 2.07 2.1 2.51.93.45 1.24.74 1.24 1.15-.01.62-.75.9-1.44.9-1.2 0-1.85-.18-2.82-.6l-.39-.19-.42 2.6c.7.32 1.99.6 3.32.61 2.52 0 4.15-1.25 4.17-3.18.02-1.06-.63-1.87-2.02-2.54-.84-.42-1.36-.71-1.35-1.14 0-.38.42-.77 1.33-.77.75-.02 1.3.16 1.72.34l.2.1.41-2.5zm-11.83 5.4l-.23-1.12c-.4-.95-1.63-2.61-2.85-2.61h-2.23l-.04.18c1.78.45 2.96 1.54 3.45 2.87l2.25 6.2h2.46l3.66-8.75h-2.43l-2.04 3.23zm-7.61-5.4L1.07 17.51h2.46l3.66-8.75h-3.79z" fill="#1A1F71"/>
+                    <path d="M15.82 8.76l-1.46 8.75h2.33l1.46-8.75h-2.33zM22.84 8.76c-.53-.22-1.37-.46-2.4-.46-2.37 0-4.04 1.26-4.05 3.07-.01 1.33 1.19 2.07 2.1 2.51.93.45 1.24.74 1.24 1.15-.01.62-.75.9-1.44.9-1.2 0-1.85-.18-2.82-.6l-.39-.19-.42 2.6c.7.32 1.99.6 3.32.61 2.52 0 4.15-1.25 4.17-3.18.02-1.06-.63-1.87-2.02-2.54-.84-.42-1.36-.71-1.35-1.14 0-.38.42-.77 1.33-.77.75-.02 1.3.16 1.72.34l.2.1.41-2.5zm-11.83 5.4l-.23-1.12c-.4-.95-1.63-2.61-2.85-2.61h-2.23l-.04.18c1.78.45 2.96 1.54 3.45 2.87l2.25 6.2h2.46l3.66-8.75h-2.43l-2.04 3.23zm-7.61-5.4L1.07 17.51h2.46l3.66-8.75h-3.79z" fill="#1A1F71" />
                   </svg>
                   <span className="text-[10px] font-bold">VISA</span>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <svg viewBox="0 0 24 24" className="h-4 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="9" cy="12" r="7" fill="#EB001B" fillOpacity="0.8"/>
-                    <circle cx="15" cy="12" r="7" fill="#F79E1B" fillOpacity="0.8"/>
+                    <circle cx="9" cy="12" r="7" fill="#EB001B" fillOpacity="0.8" />
+                    <circle cx="15" cy="12" r="7" fill="#F79E1B" fillOpacity="0.8" />
                   </svg>
                   <span className="text-[10px] font-bold">MC</span>
                 </div>
 
                 <div className="flex items-center gap-1">
                   <svg viewBox="0 0 24 24" className="h-4 w-auto text-purple-600" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19.467 2.25H4.533c-1.26 0-2.283 1.023-2.283 2.283v14.934c0 1.26 1.023 2.283 2.283 2.283h14.934c1.26 0 2.283-1.023 2.283-2.283V4.533c0-1.26-1.023-2.283-2.283-2.283zm-3.66 12.355l-2.001 2.001h-3.609l2.001-2.001H15.807zM11.996 5.865c1.879 0 3.402 1.523 3.402 3.402s-1.523 3.402-3.402 3.402-3.402-1.523-3.402-3.402 1.523-3.402 3.402-3.402z"/>
+                    <path d="M19.467 2.25H4.533c-1.26 0-2.283 1.023-2.283 2.283v14.934c0 1.26 1.023 2.283 2.283 2.283h14.934c1.26 0 2.283-1.023 2.283-2.283V4.533c0-1.26-1.023-2.283-2.283-2.283zm-3.66 12.355l-2.001 2.001h-3.609l2.001-2.001H15.807zM11.996 5.865c1.879 0 3.402 1.523 3.402 3.402s-1.523 3.402-3.402 3.402-3.402-1.523-3.402-3.402 1.523-3.402 3.402-3.402z" />
                   </svg>
                   <span className="text-[10px] font-bold text-purple-600">PhonePe</span>
                 </div>
               </div>
+            </div>
           </div>
         </div>
-      </div>
 
         {/* Recently Viewed */}
         {recentlyViewed.length > 0 && (
@@ -812,8 +809,8 @@ const ProductDetail = () => {
               <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4">Customer Reviews</h2>
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="text-3xl sm:text-4xl font-bold text-foreground">
-                  {reviews.length > 0 
-                    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
+                  {reviews.length > 0
+                    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
                     : (product.rating || 0)}
                 </div>
                 <div>
@@ -835,7 +832,7 @@ const ProductDetail = () => {
               </div>
             ) : (
               reviews.map((review) => (
-                <motion.div 
+                <motion.div
                   key={review.id}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -869,7 +866,7 @@ const ProductDetail = () => {
           </div>
         </section>
       </main>
-      <BottomNav onSearchOpen={() => setSearchOpen(true)} />
+
       <CartDrawer />
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       <Footer />

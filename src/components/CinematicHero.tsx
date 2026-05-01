@@ -150,7 +150,7 @@ const CinematicHero = () => {
             style={{ y: textY, opacity: textOpacity }}
           >
             {/* Unique character-by-character reveal for Brand name */}
-            <h1 className="flex flex-wrap justify-center mb-4 sm:mb-8 overflow-hidden">
+            {/* <h1 className="flex flex-wrap justify-center mb-4 sm:mb-8 overflow-hidden">
               {"FlexTheKicks".split("").map((char, index) => (
                 <motion.span
                   key={index}
@@ -172,7 +172,7 @@ const CinematicHero = () => {
                   {char}
                 </motion.span>
               ))}
-            </h1>
+            </h1> */}
             
             <motion.div 
               initial={{ opacity: 0, letterSpacing: "0.2em" }}

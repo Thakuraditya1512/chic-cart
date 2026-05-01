@@ -80,7 +80,7 @@ const EmailInvoicePopup = ({ isOpen, onClose, onSubmit, loading = false }: Email
                 </p>
                 <div className="flex items-center gap-2 text-xs text-primary bg-primary/5 p-3 rounded-lg">
                   <Check className="w-4 h-4" />
-                  <span>You'll receive a beautifully formatted PDF invoice</span>
+                  {/* <span>You'll receive a beautifully formatted PDF invoice</span> */}
                 </div>
               </div>
 

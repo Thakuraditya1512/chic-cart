@@ -356,9 +356,16 @@ app.post('/api/newsletter', async (req, res) => {
         html: createWelcomeEmail(email)
       });
       return res.json({ success: true });
-    } else if (action === 'send-order-confirmation') {
+    } else if (action === 'send-order-confirmation' || action === 'send-invoice') {
       const displayId = orderDetails.transactionId ? orderDetails.transactionId.slice(-6).toUpperCase() : 'NEW';
-      await createInvoiceEmail(orderDetails, displayId);
+      const subject = action === 'send-invoice' ? `Invoice for Order #${displayId}` : `Order Confirmation #${displayId}`;
+      
+      await transporter.sendMail({
+        from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
+        to: email,
+        subject: subject,
+        html: createInvoiceEmail(orderDetails, displayId)
+      });
       return res.json({ success: true });
     }
   } catch (err) { res.status(500).json({ error: err.message }); }

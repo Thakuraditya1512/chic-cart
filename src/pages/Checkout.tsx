@@ -379,7 +379,7 @@ export default function Checkout() {
 
   const sendOrderEmail = async (orderDetails: any) => {
     try {
-      await fetch("https://flexthekicks-newsletter.onrender.com/api/newsletter", {
+      await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -395,7 +395,7 @@ export default function Checkout() {
 
   const sendInvoiceEmail = async (orderDetails: any) => {
     try {
-      await fetch("https://flexthekicks-newsletter.onrender.com/api/newsletter", {
+      const response = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -404,8 +404,13 @@ export default function Checkout() {
           orderDetails
         })
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to send invoice");
+      }
     } catch (err) {
       console.error("Failed to send invoice email", err);
+      throw err; // Re-throw so the popup knows it failed
     }
   };
 
@@ -418,9 +423,8 @@ export default function Checkout() {
       // Send invoice email
       await sendInvoiceEmail(orderDataWithEmail);
       
-      // Close popup and navigate to orders
-      setShowEmailPopup(false);
-      navigate("/orders");
+      // Note: We don't close the popup or navigate here
+      // The popup itself handles the "Success" state and calls onClose when the user clicks "Done"
     } catch (error) {
       console.error("Failed to send invoice:", error);
     } finally {

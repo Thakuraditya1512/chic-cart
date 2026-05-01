@@ -7,7 +7,7 @@ import ShoeShowcase from "@/components/ShoeShowcase";
 import NewPopularSection from "@/components/NewPopularSection";
 import Newsletter from "@/components/Newsletter";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
+
 import CartDrawer from "@/components/CartDrawer";
 import SearchOverlay from "@/components/SearchOverlay";
 import ChatBot from "@/components/ChatBot";
@@ -20,7 +20,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-foreground/20 overflow-x-hidden">
       <Helmet>
-        <title>Flex The Kicks - The Ultimate Sneaker Destination</title>
+        <title>  The Ultimate Sneaker Destination</title>
         <meta name="description" content="Shop the latest trends in sneakers, hype shoes, premium kicks at Flex The Kicks. Find limited drops and everyday classics." />
         <meta name="keywords" content="Sneakers, Shoes, Footwear, Fashion, Hype, Premium, Drops, Jordan, Nike" />
         <style>
@@ -47,31 +47,31 @@ const Index = () => {
       </Helmet>
 
       <Header onSearchOpen={() => setSearchOpen(true)} />
-      
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
         <main>
-        {/* 1. Full-screen cinematic video hero */}
-        <CinematicHero />
+          {/* 1. Full-screen cinematic video hero */}
+          <CinematicHero />
 
-        {/* 2. 3D Shoe showcase — Apple-style dark section */}
-        <ShoeShowcase />
+          {/* 2. 3D Shoe showcase — Apple-style dark section */}
+          <ShoeShowcase />
 
-        {/* 3. New & Popular with brand filter tabs */}
-        <NewPopularSection />
+          {/* 3. New & Popular with brand filter tabs */}
+          <NewPopularSection />
 
-        {/* 4. Recently Viewed products */}
-        {/* <RecentlyViewed /> */}
+          {/* 4. Recently Viewed products */}
+          {/* <RecentlyViewed /> */}
 
-        {/* 5. Newsletter */}
-        <Newsletter />
-      </main>
+          {/* 5. Newsletter */}
+          <Newsletter />
+        </main>
       </motion.div>
       <Footer />
-      <BottomNav onSearchOpen={() => setSearchOpen(true)} />
+
       <CartDrawer />
       <SearchOverlay
         isOpen={searchOpen}
