@@ -115,17 +115,12 @@ const CinematicHero = () => {
           loop
           playsInline
           preload="auto"
-          disablePictureInPicture
-          x-webkit-airplay="deny"
-          onLoadedData={() => setVideoLoaded(true)}
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             opacity: videoLoaded ? 1 : 0,
-            transition: "opacity 0.8s ease",
-            transform: "translateZ(0)",
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
+            transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
+          onLoadedData={() => setVideoLoaded(true)}
         >
           <source
             src="https://pub-6d3ad6ea0d07489482b17f729ac3c4a8.r2.dev/bn.mp4"
@@ -133,54 +128,67 @@ const CinematicHero = () => {
           />
         </video>
 
-        <div
-          className="absolute inset-0 z-10"
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0.55) 100%)",
-          }}
-        />
+        {/* Cinematic Overlays */}
+        <div className="absolute inset-0 z-10 bg-black/20" />
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
       </motion.div>
 
-      <motion.div
-        key={showIntro ? "intro" : "content"}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.9 }}
-        className="relative z-20 flex flex-col items-center justify-end h-full text-center px-4 pb-16"
-      >
+      <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4">
         {!showIntro && (
           <motion.div
             ref={textRef}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
             style={{ y: textY, opacity: textOpacity }}
-            className="flex flex-col items-center mb-6"
+            className="flex flex-col items-center"
           >
-            <h1
-              className="text-white leading-none font-normal drop-shadow-2xl mb-3"
+            <motion.h1
+              className="text-white leading-none font-normal mb-6"
               style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(2.2rem, 10vw, 4rem)",
-                letterSpacing: "-0.01em",
-                textShadow: "0 4px 24px rgba(0,0,0,0.45)",
+                fontSize: "clamp(3rem, 15vw, 10rem)",
+                letterSpacing: "-0.03em",
+                textShadow: "0 10px 40px rgba(0,0,0,0.5)",
               }}
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.5 }}
             >
               FlexTheKicks
-            </h1>
-            <p
-              className="text-white/80 font-medium drop-shadow-lg"
-              style={{
-                fontSize: "clamp(9px, 2.5vw, 11px)",
-                letterSpacing: "0.42em",
-                textTransform: "uppercase",
-                fontFamily: "'DM Sans', sans-serif",
-                textShadow: "0 2px 10px rgba(0,0,0,0.4)",
-              }}
+            </motion.h1>
+            
+            <div className="overflow-hidden">
+              <motion.p
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="text-white/90 font-bold tracking-[0.6em] uppercase"
+                style={{
+                  fontSize: "clamp(10px, 1.5vw, 14px)",
+                  fontFamily: "'DM Sans', sans-serif",
+                  textShadow: "0 4px 15px rgba(0,0,0,0.3)",
+                }}
+              >
+                The Ultimate Sneaker Destination
+              </motion.p>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
+              className="mt-12"
             >
-              Spring / Summer 2026 Collection
-            </p>
+              <button 
+                onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
+                className="px-8 py-3.5 bg-white text-black font-bold uppercase tracking-widest text-[11px] rounded-full hover:bg-white/90 hover:scale-105 transition-all duration-300 shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)]"
+              >
+                Explore Collection
+              </button>
+            </motion.div>
           </motion.div>
         )}
-      </motion.div>
+      </div>
 
       {!showIntro && (
         <motion.div

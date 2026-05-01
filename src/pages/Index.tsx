@@ -23,6 +23,27 @@ const Index = () => {
         <title>Flex The Kicks - The Ultimate Sneaker Destination</title>
         <meta name="description" content="Shop the latest trends in sneakers, hype shoes, premium kicks at Flex The Kicks. Find limited drops and everyday classics." />
         <meta name="keywords" content="Sneakers, Shoes, Footwear, Fashion, Hype, Premium, Drops, Jordan, Nike" />
+        <style>
+          {`
+            ::selection {
+              background: #6c5ce7;
+              color: white;
+            }
+            ::-webkit-scrollbar {
+              width: 5px;
+            }
+            ::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+              background: rgba(108, 92, 231, 0.3);
+              border-radius: 10px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+              background: rgba(108, 92, 231, 0.6);
+            }
+          `}
+        </style>
       </Helmet>
 
       <Header onSearchOpen={() => setSearchOpen(true)} />
