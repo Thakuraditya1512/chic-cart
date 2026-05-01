@@ -146,41 +146,57 @@ const CinematicHero = () => {
         {!showIntro && (
           <motion.div
             ref={textRef}
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center max-w-[90vw]"
             style={{ y: textY, opacity: textOpacity }}
-            className="flex flex-col items-center"
           >
-            <motion.h1
-              className="text-white leading-none font-normal mb-6"
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(3rem, 15vw, 10rem)",
-                letterSpacing: "-0.03em",
-                textShadow: "0 10px 40px rgba(0,0,0,0.5)",
-              }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.5 }}
-            >
-              FlexTheKicks
-            </motion.h1>
+            {/* Unique character-by-character reveal for Brand name */}
+            <h1 className="flex flex-wrap justify-center mb-4 sm:mb-8 overflow-hidden">
+              {"FlexTheKicks".split("").map((char, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ y: 200, opacity: 0, filter: "blur(20px)" }}
+                  animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                  transition={{ 
+                    duration: 1.2, 
+                    delay: index * 0.05, 
+                    ease: [0.16, 1, 0.3, 1] 
+                  }}
+                  className="text-white inline-block font-normal"
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "clamp(3.5rem, 18vw, 12rem)",
+                    letterSpacing: "-0.05em",
+                    textShadow: "0 20px 80px rgba(0,0,0,0.8)",
+                  }}
+                >
+                  {char}
+                </motion.span>
+              ))}
+            </h1>
             
-            <div className="overflow-hidden">
-              <motion.p
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="text-white/90 font-bold tracking-[0.6em] uppercase"
+            <motion.div 
+              initial={{ opacity: 0, letterSpacing: "0.2em" }}
+              animate={{ opacity: 1, letterSpacing: "0.6em" }}
+              transition={{ duration: 2, delay: 1, ease: "easeOut" }}
+              className="relative mb-12"
+            >
+              <p
+                className="text-white/80 font-black uppercase"
                 style={{
-                  fontSize: "clamp(10px, 1.5vw, 14px)",
+                  fontSize: "clamp(9px, 1.2vw, 12px)",
                   fontFamily: "'DM Sans', sans-serif",
-                  textShadow: "0 4px 15px rgba(0,0,0,0.3)",
+                  textShadow: "0 4px 10px rgba(0,0,0,0.4)",
                 }}
               >
                 The Ultimate Sneaker Destination
-              </motion.p>
-            </div>
+              </p>
+              <motion.div 
+                className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-[2px] bg-white/30" 
+                initial={{ width: 0 }}
+                animate={{ width: 48 }}
+                transition={{ duration: 1, delay: 1.5 }}
+              />
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
