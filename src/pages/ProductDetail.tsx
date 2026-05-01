@@ -676,11 +676,35 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" className="h-4" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />
-                <img src="https://static.phonepe.com/web/hermes/public/images/logo_color.png" alt="PhonePe" className="h-4" />
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-4 transition-all duration-500">
+                <div className="flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-auto text-foreground" fill="currentColor">
+                    <path d="M12.247 18.847l-3.32-3.32h-1.637l3.32 3.32h1.637zm3.178-3.32l-3.32 3.32h1.637l3.32-3.32h-1.637zm-6.356 0h-1.637l3.32 3.32h1.637l-3.32-3.32zM12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" />
+                  </svg>
+                  <span className="text-[10px] font-bold">UPI</span>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <svg viewBox="0 0 24 24" className="h-3 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.82 8.76l-1.46 8.75h2.33l1.46-8.75h-2.33zM22.84 8.76c-.53-.22-1.37-.46-2.4-.46-2.37 0-4.04 1.26-4.05 3.07-.01 1.33 1.19 2.07 2.1 2.51.93.45 1.24.74 1.24 1.15-.01.62-.75.9-1.44.9-1.2 0-1.85-.18-2.82-.6l-.39-.19-.42 2.6c.7.32 1.99.6 3.32.61 2.52 0 4.15-1.25 4.17-3.18.02-1.06-.63-1.87-2.02-2.54-.84-.42-1.36-.71-1.35-1.14 0-.38.42-.77 1.33-.77.75-.02 1.3.16 1.72.34l.2.1.41-2.5zm-11.83 5.4l-.23-1.12c-.4-.95-1.63-2.61-2.85-2.61h-2.23l-.04.18c1.78.45 2.96 1.54 3.45 2.87l2.25 6.2h2.46l3.66-8.75h-2.43l-2.04 3.23zm-7.61-5.4L1.07 17.51h2.46l3.66-8.75h-3.79z" fill="#1A1F71"/>
+                  </svg>
+                  <span className="text-[10px] font-bold">VISA</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <svg viewBox="0 0 24 24" className="h-4 w-auto" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="9" cy="12" r="7" fill="#EB001B" fillOpacity="0.8"/>
+                    <circle cx="15" cy="12" r="7" fill="#F79E1B" fillOpacity="0.8"/>
+                  </svg>
+                  <span className="text-[10px] font-bold">MC</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <svg viewBox="0 0 24 24" className="h-4 w-auto text-purple-600" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.467 2.25H4.533c-1.26 0-2.283 1.023-2.283 2.283v14.934c0 1.26 1.023 2.283 2.283 2.283h14.934c1.26 0 2.283-1.023 2.283-2.283V4.533c0-1.26-1.023-2.283-2.283-2.283zm-3.66 12.355l-2.001 2.001h-3.609l2.001-2.001H15.807zM11.996 5.865c1.879 0 3.402 1.523 3.402 3.402s-1.523 3.402-3.402 3.402-3.402-1.523-3.402-3.402 1.523-3.402 3.402-3.402z"/>
+                  </svg>
+                  <span className="text-[10px] font-bold text-purple-600">PhonePe</span>
+                </div>
               </div>
           </div>
         </div>
