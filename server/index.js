@@ -172,12 +172,47 @@ app.post('/api/newsletter', async (req, res) => {
         from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
         to: email,
         subject: `Order Confirmed: #${displayId} 👟`,
-        html: createOrderConfirmationEmail(orderDetails),
+        html: createOrderConfirmationEmail(orderDetails, displayId),
       };
 
-      await transporter.sendMail(mailOptions);
-      console.log(`✅ Order confirmation sent to ${email}`);
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Order confirmation sent to ${email}`);
+      } catch (mailError) {
+        console.error('❌ Failed to send order confirmation:', mailError);
+        return res.status(500).json({ 
+          error: 'Email delivery failed', 
+          message: 'Order confirmed but email failed to send.',
+          details: mailError.message 
+        });
+      }
+
       return res.json({ success: true, message: 'Order confirmation sent' });
+
+    } else if (action === 'send-invoice') {
+      const { orderDetails } = req.body;
+      const displayId = orderDetails.transactionId ? orderDetails.transactionId.slice(-6).toUpperCase() : 'INV';
+      const mailOptions = {
+        from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
+        to: email,
+        subject: `Invoice: #${displayId} 🧾`,
+        html: createInvoiceEmail(orderDetails, displayId),
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Invoice sent to ${email}`);
+      } catch (mailError) {
+        console.error('❌ Failed to send invoice:', mailError);
+        return res.status(500).json({ 
+          error: 'Email delivery failed', 
+          message: 'Invoice email failed to send.',
+          details: mailError.message 
+        });
+      }
+
+      return res.json({ success: true, message: 'Invoice sent' });
+
     }
 
     return res.status(400).json({ error: 'Invalid action' });
@@ -323,6 +358,110 @@ function createOrderConfirmationEmail(order) {
       </div>
     </div>
     <div class="footer">
+      <p>© 2024 Flex The Kicks. All rights reserved.</p>
+      <p>Questions? Contact us at support@flexthekicks.in</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function createInvoiceEmail(order, displayId) {
+  const itemsHtml = order.items.map(item => `
+    <div style="display: flex; gap: 15px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+      <img src="${item.image}" alt="${item.productName}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" />
+      <div style="flex: 1;">
+        <h4 style="margin: 0; font-size: 14px;">${item.productName}</h4>
+        <p style="margin: 5px 0; font-size: 12px; color: #666;">Size: ${item.size || 'N/A'} | Qty: ${item.quantity}</p>
+        <p style="margin: 0; font-weight: 700;">₹${item.price.toLocaleString()}</p>
+      </div>
+      <div style="text-align: right;">
+        <p style="margin: 0; font-weight: 700;">₹${(item.price * item.quantity).toLocaleString()}</p>
+      </div>
+    </div>
+  `).join('');
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background: #f9f9f9; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 25px rgba(0,0,0,0.05); }
+    .header { background: #000; color: white; padding: 40px 20px; text-align: center; }
+    .content { padding: 40px 30px; }
+    .invoice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+    .invoice-number { font-family: monospace; background: #000; color: white; padding: 10px 15px; border-radius: 6px; font-size: 16px; font-weight: bold; }
+    .billing-info { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .items-table th { background: #f8f9fa; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #000; }
+    .items-table td { padding: 12px; border-bottom: 1px solid #eee; }
+    .summary { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-top: 30px; }
+    .total-row { font-size: 18px; font-weight: 700; border-top: 2px solid #000; padding-top: 10px; }
+    .footer { padding: 30px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 28px; letter-spacing: 2px;">FLEX THE KICKS</h1>
+      <p style="margin-top: 10px; opacity: 0.8;">INVOICE</p>
+    </div>
+    <div class="content">
+      <div class="invoice-header">
+        <div>
+          <h3 style="margin: 0; color: #666; font-size: 14px;">INVOICE NUMBER</h3>
+          <span class="invoice-number">#${displayId}</span>
+        </div>
+        <div style="text-align: right;">
+          <h3 style="margin: 0; color: #666; font-size: 14px;">DATE</h3>
+          <p style="margin: 5px 0; font-weight: 600;">${new Date().toLocaleDateString('en-IN')}</p>
+        </div>
+      </div>
+
+      <div class="billing-info">
+        <h3 style="margin-top: 0;">Bill To:</h3>
+        <p style="margin: 5px 0; font-weight: 600;">${order.customerName}</p>
+        <p style="margin: 5px 0;">${order.email}</p>
+        <p style="margin: 5px 0;">${order.phone}</p>
+        <p style="margin: 5px 0;">${order.lane1}, ${order.lane2 || ''}</p>
+        <p style="margin: 5px 0;">${order.city} - ${order.zipCode}</p>
+      </div>
+
+      <h3 style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">Order Items</h3>
+      ${itemsHtml}
+
+      <div class="summary">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span>Subtotal</span>
+          <span>₹${order.subtotal.toLocaleString()}</span>
+        </div>
+        ${order.codCharge > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span>COD Charges</span>
+          <span>₹${order.codCharge.toLocaleString()}</span>
+        </div>
+        ` : ''}
+        ${order.discountAmount > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #28a745;">
+          <span>Discount (${order.discountPercent}%)</span>
+          <span>-₹${order.discountAmount.toLocaleString()}</span>
+        </div>
+        ` : ''}
+        <div style="display: flex; justify-content: space-between; total-row;">
+          <span>TOTAL</span>
+          <span>₹${order.total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+        <h4 style="margin: 0 0 10px 0; color: #856404;">Payment Information</h4>
+        <p style="margin: 5px 0; color: #856404;">Method: ${order.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment'}</p>
+        <p style="margin: 5px 0; color: #856404;">Status: ${order.status === 'paid' ? 'Paid' : 'Pending'}</p>
+        ${order.transactionId ? `<p style="margin: 5px 0; color: #856404;">Transaction ID: ${order.transactionId}</p>` : ''}
+      </div>
+    </div>
+    <div class="footer">
+      <p><strong>Thank you for your business!</strong></p>
       <p>© 2024 Flex The Kicks. All rights reserved.</p>
       <p>Questions? Contact us at support@flexthekicks.in</p>
     </div>

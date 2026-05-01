@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -10,6 +10,16 @@ const ShoeShowcase = () => {
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   // GSAP scroll animations
   useEffect(() => {
@@ -67,6 +77,14 @@ const ShoeShowcase = () => {
       ref={sectionRef}
       className="relative pt-24 pb-14 sm:py-24 md:py-40 bg-background text-foreground overflow-hidden noise-bg transition-colors duration-300"
     >
+      {/* Dynamic Cursor Glow */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none z-0 opacity-50 hidden md:block"
+        animate={{
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(139, 92, 246, 0.08), transparent 80%)`
+        }}
+      />
+
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] sm:w-[600px] h-[250px] sm:h-[600px] rounded-full bg-purple-500/10 blur-[60px] sm:blur-[120px] animate-glow-pulse" />
       <div className="absolute top-1/3 right-1/4 w-[200px] sm:w-[400px] h-[200px] sm:h-[400px] rounded-full bg-cyan-500/8 blur-[60px] sm:blur-[100px] animate-glow-pulse hidden sm:block" style={{ animationDelay: '1.5s' }} />

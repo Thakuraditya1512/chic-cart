@@ -333,6 +333,9 @@ export default function Checkout() {
       // Send confirmation email
       await sendOrderEmail(orderData);
 
+      // Send invoice email
+      await sendInvoiceEmail(orderData);
+
       // Save/Update address and contact info in user's permanent profile
       if (user?.uid) {
         try {
@@ -358,7 +361,7 @@ export default function Checkout() {
       if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
       toast.success("Order placed successfully! 🎉");
       clearCart(); 
-      navigate(`/payment-success?id=${docRef.id}&method=cod`);
+      navigate("/orders");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       setError(msg); toast.error(msg);
@@ -367,7 +370,7 @@ export default function Checkout() {
 
   const sendOrderEmail = async (orderDetails: any) => {
     try {
-      await fetch("/api/newsletter", {
+      await fetch("https://flexthekicks-newsletter.onrender.com/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -378,6 +381,22 @@ export default function Checkout() {
       });
     } catch (err) {
       console.error("Failed to send order confirmation email", err);
+    }
+  };
+
+  const sendInvoiceEmail = async (orderDetails: any) => {
+    try {
+      await fetch("https://flexthekicks-newsletter.onrender.com/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: orderDetails.email,
+          action: "send-invoice",
+          orderDetails
+        })
+      });
+    } catch (err) {
+      console.error("Failed to send invoice email", err);
     }
   };
 
@@ -403,10 +422,13 @@ export default function Checkout() {
       // Send confirmation email
       await sendOrderEmail(orderData);
 
+      // Send invoice email
+      await sendInvoiceEmail(orderData);
+
       clearCart();
       setShowQR(false);
       toast.success("Payment Received! Order placed.");
-      navigate(`/payment-success?id=${transactionId}`);
+      navigate("/orders");
     } catch (err) {
       toast.error("Failed to finalize order after payment");
     } finally {

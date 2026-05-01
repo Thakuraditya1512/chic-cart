@@ -26,7 +26,13 @@ const Index = () => {
       </Helmet>
 
       <Header onSearchOpen={() => setSearchOpen(true)} />
-      <main>
+      
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <main>
         {/* 1. Full-screen cinematic video hero */}
         <CinematicHero />
 
@@ -42,6 +48,7 @@ const Index = () => {
         {/* 5. Newsletter */}
         <Newsletter />
       </main>
+      </motion.div>
       <Footer />
       <BottomNav onSearchOpen={() => setSearchOpen(true)} />
       <CartDrawer />

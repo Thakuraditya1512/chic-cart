@@ -95,15 +95,14 @@ const CinematicHero = () => {
     return () => { anim.kill(); };
   }, [showIntro, isMobile]);
 
-  if (!isMobile) {
-    return null;
-  }
+  // if (!isMobile) {
+  //   return null;
+  // }
 
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden bg-black"
-      style={{ height: "85dvh" }}
+      className="relative w-full overflow-hidden bg-black h-screen"
     >
       <motion.div
         style={{ scale: videoScale }}
