@@ -230,7 +230,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           </div>
           <div className="flex justify-between items-center">
             <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium uppercase tracking-[0.1em]">
-              {product.brandId?.replace(/-/g, ' ') || 'Premium Kicks'}
+              {product.brand || 'Premium Kicks'}
             </p>
             {product.originalPrice && !isOutOfStock && (
               <p className="text-[10px] text-red-500 font-bold tracking-tight bg-red-500/5 px-1.5 py-0.5 rounded">
