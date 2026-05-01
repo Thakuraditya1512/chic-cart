@@ -205,6 +205,7 @@ const NewPopularSection = () => {
                 <Search size={14} className="text-muted-foreground" />
               </div>
               <input
+                id="shoes-search-input"
                 type="text"
                 placeholder="Search shoes..."
                 value={searchQuery}

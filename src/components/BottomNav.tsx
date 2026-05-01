@@ -21,7 +21,15 @@ const BottomNav = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
           </button>
 
           <button 
-            onClick={onSearchOpen} 
+            onClick={() => {
+              const searchInput = document.getElementById('shoes-search-input');
+              if (searchInput) {
+                searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => (searchInput as HTMLInputElement).focus(), 600);
+              } else {
+                onSearchOpen();
+              }
+            }} 
             className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors"
           >
             <Search size={20} />

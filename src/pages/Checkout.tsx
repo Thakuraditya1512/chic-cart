@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import PhonePeQR from "@/components/PhonePeQR";
+import EmailInvoicePopup from "@/components/EmailInvoicePopup";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -88,6 +89,10 @@ export default function Checkout() {
   const [selectedAddressIdx, setSelectedAddressIdx] = useState<number | null>(null);
   const [showQR, setShowQR] = useState(false);
   const [activeTransactionId, setActiveTransactionId] = useState("");
+  const [showEmailPopup, setShowEmailPopup] = useState(false);
+  const [invoiceEmail, setInvoiceEmail] = useState("");
+  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
+  const [completedOrderData, setCompletedOrderData] = useState<any>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -361,7 +366,11 @@ export default function Checkout() {
       if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
       toast.success("Order placed successfully! 🎉");
       clearCart(); 
-      navigate("/orders");
+      
+      // Store order data for invoice email
+      setCompletedOrderData(orderData);
+      // Show email popup for invoice
+      setShowEmailPopup(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       setError(msg); toast.error(msg);
@@ -400,6 +409,25 @@ export default function Checkout() {
     }
   };
 
+  const handleInvoiceEmail = async (email: string) => {
+    setIsSendingInvoice(true);
+    try {
+      // Update order data with the provided email
+      const orderDataWithEmail = { ...completedOrderData, email };
+      
+      // Send invoice email
+      await sendInvoiceEmail(orderDataWithEmail);
+      
+      // Close popup and navigate to orders
+      setShowEmailPopup(false);
+      navigate("/orders");
+    } catch (error) {
+      console.error("Failed to send invoice:", error);
+    } finally {
+      setIsSendingInvoice(false);
+    }
+  };
+
   const handleQRSuccess = async (data: any) => {
     try {
       setLoading(true);
@@ -422,13 +450,14 @@ export default function Checkout() {
       // Send confirmation email
       await sendOrderEmail(orderData);
 
-      // Send invoice email
-      await sendInvoiceEmail(orderData);
-
       clearCart();
       setShowQR(false);
       toast.success("Payment Received! Order placed.");
-      navigate("/orders");
+      
+      // Store order data for invoice email
+      setCompletedOrderData(orderData);
+      // Show email popup for invoice
+      setShowEmailPopup(true);
     } catch (err) {
       toast.error("Failed to finalize order after payment");
     } finally {
@@ -1097,6 +1126,17 @@ export default function Checkout() {
           border-width: 1px !important;
         }
       `}</style>
+
+      {/* Email Invoice Popup */}
+      <EmailInvoicePopup
+        isOpen={showEmailPopup}
+        onClose={() => {
+          setShowEmailPopup(false);
+          navigate("/orders");
+        }}
+        onSubmit={handleInvoiceEmail}
+        loading={isSendingInvoice}
+      />
     </div>
   );
 }

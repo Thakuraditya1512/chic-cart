@@ -10,6 +10,15 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 import gsap from "gsap";
 
 const Header = ({ onSearchOpen }: { onSearchOpen: () => void }) => {
+  const handleSearchClick = () => {
+    const searchInput = document.getElementById('shoes-search-input');
+    if (searchInput) {
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => (searchInput as HTMLInputElement).focus(), 600);
+    } else {
+      onSearchOpen();
+    }
+  };
   const navigate = useNavigate();
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin } = useAuth();

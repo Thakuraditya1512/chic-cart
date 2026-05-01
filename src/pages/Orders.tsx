@@ -16,7 +16,10 @@ import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€âinterface Order {
+/* ─────────────────────────────────────────────────────────────────────────────
+   Types
+───────────────────────────────────────────────────────────────────────────── */
+interface Order {
   id: string;
   customerName: string;
   email: string;
@@ -38,9 +41,9 @@ import { Textarea } from "@/components/ui/textarea";
   createdAt: any;
 }
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ─────────────────────────────────────────────────────────────────────────────
    Constants
- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+───────────────────────────────────────────────────────────────────────────── */
 const STATUS_STEPS = [
   { key: "pending",          label: "Placed",           Icon: ClipboardCheck },
   { key: "confirmed",        label: "Confirmed",        Icon: CheckCircle     },
@@ -61,9 +64,9 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string; do
   delivered:        { label: "Delivered",        color: "text-green-700  dark:text-green-400",   bg: "bg-green-50   dark:bg-green-400/10   border-green-200   dark:border-green-400/20",   dot: "bg-green-500"   },
 };
 
-/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ─────────────────────────────────────────────────────────────────────────────
    Tracking Map SVG (decorative)
-â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+───────────────────────────────────────────────────────────────────────────── */
 const TrackingMap = ({ dark }: { dark: boolean }) => (
   <div className={`relative rounded-xl overflow-hidden border ${dark ? "border-zinc-800 bg-zinc-900" : "border-gray-100 bg-gray-50"}`} style={{ height: 140 }}>
     {/* grid */}
@@ -180,7 +183,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
       transition={{ delay: index * 0.06 }}
       className={`rounded-2xl border overflow-hidden ${dark ? "bg-zinc-900/70 border-zinc-800/80" : "bg-white border-gray-100 shadow-sm"}`}
     >
-      {/* â”€â”€ Collapsed header â”€â”€ */}
+      {/* ── Collapsed header ── */}
       <button onClick={onToggle} className="w-full text-left">
         <div className={`px-4 py-4 flex items-center gap-3 transition-colors ${dark ? "hover:bg-white/[0.02]" : "hover:bg-gray-50/60"}`}>
 
@@ -216,7 +219,7 @@ const OrderCard = ({ order, index, expanded, onToggle, onReview, reviewedIds, da
         </div>
       </button>
 
-      {/* â”€â”€ Expanded body â”€â”€ */}
+      {/* ── Expanded body ── */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -500,7 +503,7 @@ const Orders = () => {
     <div className={`min-h-screen transition-colors duration-300 ${dk ? "bg-[#0a0a0a]" : "bg-gray-50"}`}>
       <div className="max-w-2xl mx-auto px-4 pt-6 pb-24">
 
-        {/* â”€â”€ Header â”€â”€ */}
+        {/* ── Header ── */}
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6 gap-2">
           <div className="flex items-center gap-2.5">
             <button
@@ -535,7 +538,7 @@ const Orders = () => {
           </div>
         </motion.div>
 
-        {/* â”€â”€ Stats â”€â”€ */}
+        {/* ── Stats ── */}
         <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="grid grid-cols-3 gap-2.5 mb-5">
           {[
@@ -551,7 +554,7 @@ const Orders = () => {
           ))}
         </motion.div>
 
-        {/* â”€â”€ Tabs â”€â”€ */}
+        {/* ── Tabs ── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
           className={`flex gap-1 p-1 rounded-xl border mb-5 ${dk ? "bg-zinc-900/60 border-zinc-800/60" : "bg-white border-gray-100 shadow-sm"}`}>
           {(["orders", "addresses"] as const).map(tab => (
@@ -569,7 +572,7 @@ const Orders = () => {
           ))}
         </motion.div>
 
-        {/* â”€â”€ Content â”€â”€ */}
+        {/* ── Content ── */}
         <AnimatePresence mode="wait">
           {activeTab === "addresses" ? (
             <motion.div key="addresses" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
@@ -624,7 +627,7 @@ const Orders = () => {
           )}
         </AnimatePresence>
 
-        {/* â”€â”€ Footer CTA â”€â”€ */}
+        {/* ── Footer CTA ── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-8 text-center">
           <button onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all active:scale-95">
@@ -633,7 +636,7 @@ const Orders = () => {
         </motion.div>
       </div>
 
-      {/* â•â• Review Modal â•â• */}
+      {/* ══ Review Modal ══ */}
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
         <DialogContent className={`max-w-sm mx-4 rounded-2xl border p-0 overflow-hidden shadow-2xl
           ${dk ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>
@@ -680,7 +683,7 @@ const Orders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* â•â• Coupon Modal â•â• */}
+      {/* ══ Coupon Modal ══ */}
       <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
         <DialogContent className={`max-w-xs mx-4 rounded-2xl border p-0 overflow-hidden shadow-2xl
           ${dk ? "bg-[#111118] border-white/10 text-white" : "bg-white border-black/10 text-gray-900"}`}>

@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { products } from "@/data/products";
 import { Product } from "@/types";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import gsap from "gsap";
 
 const SearchOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,24 +68,28 @@ const SearchOverlay = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         >
           {/* Header */}
           <div className="flex items-center gap-3 p-4 border-b border-border">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </motion.div>
-            <input
-              ref={inputRef}
-              autoFocus
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products..."
-              className="flex-1 text-base bg-transparent outline-none text-foreground placeholder:text-muted-foreground"
-            />
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                ref={inputRef}
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && query.trim()) {
+                    navigate(`/products?search=${encodeURIComponent(query.trim())}`);
+                    onClose();
+                  }
+                }}
+                placeholder="Search shoes..."
+                className="w-full pl-9 pr-4 py-2 bg-foreground/5 border border-foreground/10 rounded-full text-sm font-sans focus:outline-none focus:ring-2 focus:ring-foreground/20 focus:border-foreground/50 transition-all"
+              />
+            </div>
             <motion.button 
               onClick={onClose} 
               whileTap={{ scale: 0.9 }}
