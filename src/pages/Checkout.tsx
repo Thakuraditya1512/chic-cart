@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Loader2, AlertCircle, ArrowRight, ShoppingBag, MapPin, CheckCircle2,
   Navigation, Tag, ChevronRight, Plus, Check, X, Phone, Mail, User,
-  Home, Truck, Shield, Gift, Clock, Moon, Sun, Package
+  Home, Truck, Shield, Gift, Clock, Moon, Sun, Package, ShieldCheck, Lock, Smartphone
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "@/lib/firebase";
@@ -22,6 +22,25 @@ import PhonePeQR from "@/components/PhonePeQR";
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+const PhonePeIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.467 2.25H4.533c-1.26 0-2.283 1.023-2.283 2.283v14.934c0 1.26 1.023 2.283 2.283 2.283h14.934c1.26 0 2.283-1.023 2.283-2.283V4.533c0-1.26-1.023-2.283-2.283-2.283zm-3.66 12.355l-2.001 2.001h-3.609l2.001-2.001H15.807zM11.996 5.865c1.879 0 3.402 1.523 3.402 3.402s-1.523 3.402-3.402 3.402-3.402-1.523-3.402-3.402 1.523-3.402 3.402-3.402z"/>
+  </svg>
+);
+
+const VisaIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M15.82 8.76l-1.46 8.75h2.33l1.46-8.75h-2.33zM22.84 8.76c-.53-.22-1.37-.46-2.4-.46-2.37 0-4.04 1.26-4.05 3.07-.01 1.33 1.19 2.07 2.1 2.51.93.45 1.24.74 1.24 1.15-.01.62-.75.9-1.44.9-1.2 0-1.85-.18-2.82-.6l-.39-.19-.42 2.6c.7.32 1.99.6 3.32.61 2.52 0 4.15-1.25 4.17-3.18.02-1.06-.63-1.87-2.02-2.54-.84-.42-1.36-.71-1.35-1.14 0-.38.42-.77 1.33-.77.75-.02 1.3.16 1.72.34l.2.1.41-2.5zm-11.83 5.4l-.23-1.12c-.4-.95-1.63-2.61-2.85-2.61h-2.23l-.04.18c1.78.45 2.96 1.54 3.45 2.87l2.25 6.2h2.46l3.66-8.75h-2.43l-2.04 3.23zm-7.61-5.4L1.07 17.51h2.46l3.66-8.75h-3.79z" fill="#1A1F71"/>
+  </svg>
+);
+
+const MastercardIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <circle cx="9" cy="12" r="7" fill="#EB001B" fillOpacity="0.8"/>
+    <circle cx="15" cy="12" r="7" fill="#F79E1B" fillOpacity="0.8"/>
   </svg>
 );
 
@@ -250,7 +269,7 @@ export default function Checkout() {
   const handlePlaceOrder = async () => {
     try {
       setLoading(true); setError("");
-      const transactionId = `T${Date.now()}`;
+      const transactionId = `FLEX${Date.now()}${Math.floor(Math.random() * 1000)}`;
       const orderData = {
         userId: user?.uid || "guest",
         customerName: customerData.fullName, email: customerData.email, phone: customerData.phone,
@@ -338,7 +357,8 @@ export default function Checkout() {
 
       if (appliedCouponId) await updateDoc(doc(db, "coupons", appliedCouponId), { isUsed: true, usedAt: serverTimestamp(), orderId: docRef.id });
       toast.success("Order placed successfully! 🎉");
-      clearCart(); navigate("/orders");
+      clearCart(); 
+      navigate(`/payment-success?id=${docRef.id}&method=cod`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       setError(msg); toast.error(msg);
@@ -386,7 +406,7 @@ export default function Checkout() {
       clearCart();
       setShowQR(false);
       toast.success("Payment Received! Order placed.");
-      navigate("/orders");
+      navigate(`/payment-success?id=${transactionId}`);
     } catch (err) {
       toast.error("Failed to finalize order after payment");
     } finally {
@@ -529,7 +549,8 @@ export default function Checkout() {
               <PhonePeQR 
                 amount={finalTotal} 
                 transactionId={activeTransactionId} 
-                userId={user.uid} 
+                userId={user?.uid || "guest_user"} 
+                mobileNumber={customerData.phone}
                 isDarkMode={isDarkMode}
                 onSuccess={handleQRSuccess}
                 onCancel={() => setShowQR(false)}
@@ -834,10 +855,16 @@ export default function Checkout() {
                           className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${paymentMethod === "PHONEPE" ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-black/[0.02]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"}`}`}
                         >
                           <div className="flex items-center gap-3">
-                            <Shield className={`w-5 h-5 ${paymentMethod === "PHONEPE" ? "text-purple-500" : textMuted}`} />
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === "PHONEPE" ? "bg-purple-500/20" : "bg-black/5"}`}>
+                              <PhonePeIcon className={`w-6 h-6 ${paymentMethod === "PHONEPE" ? "text-purple-600" : textMuted}`} />
+                            </div>
                             <div className="text-left">
                               <p className={`text-sm font-bold ${paymentMethod === "PHONEPE" ? textPrimary : textSub}`}>PhonePe Redirect</p>
-                              <p className={`text-[10px] ${textMuted}`}>Pay on PhonePe App/Web</p>
+                              <div className="flex items-center gap-1.5">
+                                <VisaIcon className="w-6 h-3 opacity-60" />
+                                <MastercardIcon className="w-3 h-3 opacity-60" />
+                                <p className={`text-[10px] ${textMuted}`}>Cards/UPI/Wallet</p>
+                              </div>
                             </div>
                           </div>
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === "PHONEPE" ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
@@ -850,10 +877,12 @@ export default function Checkout() {
                           className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${paymentMethod === ("PHONEPE_QR" as any) ? (isDarkMode ? "border-white bg-white/5" : "border-[#0f0f0f] bg-black/[0.02]") : `${inputBorder} ${isDarkMode ? "bg-zinc-950/30" : "bg-white"}`}`}
                         >
                           <div className="flex items-center gap-3">
-                            <Plus className={`w-5 h-5 ${paymentMethod === ("PHONEPE_QR" as any) ? "text-purple-500" : textMuted}`} />
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${paymentMethod === ("PHONEPE_QR" as any) ? "bg-purple-500/20" : "bg-black/5"}`}>
+                              <Smartphone className={`w-6 h-6 ${paymentMethod === ("PHONEPE_QR" as any) ? "text-purple-600" : textMuted}`} />
+                            </div>
                             <div className="text-left">
                               <p className={`text-sm font-bold ${paymentMethod === ("PHONEPE_QR" as any) ? textPrimary : textSub}`}>Dynamic QR Scan</p>
-                              <p className={`text-[10px] ${textMuted}`}>Scan & Pay directly</p>
+                              <p className={`text-[10px] ${textMuted}`}>Scan & Pay with any App</p>
                             </div>
                           </div>
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === ("PHONEPE_QR" as any) ? (isDarkMode ? "border-white bg-white" : "border-[#0f0f0f] bg-[#0f0f0f]") : (isDarkMode ? "border-zinc-800" : "border-black/10")}`}>
@@ -1001,11 +1030,16 @@ export default function Checkout() {
                     <span>−₹{discountAmount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
-                <div className={`flex justify-between font-bold text-base pt-2 border-t ${divider}`}>
-                  <span className={textPrimary}>Total ({paymentMethod})</span>
+                <div className={`flex justify-between font-bold text-lg pt-3 border-t ${divider}`}>
+                  <span className={textPrimary}>Grand Total</span>
                   <span className={textPrimary}>₹{finalTotal.toLocaleString('en-IN')}</span>
                 </div>
-                <p className={`text-[10px] ${textMuted} mt-1 text-center font-bold uppercase tracking-wider`}>Payment Method: {paymentMethod === "COD" ? "Cash on Delivery" : "PhonePe / UPI"}</p>
+                {paymentMethod !== "COD" && (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 py-1.5 bg-emerald-500/5 rounded-lg border border-emerald-500/10">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Secure Online Payment</span>
+                  </div>
+                )}
               </div>
 
               {/* WhatsApp */}

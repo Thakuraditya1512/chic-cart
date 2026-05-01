@@ -1,4 +1,4 @@
-import { ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler, Share2, Heart, Plus, Minus, ArrowLeft, Check, Bell, Loader2, Truck } from "lucide-react";
+import { ShoppingBag, Star, CheckCircle2, MessageCircle, Ruler, Share2, Heart, Plus, Minus, ArrowLeft, Check, Bell, Loader2, Truck, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import gsap from "gsap";
@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect, useRef } from "react";
+import { useTheme } from "@/hooks/useTheme";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import CartDrawer from "@/components/CartDrawer";
@@ -42,6 +43,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isDark: isDarkMode } = useTheme();
   const [product, setProduct] = useState<Product | null>(null);
   const [brand, setBrand] = useState<Brand | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -438,31 +440,45 @@ const ProductDetail = () => {
               </span>
             </div>
 
-            <div className="flex flex-col gap-2 mb-4 sm:mb-6">
-              <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border border-border bg-card/20 w-fit">
-                <span className="text-xl sm:text-2xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-card/30 backdrop-blur-sm w-fit">
+                <span className="text-2xl sm:text-3xl font-bold text-foreground">₹{product.price.toLocaleString('en-IN')}</span>
                 {product.originalPrice && (
-                  <span className="text-sm sm:text-lg text-muted-foreground line-through">₹{product.originalPrice.toLocaleString('en-IN')}</span>
-                )}
-                {product.originalPrice && (
-                  <span className="text-[9px] sm:text-xs font-bold uppercase px-2 py-1 bg-sale text-sale-foreground rounded-sm">
-                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% off
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs sm:text-sm text-muted-foreground line-through opacity-50">₹{product.originalPrice.toLocaleString('en-IN')}</span>
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">
+                      Save ₹{(product.originalPrice - product.price).toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest bg-emerald-500/5 px-3 py-1.5 rounded-lg w-fit border border-emerald-500/10">
-                <CheckCircle2 size={12} />
-                Cash on Delivery Available
-              </div>
-              <div className="flex items-center gap-2 text-foreground/60 font-medium text-[10px] uppercase tracking-widest bg-foreground/5 px-3 py-1.5 rounded-lg w-fit border border-border">
-                <Truck size={12} />
-                Est. Delivery: {getEstimatedDelivery()}
+              
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-widest bg-emerald-500/5 px-3 py-2 rounded-xl border border-emerald-500/10 shadow-sm">
+                  <CheckCircle2 size={12} />
+                  Cash on Delivery
+                </div>
+                <div className="flex items-center gap-2 text-blue-500 font-bold text-[10px] uppercase tracking-widest bg-blue-500/5 px-3 py-2 rounded-xl border border-blue-500/10 shadow-sm">
+                  <Truck size={12} />
+                  Delivery by {getEstimatedDelivery()}
+                </div>
+                <div className="flex items-center gap-2 text-amber-500 font-bold text-[10px] uppercase tracking-widest bg-amber-500/5 px-3 py-2 rounded-xl border border-amber-500/10 shadow-sm">
+                  <ShieldCheck size={12} />
+                  100% Authentic
+                </div>
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6 sm:mb-8">
-              {product.description}
-            </p>
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border/50"></div>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">Description</span>
+                <div className="h-px flex-1 bg-border/50"></div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {product.description}
+              </p>
+            </div>
 
             {/* Sizes */}
             {product.sizes && (
@@ -628,8 +644,47 @@ const ProductDetail = () => {
                 </AccordionItem>
               </Accordion>
             </div>
+
+            {/* Premium Trust Badges */}
+            <div className={`p-6 rounded-[2rem] ${isDarkMode ? 'bg-zinc-900/40' : 'bg-zinc-50'} border border-border mt-8 space-y-6`}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <ShieldCheck className="text-primary" size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold tracking-tight">Premium Guarantee</h4>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Secure Checkout</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Payments</p>
+                  <p className="text-xs font-medium">PhonePe, UPI, COD</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Shipping</p>
+                  <p className="text-xs font-medium">Free Pan-India Delivery</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Authenticity</p>
+                  <p className="text-xs font-medium">100% Original Pairs</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">Support</p>
+                  <p className="text-xs font-medium">24/7 Premium Chat</p>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-between opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" alt="UPI" className="h-4" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />
+                <img src="https://static.phonepe.com/web/hermes/public/images/logo_color.png" alt="PhonePe" className="h-4" />
+              </div>
           </div>
         </div>
+      </div>
 
         {/* Recently Viewed */}
         {recentlyViewed.length > 0 && (

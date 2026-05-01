@@ -381,24 +381,34 @@ async function getPhonePeToken() {
 }
 
 // Generate QR code
-app.post('/api/phonepe/qr', async (req, res) => {
+  app.post('/api/phonepe/qr', async (req, res) => {
   try {
-    const { amount, transactionId, userId } = req.body;
+    const { amount, transactionId, userId, mobileNumber } = req.body;
     if (!amount || !transactionId || !userId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     const token = await getPhonePeToken();
+    const origin = req.headers.origin
+      || (req.headers.referer ? new URL(req.headers.referer).origin : 'https://flexthekicks.in');
+    
     const payload = {
+      merchantId: PHONEPE_CLIENT_ID,
       merchantOrderId: transactionId,
+      merchantUserId: userId,
       amount: Math.round(amount * 100),
       expireAfter: 1800,
+      metaInfo: { udf1: userId, udf2: mobileNumber || '' },
       paymentFlow: {
         type: 'PG_QR_GEN',
-        message: 'Scan to pay for your sneakers'
+        message: 'Scan to pay for your sneakers',
+        merchantUrls: {
+          callbackUrl: `${origin}/api/phonepe/callback`
+        }
       },
     };
 
+    console.log('🚀 Sending payload to PhonePe /qr:', JSON.stringify(payload, null, 2));
     const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
@@ -416,8 +426,13 @@ app.post('/api/phonepe/qr', async (req, res) => {
 
     console.log('🔍 PhonePe /qr raw response:', JSON.stringify(responseData, null, 2));
 
-    const qrString = responseData.qrString || (responseData.data && responseData.data.qrString);
-    const orderId  = responseData.orderId  || (responseData.data && responseData.data.merchantOrderId);
+    const qrString = responseData.qrString || 
+                     (responseData.data && responseData.data.qrString) ||
+                     (responseData.paymentFlow && responseData.paymentFlow.qrString);
+    
+    const orderId = responseData.orderId || 
+                    (responseData.data && responseData.data.merchantOrderId) ||
+                    (responseData.paymentFlow && responseData.paymentFlow.merchantOrderId);
 
     if (qrString) {
       console.log('✅ QR String generated successfully');
@@ -446,9 +461,13 @@ app.post('/api/phonepe/pay', async (req, res) => {
       || (req.headers.referer ? new URL(req.headers.referer).origin : 'https://flexthekicks.in');
 
     const payload = {
+      merchantId:      PHONEPE_CLIENT_ID,
       merchantOrderId: transactionId,
+      merchantUserId:  userId,
       amount:          Math.round(amount * 100),
       expireAfter:     1800,
+      terminalId:      'TERMINAL01',
+      storeId:         'STORE01',
       metaInfo: { udf1: userId, udf2: mobileNumber || '' },
       paymentFlow: {
         type:    'PG_CHECKOUT',

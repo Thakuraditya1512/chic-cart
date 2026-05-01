@@ -44,6 +44,27 @@ export default function PaymentSuccess() {
   }, [transactionId]);
 
   const verifyPayment = async (attempt = 0) => {
+    const isCOD = searchParams.get("method") === "cod";
+
+    if (isCOD) {
+      try {
+        const snap = await getDocs(query(collection(db, "orders"), where("__name__", "==", transactionId)));
+        if (!snap.empty) {
+          const orderData = { id: snap.docs[0].id, ...snap.docs[0].data() };
+          setOrderDetails(orderData);
+          setStatus("success");
+          clearCart();
+          await sendOrderEmail(orderData);
+          return;
+        }
+        throw new Error("Order not found");
+      } catch (err) {
+        console.error("COD order verification failed", err);
+        setStatus("failed");
+        return;
+      }
+    }
+
     try {
       const response = await fetch(`/api/phonepe/status/${transactionId}`);
 
@@ -56,7 +77,6 @@ export default function PaymentSuccess() {
       const data = JSON.parse(text);
 
       if (data.success && data.status === 'COMPLETED') {
-        // Update order status in Firebase
         const q = query(collection(db, "orders"), where("transactionId", "==", transactionId));
         const snapshot = await getDocs(q);
 
@@ -70,7 +90,6 @@ export default function PaymentSuccess() {
           });
           const orderData = { id: orderDoc.id, ...orderDoc.data() };
           setOrderDetails(orderData);
-          // Send confirmation email
           await sendOrderEmail(orderData);
         }
 
@@ -79,8 +98,7 @@ export default function PaymentSuccess() {
         localStorage.removeItem('pending_order');
         toast.success("Payment successful! 🎉");
 
-      } else if (data.status === 'PENDING' && attempt < 3) {
-        // Poll up to 3 times with a 3-second delay for pending transactions
+      } else if (data.status === 'PENDING' && attempt < 10) {
         setTimeout(() => verifyPayment(attempt + 1), 3000);
       } else {
         setStatus("failed");
@@ -147,17 +165,49 @@ export default function PaymentSuccess() {
 
               <div className="space-y-2">
                 <h2 className={`text-3xl font-bold tracking-tight ${textPrimary}`}>Order Confirmed!</h2>
-                <p className={textMuted}>Your payment was successful and your order is being prepared.</p>
+                <p className={textMuted}>
+                  {orderDetails?.paymentMethod === "COD" 
+                    ? "Your order has been received and will be delivered soon."
+                    : "Your payment was successful and your order is being prepared."}
+                </p>
               </div>
 
               <div className={`p-6 rounded-3xl ${isDarkMode ? "bg-white/5" : "bg-black/[0.02]"} border ${isDarkMode ? "border-white/5" : "border-black/[0.05]"} text-left space-y-4`}>
-                <div className="flex justify-between items-center">
-                  <span className={`text-xs font-bold uppercase tracking-widest ${textMuted}`}>Transaction ID</span>
-                  <span className={`text-sm font-mono ${textPrimary}`}>{transactionId?.slice(0, 12)}...</span>
+                <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                  <span className={`text-xs font-bold uppercase tracking-widest ${textMuted}`}>Order Summary</span>
+                  <span className={`text-xs font-bold ${textPrimary}`}>#{orderDetails?.id?.slice(-8).toUpperCase()}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className={`text-xs font-bold uppercase tracking-widest ${textMuted}`}>Payment Status</span>
-                  <span className="text-xs font-bold px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded-md">COMPLETED</span>
+                
+                <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                  {orderDetails?.items?.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/5 overflow-hidden flex-shrink-0">
+                        <img src={item.image} alt={item.productName} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs font-bold truncate ${textPrimary}`}>{item.productName}</p>
+                        <p className={`text-[10px] ${textMuted}`}>Size: {item.size} × {item.quantity}</p>
+                      </div>
+                      <span className={`text-xs font-bold ${textPrimary}`}>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-3 border-t border-white/5 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${textMuted}`}>Status</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      orderDetails?.paymentMethod === "COD" 
+                        ? "bg-amber-500/10 text-amber-500" 
+                        : "bg-emerald-500/10 text-emerald-500"
+                    }`}>
+                      {orderDetails?.paymentMethod === "COD" ? "PAY ON DELIVERY" : "PAID ONLINE"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${textMuted}`}>Total Paid</span>
+                    <span className={`text-sm font-bold ${textPrimary}`}>₹{orderDetails?.total?.toLocaleString('en-IN')}</span>
+                  </div>
                 </div>
               </div>
 

@@ -1782,6 +1782,30 @@ const Admin = () => {
                                           </div>
                                         </div>
 
+                                        {/* Payment info */}
+                                        <div>
+                                          <SectionLabel>Payment Details</SectionLabel>
+                                          <div className="mt-2 p-3.5 rounded-xl bg-white/3 border border-white/6
+                                    text-xs text-white/50 space-y-2">
+                                            <div className="flex justify-between items-center">
+                                              <span>Method:</span>
+                                              <span className={`font-bold ${(order as any).paymentMethod === "COD" ? "text-amber-400" : "text-emerald-400"}`}>
+                                                {(order as any).paymentMethod === "COD" ? "Cash on Delivery" : "Paid Online"}
+                                              </span>
+                                            </div>
+                                            {(order as any).transactionId && (
+                                              <div className="flex justify-between items-center">
+                                                <span>Txn ID:</span>
+                                                <span className="font-mono text-white/70">{(order as any).transactionId}</span>
+                                              </div>
+                                            )}
+                                            <div className="flex justify-between items-center pt-1 border-t border-white/6">
+                                              <span className="font-bold text-white">Grand Total:</span>
+                                              <span className="text-sm font-bold text-white">₹{order.total.toLocaleString('en-IN')}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+
                                         {/* Update status */}
                                         <div>
                                           <SectionLabel>Update Status</SectionLabel>

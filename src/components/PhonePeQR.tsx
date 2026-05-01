@@ -8,16 +8,17 @@ interface PhonePeQRProps {
   amount: number;
   transactionId: string;
   userId: string;
+  mobileNumber?: string;
   onSuccess: (data: any) => void;
   onCancel: () => void;
   isDarkMode?: boolean;
 }
 
-export default function PhonePeQR({ amount, transactionId, userId, onSuccess, onCancel, isDarkMode = true }: PhonePeQRProps) {
+export default function PhonePeQR({ amount, transactionId, userId, mobileNumber, onSuccess, onCancel, isDarkMode = true }: PhonePeQRProps) {
   const [qrString, setQrString] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<"PENDING" | "COMPLETED" | "FAILED" | "EXPIRED">("PENDING");
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes
 
   useEffect(() => {
     generateQR();
@@ -41,7 +42,7 @@ export default function PhonePeQR({ amount, transactionId, userId, onSuccess, on
       const resp = await fetch("/api/phonepe/qr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, transactionId, userId }),
+        body: JSON.stringify({ amount, transactionId, userId, mobileNumber }),
       });
 
       const data = await resp.json();
@@ -90,6 +91,7 @@ export default function PhonePeQR({ amount, transactionId, userId, onSuccess, on
         </div>
         
         <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? "text-white" : "text-black"}`}>Dynamic QR Payment</h3>
+        <p className={`text-2xl font-black mb-1 ${isDarkMode ? "text-white" : "text-black"}`}>₹{amount.toLocaleString('en-IN')}</p>
         <p className={`text-sm mb-6 ${isDarkMode ? "text-zinc-400" : "text-gray-500"}`}>Scan the QR code below using any UPI app</p>
 
         <div className={`relative p-4 rounded-2xl ${isDarkMode ? "bg-white" : "bg-gray-50"} mb-6`}>

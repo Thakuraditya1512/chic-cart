@@ -97,7 +97,7 @@ const Footer = () => {
               <div className="flex items-center gap-4">
                 <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2 group hover:border-purple-500/50 transition-colors">
                   <svg viewBox="0 0 24 24" className="w-5 h-5 fill-purple-500" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+                    <path d="M19.467 2.25H4.533c-1.26 0-2.283 1.023-2.283 2.283v14.934c0 1.26 1.023 2.283 2.283 2.283h14.934c1.26 0 2.283-1.023 2.283-2.283V4.533c0-1.26-1.023-2.283-2.283-2.283zm-3.66 12.355l-2.001 2.001h-3.609l2.001-2.001H15.807zM11.996 5.865c1.879 0 3.402 1.523 3.402 3.402s-1.523 3.402-3.402 3.402-3.402-1.523-3.402-3.402 1.523-3.402 3.402-3.402z"/>
                   </svg>
                   <span className="text-xs font-bold text-foreground">PhonePe</span>
                 </div>
