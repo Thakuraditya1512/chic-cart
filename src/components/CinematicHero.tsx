@@ -131,7 +131,7 @@ const CinematicHero = () => {
           <div 
             className="absolute inset-0 w-full h-full bg-cover bg-center"
             style={{ 
-              backgroundImage: 'url("https://images.unsplash.com/photo-1552346154-21d32810aba3?q=80&w=2070&auto=format&fit=crop")',
+              backgroundImage: 'url("https://th.bing.com/th/id/R.63bb611cf511fd604dd6b5cb7bcbcc23?rik=E8ov2QAILw%2bAfw&riu=http%3a%2f%2fwallpapercave.com%2fwp%2ftjeKBs2.jpg&ehk=6rhUYwTn8J9n5nX1oADbKnVyGedq7Q6lgD45H3Taz6I%3d&risl=&pid=ImgRaw&r=0")',
               filter: 'brightness(0.6)'
             }}
           />
