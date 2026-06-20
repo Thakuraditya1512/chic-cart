@@ -313,7 +313,8 @@ export default function Checkout() {
             amount: finalTotal,
             transactionId: transactionId,
             userId: user?.uid || "guest",
-            mobileNumber: customerData.phone
+            mobileNumber: customerData.phone,
+            email: orderEmail
           })
         });
 

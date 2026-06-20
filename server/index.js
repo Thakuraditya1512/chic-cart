@@ -52,6 +52,9 @@ const transporter = nodemailer.createTransport({
   tls: { rejectUnauthorized: false }
 });
 
+// Flag whether SMTP credentials are present to avoid attempting sends when not configured
+const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_HOST);
+
 function generateOTP() { return Math.floor(100000 + Math.random() * 900000).toString(); }
 function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
@@ -383,6 +386,11 @@ let _token = null;
 let _expiry = 0;
 
 async function getAuth() {
+  if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+    console.error('❌ PhonePe credentials missing: set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET');
+    throw new Error('PhonePe credentials not configured. Set PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET in .env');
+  }
+
   if (_token && Date.now() < _expiry - 30000) return _token;
   const params = new URLSearchParams({
     client_id: PHONEPE_CLIENT_ID,
@@ -519,7 +527,7 @@ app.post('/api/phonepe/pay', async (req, res) => {
     const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
     if (redirectUrl) {
       // Send a lightweight acknowledgement email (order received, will confirm after payment)
-      if (email && transporter) {
+      if (email && smtpConfigured) {
         const mail = {
           from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
           to: email,
