@@ -401,40 +401,156 @@ async function getAuth() {
 
 app.post('/api/phonepe/qr', async (req, res) => {
   try {
-    const token = await getAuth();
     const { amount, transactionId, userId } = req.body;
+
+    if (!amount || !transactionId || !userId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const token = await getAuth();
+
+    const payload = {
+      merchantOrderId: transactionId,
+      amount: Math.round(amount * 100),
+      expireAfter: 1800,
+      paymentFlow: {
+        type: 'PG_QR_GEN',
+        message: 'Scan to pay for your sneakers'
+      },
+    };
+
     const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
-      body: JSON.stringify({
-        merchantId: PHONEPE_CLIENT_ID,
-        merchantOrderId: transactionId,
-        merchantUserId: userId,
-        amount: Math.round(amount * 100),
-        expireAfter: 1800,
-        paymentFlow: { type: 'PG_QR_GEN', message: 'Pay for your kicks' }
-      })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `O-Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
     });
-    const data = await resp.json();
-    const qrString = data.qrString || (data.data && data.data.qrString);
-    if (qrString) return res.json({ success: true, qrString });
-    res.status(500).json({ error: 'QR Failed', details: data });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    const text = await resp.text();
+    let responseData;
+    try { 
+      responseData = JSON.parse(text); 
+    } catch { 
+      console.error('❌ Failed to parse PhonePe response:', text);
+      return res.status(502).json({ error: 'Invalid response from PhonePe' }); 
+    }
+
+    const qrString = responseData.qrString || (responseData.data && responseData.data.qrString);
+    const orderId  = responseData.orderId  || (responseData.data && responseData.data.merchantOrderId);
+
+    if (qrString) {
+      return res.json({ 
+        success: true, 
+        qrString,
+        orderId 
+      });
+    }
+
+    const errorMsg = responseData.message || (responseData.data && responseData.data.message) || 'Failed to generate QR';
+    return res.status(500).json({ error: errorMsg, details: responseData });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/phonepe/pay', async (req, res) => {
+  try {
+    const { amount, transactionId, userId, mobileNumber } = req.body;
+
+    if (!amount || !transactionId || !userId) {
+      return res.status(400).json({ error: 'Missing required fields: amount, transactionId, userId' });
+    }
+
+    const token  = await getAuth();
+    const origin = req.headers.origin
+      || (req.headers.referer ? new URL(req.headers.referer).origin : 'https://flexthekicks.in');
+
+    const payload = {
+      merchantOrderId:  transactionId,
+      amount:           Math.round(amount * 100),  // paise
+      expireAfter:      1800,                      // 30 min
+      metaInfo: {
+        udf1: userId,
+        udf2: mobileNumber || '',
+      },
+      paymentFlow: {
+        type: 'PG_CHECKOUT',
+        message: 'Flex The Kicks — Secure Payment',
+        merchantUrls: {
+          redirectUrl: `${origin}/payment-success?id=${transactionId}`,
+        },
+      },
+    };
+
+    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `O-Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await resp.text();
+    let data;
+    try   { data = JSON.parse(text); }
+    catch { console.error('PhonePe non-JSON response:', text.substring(0, 400)); return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+
+    const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
+    if (redirectUrl) {
+      return res.json({ success: true, url: redirectUrl, orderId: data.orderId });
+    }
+
+    return res.status(500).json({ error: data.message || 'Failed to initiate payment', details: data });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
 });
 
 app.get('/api/phonepe/status/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     const token = await getAuth();
-    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/order/${req.params.id}/status`, {
-      headers: { 'Authorization': `O-Bearer ${token}` }
+
+    const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/order/${id}/status`, {
+      method:  'GET',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `O-Bearer ${token}`,
+      },
     });
-    const data = await resp.json();
-    res.json(data);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    const text = await resp.text();
+    let data;
+    try   { data = JSON.parse(text); }
+    catch { console.error('PhonePe status non-JSON:', text.substring(0, 400)); return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+
+    const state = (data.state || '').toUpperCase();
+    if (state === 'COMPLETED') {
+      return res.json({ success: true, status: 'COMPLETED', data });
+    } else if (state === 'PENDING') {
+      return res.json({ success: true, status: 'PENDING', data });
+    } else {
+      return res.json({ success: false, status: state || 'FAILED', data });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+app.post('/api/phonepe/callback', (req, res) => {
+  try {
+    console.log('PhonePe callback:', JSON.stringify(req.body));
+    return res.json({ success: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // SPA Routing Fallback
-app.get('*', (req, res) => {
+app.use(/.*/,  (req, res) => {
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(distPath, 'index.html'));
   } else {

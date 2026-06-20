@@ -93,6 +93,8 @@ export default function Checkout() {
   const [invoiceEmail, setInvoiceEmail] = useState("");
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const [completedOrderData, setCompletedOrderData] = useState<any>(null);
+  const [showEmailConfirmModal, setShowEmailConfirmModal] = useState(false);
+  const [confirmEmailInput, setConfirmEmailInput] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("theme") === "dark";
@@ -271,13 +273,19 @@ export default function Checkout() {
     setStep("review");
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrderClick = () => {
+    setConfirmEmailInput(customerData.email || "");
+    setShowEmailConfirmModal(true);
+  };
+
+  const handlePlaceOrder = async (confirmedEmail?: string) => {
     try {
       setLoading(true); setError("");
+      const orderEmail = confirmedEmail || customerData.email;
       const transactionId = `FLEX${Date.now()}${Math.floor(Math.random() * 1000)}`;
       const orderData = {
         userId: user?.uid || "guest",
-        customerName: customerData.fullName, email: customerData.email, phone: customerData.phone,
+        customerName: customerData.fullName, email: orderEmail, phone: customerData.phone,
         lane1: addressData.lane1, lane2: addressData.lane2, landmark: addressData.landmark,
         city: addressData.city, zipCode: addressData.zipCode,
         location: locationData ? { latitude: locationData.latitude, longitude: locationData.longitude, googleMapsLink: addressData.googleMapsLink || `https://www.google.com/maps?q=${locationData.latitude},${locationData.longitude}` } : addressData.googleMapsLink ? { latitude: 0, longitude: 0, googleMapsLink: addressData.googleMapsLink } : null,
@@ -367,10 +375,8 @@ export default function Checkout() {
       toast.success("Order placed successfully! 🎉");
       clearCart(); 
       
-      // Store order data for invoice email
-      setCompletedOrderData(orderData);
-      // Show email popup for invoice
-      setShowEmailPopup(true);
+      // Redirect directly to payment success page for COD
+      navigate(`/payment-success?method=cod&id=${docRef.id}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to place order";
       setError(msg); toast.error(msg);
@@ -458,10 +464,8 @@ export default function Checkout() {
       setShowQR(false);
       toast.success("Payment Received! Order placed.");
       
-      // Store order data for invoice email
-      setCompletedOrderData(orderData);
-      // Show email popup for invoice
-      setShowEmailPopup(true);
+      // Redirect directly to payment success page
+      navigate(`/payment-success?method=phonepe_qr&id=${docRef.id}`);
     } catch (err) {
       toast.error("Failed to finalize order after payment");
     } finally {
@@ -975,7 +979,7 @@ export default function Checkout() {
                       <CtaButton 
                         type="button" 
                         label={loading ? "" : (paymentMethod === "COD" ? "Place COD Order" : "Pay & Place Order")} 
-                        onClick={handlePlaceOrder} 
+                        onClick={handlePlaceOrderClick} 
                         disabled={loading}
                         icon={loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (paymentMethod === "PHONEPE" ? <Shield className="w-4 h-4" /> : undefined)} 
                         darkMode={isDarkMode} 
@@ -1141,6 +1145,74 @@ export default function Checkout() {
         onSubmit={handleInvoiceEmail}
         loading={isSendingInvoice}
       />
+
+      {/* Confirm Invoice Email Modal right before placing order */}
+      <AnimatePresence>
+        {showEmailConfirmModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-md p-6 rounded-3xl border ${isDarkMode ? "bg-zinc-900 border-zinc-800" : "bg-white border-black/10"} shadow-2xl space-y-6`}
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className={`text-lg font-bold ${textPrimary}`}>Confirm Invoice Email</h3>
+                <button onClick={() => setShowEmailConfirmModal(false)} className={`p-1.5 rounded-full hover:${isDarkMode ? "bg-white/10" : "bg-black/5"} ${textPrimary}`}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className={`text-sm ${textSub} leading-relaxed`}>
+                  Please confirm the email address where you would like to receive your official order invoice and shipment tracking updates.
+                </p>
+                
+                <div className="space-y-2">
+                  <label className={`text-xs font-bold uppercase tracking-wider ${textMuted}`}>Invoice Email</label>
+                  <div className="relative">
+                    <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${textMuted}`} />
+                    <input
+                      type="email"
+                      value={confirmEmailInput}
+                      onChange={(e) => setConfirmEmailInput(e.target.value)}
+                      placeholder="your.email@example.com"
+                      className={`w-full pl-10 pr-4 py-3 rounded-2xl border ${inputBorder} ${inputBg} ${textPrimary} text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailConfirmModal(false)}
+                  className={`flex-1 py-3 rounded-2xl border ${divider} text-sm font-bold ${textPrimary} hover:${isDarkMode ? "bg-white/5" : "bg-black/5"} transition-all`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(confirmEmailInput)) {
+                      toast.error("Please enter a valid email address");
+                      return;
+                    }
+                    setShowEmailConfirmModal(false);
+                    // Update the customer data email
+                    setCustomerData(prev => ({ ...prev, email: confirmEmailInput }));
+                    // Proceed with placement
+                    await handlePlaceOrder(confirmEmailInput);
+                  }}
+                  className="flex-1 py-3 bg-purple-600 text-white rounded-2xl font-bold text-sm hover:bg-purple-700 transition-colors shadow-lg shadow-purple-600/20"
+                >
+                  Proceed to Order
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
