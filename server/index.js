@@ -374,6 +374,7 @@ app.post('/api/newsletter', async (req, res) => {
 // PhonePe Endpoints
 const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID;
 const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET;
+const PHONEPE_CLIENT_VERSION = process.env.PHONEPE_CLIENT_VERSION || '1';
 const PHONEPE_ENV = process.env.PHONEPE_ENV || 'UAT';
 const PHONEPE_AUTH_URL = PHONEPE_ENV === 'PROD' ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token' : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
 const PHONEPE_PG_BASE = PHONEPE_ENV === 'PROD' ? 'https://api.phonepe.com/apis/pg' : 'https://api-preprod.phonepe.com/apis/pg-sandbox';
@@ -383,19 +384,32 @@ let _expiry = 0;
 
 async function getAuth() {
   if (_token && Date.now() < _expiry - 30000) return _token;
+  const params = new URLSearchParams({
+    client_id: PHONEPE_CLIENT_ID,
+    client_version: String(PHONEPE_CLIENT_VERSION),
+    client_secret: PHONEPE_CLIENT_SECRET,
+    grant_type: 'client_credentials'
+  }).toString();
+
   const resp = await fetch(PHONEPE_AUTH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: PHONEPE_CLIENT_ID,
-      client_version: '1',
-      client_secret: PHONEPE_CLIENT_SECRET,
-      grant_type: 'client_credentials'
-    })
+    body: params,
   });
-  const data = await resp.json();
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    console.error('❌ PhonePe auth failed:', resp.status, text);
+    throw new Error(`PhonePe auth error: ${text}`);
+  }
+
+  let data;
+  try { data = JSON.parse(text); }
+  catch (e) { console.error('❌ Failed to parse PhonePe auth response:', text); throw new Error('Invalid PhonePe auth response'); }
+
   _token = data.access_token;
   _expiry = data.expires_at ? data.expires_at * 1000 : Date.now() + 600000;
+  console.log('✅ Obtained PhonePe OAuth token (env=' + PHONEPE_ENV + ')');
   return _token;
 }
 
@@ -429,12 +443,13 @@ app.post('/api/phonepe/qr', async (req, res) => {
     });
 
     const text = await resp.text();
+    console.log('📤 PhonePe /qr response status:', resp.status);
+    console.log('📤 PhonePe /qr response body:', text.substring(0, 2000));
+
     let responseData;
-    try { 
-      responseData = JSON.parse(text); 
-    } catch { 
+    try { responseData = JSON.parse(text); } catch (e) {
       console.error('❌ Failed to parse PhonePe response:', text);
-      return res.status(502).json({ error: 'Invalid response from PhonePe' }); 
+      return res.status(502).json({ error: 'Invalid response from PhonePe' });
     }
 
     const qrString = responseData.qrString || (responseData.data && responseData.data.qrString);
@@ -494,9 +509,11 @@ app.post('/api/phonepe/pay', async (req, res) => {
     });
 
     const text = await resp.text();
+    console.log('📤 PhonePe /pay response status:', resp.status);
+    console.log('📤 PhonePe /pay response body:', text.substring(0, 2000));
+
     let data;
-    try   { data = JSON.parse(text); }
-    catch { console.error('PhonePe non-JSON response:', text.substring(0, 400)); return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+    try { data = JSON.parse(text); } catch (e) { console.error('PhonePe non-JSON response:', text.substring(0, 400)); return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
 
     const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
     if (redirectUrl) {
