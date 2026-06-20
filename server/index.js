@@ -508,6 +508,20 @@ app.post('/api/phonepe/pay', async (req, res) => {
       },
     };
 
+    // Add optional prefill of user's phone number for quicker login on PhonePe
+    try {
+      let phonePrefill = null;
+      if (mobileNumber) {
+        const cleaned = mobileNumber.replace(/[^0-9+]/g, '');
+        if (cleaned.startsWith('+')) phonePrefill = cleaned;
+        else if (cleaned.length === 10) phonePrefill = '+91' + cleaned;
+        else phonePrefill = cleaned;
+      }
+      if (phonePrefill) payload.prefillUserLoginDetails = { phoneNumber: phonePrefill };
+    } catch (e) { /* ignore prefill errors */ }
+    // Recommended: disable retry to avoid duplicate orders
+    payload.disablePaymentRetry = true;
+
     const resp = await fetch(`${PHONEPE_PG_BASE}/checkout/v2/pay`, {
       method:  'POST',
       headers: {
@@ -523,6 +537,13 @@ app.post('/api/phonepe/pay', async (req, res) => {
 
     let data;
     try { data = JSON.parse(text); } catch (e) { console.error('PhonePe non-JSON response:', text.substring(0, 400)); return res.status(502).json({ error: 'Invalid response from PhonePe' }); }
+
+    // If gateway returned an error code/message, surface it to frontend for debugging
+    if (resp.status >= 400 || data.code || data.message) {
+      const errMsg = data.message || data.code || 'Failed to initiate payment';
+      console.error('❌ PhonePe /pay error:', errMsg, JSON.stringify(data));
+      return res.status(502).json({ error: errMsg, details: data, status: resp.status });
+    }
 
     const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
     if (redirectUrl) {
