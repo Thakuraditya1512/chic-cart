@@ -472,7 +472,7 @@ app.post('/api/phonepe/qr', async (req, res) => {
 
 app.post('/api/phonepe/pay', async (req, res) => {
   try {
-    const { amount, transactionId, userId, mobileNumber } = req.body;
+    const { amount, transactionId, userId, mobileNumber, email } = req.body;
 
     if (!amount || !transactionId || !userId) {
       return res.status(400).json({ error: 'Missing required fields: amount, transactionId, userId' });
@@ -489,6 +489,7 @@ app.post('/api/phonepe/pay', async (req, res) => {
       metaInfo: {
         udf1: userId,
         udf2: mobileNumber || '',
+        customerEmail: email || ''
       },
       paymentFlow: {
         type: 'PG_CHECKOUT',
@@ -517,6 +518,24 @@ app.post('/api/phonepe/pay', async (req, res) => {
 
     const redirectUrl = data.redirectUrl || data.checkoutPageUrl;
     if (redirectUrl) {
+      // Send a lightweight acknowledgement email (order received, will confirm after payment)
+      if (email && transporter) {
+        const mail = {
+          from: `"Flex The Kicks" <${process.env.SMTP_USER || 'otp@flexthekicks.in'}>`,
+          to: email,
+          subject: `We received your order ${transactionId}`,
+          html: `<p>Thanks for your order. We have received your request (Order ID: <strong>${transactionId}</strong>).</p>
+                 <p>Your payment page is opening. Once payment is confirmed, we'll send the official receipt and order details to this email address.</p>
+                 <p>Continue shopping with us: <a href="https://${process.env.FRONTEND_URL || 'flexthekicks.in'}">flexthekicks.in</a></p>`
+        };
+
+        transporter.sendMail(mail).then(() => {
+          console.log('✅ Acknowledgement email sent to', email);
+        }).catch((e) => {
+          console.error('❌ Failed to send acknowledgement email:', e && e.message);
+        });
+      }
+
       return res.json({ success: true, url: redirectUrl, orderId: data.orderId });
     }
 
